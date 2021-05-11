@@ -1,0 +1,73 @@
+<html>
+  <title>Feet/Inch Calculator</title>
+  <body onload="updateResult()">
+    <script type="text/javascript">
+      function updateResult() {
+        document.getElementById('success').style.display = "block";
+        document.getElementById('fail').style.display = "none";
+        try {
+          var ft = Number(document.getElementById('ft').value);
+          var inch = Number(document.getElementById('inch').value);
+          var num = Number(document.getElementById('num').value);
+          var denom = Number(document.getElementById('denom').value);
+          var times = Number(document.getElementById('times').value);
+          var div = Number(document.getElementById('div').value);
+          var totalInches = (ft*12 + inch + num/denom) * times / div;
+          if (isNaN(totalInches)) throw "bad input";
+          if (!isFinite(totalInches)) throw "divide by zero";
+          document.getElementById('resultIn').textContent = totalInches;
+          document.getElementById('resultFt').textContent = totalInches/12;
+
+          var inches = totalInches;
+          ft = (inches/12)|0;
+          inches = inches - ft*12;
+          var frac = inches - (inches|0);
+          inches = inches |0;
+          var denom = 64;
+          num = (frac * denom)|0;
+          frac = frac - num/denom;
+          while (denom > 1 && num%2 === 0) {
+            denom = denom/2;
+            num = num/2;
+          }
+          var exact = frac === 0 ? "exactly" : "approximately";
+
+          var str = exact + " " + ft + "' " + inches + '" ';
+          if (num != 0) {
+            str += " " + num + "/" + denom;
+          }
+          document.getElementById('resultFtDetail').textContent = str;
+
+          var str = exact + " " + (12*ft + inches) + '" ';
+          if (num != 0) {
+            str += " " + num + "/" + denom;
+          }
+          document.getElementById('resultInDetail').textContent = str;
+        }
+        catch (e) {
+          document.getElementById('success').style.display = "none";
+          document.getElementById('fail').style.display = "block";
+          document.getElementById('fail').textContent = String(e);
+        }
+      }
+    </script>
+    <p>
+      <input type="text" onchange="updateResult()" size="4" id="ft" value="5"> ft
+      <input type="text" onchange="updateResult()" size="4" id="inch" value="0"> in
+      &nbsp;&nbsp;
+      <input type="text" onchange="updateResult()" size="2" id="num" value="0"> /
+      <input type="text" onchange="updateResult()" size="2" id="denom" value="8">
+      &nbsp;&nbsp;
+      times <input type="text" onchange="updateResult()" size="2" id="times" value="1">
+      divided by <input type="text" onchange="updateResult()" size="2" id="div" value="1">
+    </p>
+    <p id="success">
+      <span id="resultFt"></span> ft, <span id="resultFtDetail"></span>
+    <br>
+      <span id="resultIn"></span> inches, <span id="resultInDetail"></span>
+    </p>
+    <p id="fail">
+      haha no
+    </p>
+  </body>
+</html>
