@@ -40,12 +40,16 @@
           }
 
           // format that string and output it
-          var exact, delta = "";
+          var exact, delta;
           if (frac === 0) {
             exact = "exactly";
+            delta = "";
           } else {
             exact = "approximately"
-            delta = " (+" + frac + '")';
+            if (frac < 0)
+              delta = " (" + frac + '")';
+            else
+              delta = " (+" + frac + '")';
           }
           var str = exact + " " + ft + "' " + inches;
           if (num != 0) {
@@ -55,7 +59,7 @@
           document.getElementById('resultFtDetail').textContent = str;
 
           // format inches
-          var str = exact + " " + (12*ft + inches) + '" ';
+          var str = exact + " " + (12*ft + inches);
           if (num != 0) {
             str += " " + num + "/" + denom;
           }
