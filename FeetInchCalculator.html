@@ -68,9 +68,8 @@
 
           // format inches
           var str = exact + " " + (12*ft + inches);
-          if (num != 0) {
+          if (num != 0)
             str += " " + num + "/" + denom;
-          }
           str += '"' + delta;
           document.getElementById('resultInDetail').textContent = str;
 
