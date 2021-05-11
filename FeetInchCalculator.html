@@ -3,21 +3,29 @@
   <body onload="updateResult()">
     <script type="text/javascript">
       function updateResult() {
-        document.getElementById('success').style.display = "block";
-        document.getElementById('fail').style.display = "none";
+        // assume success. show results elemengt and hide error element
+        document.getElementById('results').style.display = "block";
+        document.getElementById('error').style.display = "none";
         try {
+          // get the fields and convert to numbers
           var ft = Number(document.getElementById('ft').value);
           var inch = Number(document.getElementById('inch').value);
           var num = Number(document.getElementById('num').value);
           var denom = Number(document.getElementById('denom').value);
           var times = Number(document.getElementById('times').value);
           var div = Number(document.getElementById('div').value);
+
+          // compute total inches
           var totalInches = (ft*12 + inch + num/denom) * times / div;
+
+          // check for bad input
           if (isNaN(totalInches)) throw "bad input";
           if (!isFinite(totalInches)) throw "divide by zero";
+
           document.getElementById('resultIn').textContent = totalInches;
           document.getElementById('resultFt').textContent = totalInches/12;
 
+          // recover feet and inches form from result
           var inches = totalInches;
           ft = (inches/12)|0;
           inches = inches - ft*12;
@@ -30,8 +38,9 @@
             denom = denom/2;
             num = num/2;
           }
-          var exact = frac === 0 ? "exactly" : "approximately";
 
+          // format that string and output it
+          var exact = frac === 0 ? "exactly" : "approximately";
           var str = exact + " " + ft + "' " + inches;
           if (num != 0) {
             str += " " + num + "/" + denom;
@@ -39,18 +48,21 @@
           str += '"';
           document.getElementById('resultFtDetail').textContent = str;
 
+          // format inches
           var str = exact + " " + (12*ft + inches) + '" ';
           if (num != 0) {
             str += " " + num + "/" + denom;
           }
           document.getElementById('resultInDetail').textContent = str;
 
+          // show metric for good measure
           document.getElementById('resultMeters').textContent = String(totalInches / 39.37);
         }
         catch (e) {
-          document.getElementById('success').style.display = "none";
-          document.getElementById('fail').style.display = "block";
-          document.getElementById('fail').textContent = String(e);
+          // we had an error so hide the results block and show the error block
+          document.getElementById('results').style.display = "none";
+          document.getElementById('error').style.display = "block";
+          document.getElementById('error').textContent = String(e);
         }
       }
     </script>
@@ -64,7 +76,7 @@
       times <input type="text" onchange="updateResult()" size="2" id="times" value="1">
       divided by <input type="text" onchange="updateResult()" size="2" id="div" value="1">
     </p>
-    <p id="success">
+    <p id="results">
       <span id="resultFt"></span> ft, <span id="resultFtDetail"></span>
       <br>
       <span id="resultIn"></span> inches, <span id="resultInDetail"></span>
@@ -72,7 +84,7 @@
       <span id="resultMeters"></span> meters
     </p>
     </p>
-    <p id="fail">
+    <p id="error">
       haha no
     </p>
   </body>
