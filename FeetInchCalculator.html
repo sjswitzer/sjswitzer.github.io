@@ -32,10 +32,11 @@
           }
           var exact = frac === 0 ? "exactly" : "approximately";
 
-          var str = exact + " " + ft + "' " + inches + '" ';
+          var str = exact + " " + ft + "' " + inches;
           if (num != 0) {
             str += " " + num + "/" + denom;
           }
+          str += '"';
           document.getElementById('resultFtDetail').textContent = str;
 
           var str = exact + " " + (12*ft + inches) + '" ';
