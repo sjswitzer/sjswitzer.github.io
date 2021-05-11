@@ -1,18 +1,23 @@
 <html>
-  <title>Feet/Inch Calculator</title>
+  <title>Feet & Inch Calculator</title>
   <body onload="updateResult()">
     <script type="text/javascript">
+      function getField(name, def) {
+        document.getElementById(name).style.borderColor = "";  // default
+        var val = document.getElementById(name).value.trim();
+        if (val === "") return def;
+        val = Number(val);
+        if (isNaN(val)) {
+          document.getElementById(name).style.borderColor = "red";
+          throw "bad input";
+        }
+        return val;
+      }
+
       function updateResult() {
         // assume success. show results element and hide error element
         document.getElementById('results').style.display = "block";
         document.getElementById('error').style.display = "none";
-        function getField(name, def) {
-          var val = document.getElementById(name).value.trim();
-          if (val === "") return def;
-          val = Number(val);
-          if (isNaN(val)) throw "bad input";
-          return val;
-        }
         try {
           // get the fields and convert to numbers
           var ft = getField('ft', 0);
