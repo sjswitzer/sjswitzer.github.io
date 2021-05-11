@@ -6,20 +6,24 @@
         // assume success. show results element and hide error element
         document.getElementById('results').style.display = "block";
         document.getElementById('error').style.display = "none";
+        function getField(name, def) {
+          var val = document.getElementById(name).value.trim();
+          if (val === "") return def;
+          val = Number(val);
+          if (isNaN(val)) throw "bad input";
+          return val;
+        }
         try {
           // get the fields and convert to numbers
-          var ft = Number(document.getElementById('ft').value);
-          var inch = Number(document.getElementById('inch').value);
-          var num = Number(document.getElementById('num').value);
-          var denom = Number(document.getElementById('denom').value);
-          var times = Number(document.getElementById('times').value);
-          var div = Number(document.getElementById('div').value);
+          var ft = getField('ft', 0);
+          var inch = getField('inch', 0);
+          var num = getField('num', 0);
+          var denom = getField('denom', 1);
+          var times = getField('times', 1);
+          var div = getField('div', 1);
 
           // compute total inches
           var totalInches = (ft*12 + inch + num/denom) * times / div;
-
-          // check for bad input
-          if (isNaN(totalInches)) throw "bad input";
           if (!isFinite(totalInches)) throw "divide by zero";
 
           document.getElementById('resultIn').textContent = totalInches;
@@ -27,14 +31,14 @@
 
           // recover feet and inches form from result
           var inches = totalInches;
-          ft = (inches/12)|0;
+          ft = (inches/12)|0;      // "n|0" truncates to an integer
           inches = inches - ft*12;
           var frac = inches - (inches|0);
-          inches = inches |0;
-          var denom = 64;
+          inches = inches|0;
+          var denom = 32;
           num = (frac*denom + 0.5)|0; // round
           frac = frac - num/denom;
-          while (denom > 1 && num%2 === 0) {
+          while (denom > 2 && num%2 === 0) {
             denom = denom/2;
             num = num/2;
           }
@@ -47,14 +51,13 @@
           } else {
             exact = "approximately"
             if (frac < 0)
-              delta = " (" + frac + '")';
+              delta = " (" + frac + '")';   // frac will have a "-" sign already
             else
-              delta = " (+" + frac + '")';
+              delta = " (+" + frac + '")';  // add a "+" sign
           }
           var str = exact + " " + ft + "' " + inches;
-          if (num != 0) {
+          if (num != 0)
             str += " " + num + "/" + denom;
-          }
           str += '"' + delta;
           document.getElementById('resultFtDetail').textContent = str;
 
@@ -79,13 +82,13 @@
     </script>
     <p>
       <input type="text" onchange="updateResult()" size="4" id="ft" value="5"> ft
-      <input type="text" onchange="updateResult()" size="4" id="inch" value="0"> in
+      <input type="text" onchange="updateResult()" size="4" id="inch" value=""> in
       &nbsp;&nbsp;
-      <input type="text" onchange="updateResult()" size="2" id="num" value="0"> /
+      <input type="text" onchange="updateResult()" size="2" id="num" value=""> /
       <input type="text" onchange="updateResult()" size="2" id="denom" value="8">
       &nbsp;&nbsp;
-      times <input type="text" onchange="updateResult()" size="2" id="times" value="1">
-      divided by <input type="text" onchange="updateResult()" size="2" id="div" value="1">
+      times <input type="text" onchange="updateResult()" size="2" id="times" value="">
+      divided by <input type="text" onchange="updateResult()" size="2" id="div" value="">
       <br>
       &nbsp;&nbsp;&nbsp;&nbsp;
       <small>(update fields and hit enter/return)</small>
