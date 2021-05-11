@@ -43,6 +43,8 @@
             str += " " + num + "/" + denom;
           }
           document.getElementById('resultInDetail').textContent = str;
+
+          document.getElementById('resultMeters').textContent = String(totalInches / 39.37);
         }
         catch (e) {
           document.getElementById('success').style.display = "none";
@@ -63,8 +65,11 @@
     </p>
     <p id="success">
       <span id="resultFt"></span> ft, <span id="resultFtDetail"></span>
-    <br>
+      <br>
       <span id="resultIn"></span> inches, <span id="resultInDetail"></span>
+      <br>
+      <span id="resultMeters"></span> meters
+    </p>
     </p>
     <p id="fail">
       haha no
