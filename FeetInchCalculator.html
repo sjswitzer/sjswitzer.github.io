@@ -62,7 +62,7 @@
           document.getElementById('resultInDetail').textContent = str;
 
           // show metric for good measure
-          document.getElementById('resultMeters').textContent = String(totalInches / 39.37);
+          document.getElementById('resultMeters').textContent = String(totalInches * 0.0254);
         }
         catch (e) {
           // we had an error so hide the results block and show the error block
