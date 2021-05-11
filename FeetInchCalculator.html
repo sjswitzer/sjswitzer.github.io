@@ -3,12 +3,12 @@
   <body onload="updateResult()">
     <script type="text/javascript">
       function getField(name, def) {
-        document.getElementById(name).style.borderColor = "";  // default
+        document.getElementById(name).style.color = "";  // default
         var val = document.getElementById(name).value.trim();
         if (val === "") return def;
         val = Number(val);
         if (isNaN(val)) {
-          document.getElementById(name).style.borderColor = "red";
+          document.getElementById(name).style.color = "red";
           throw "bad input";
         }
         return val;
