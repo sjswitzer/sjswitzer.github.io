@@ -24,7 +24,7 @@
           var frac = inches - (inches|0);
           inches = inches |0;
           var denom = 64;
-          num = (frac * denom)|0;
+          num = (frac*denom + 0.5)|0; // round
           frac = frac - num/denom;
           while (denom > 1 && num%2 === 0) {
             denom = denom/2;
