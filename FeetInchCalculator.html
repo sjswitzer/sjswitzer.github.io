@@ -1,25 +1,24 @@
 <html>
   <title>Feet & Inch Calculator</title>
-  <body onload="updateResult()">
+  <body onload="updateResult()" style="font: medium helvetica, arial, sans-serif;">
     <script type="text/javascript">
       function getField(name, def) {
-        document.getElementById(name).style.color = "";  // default
+        document.getElementById(name).style.color = '';  // default
         var val = document.getElementById(name).value.trim();
         if (val === "") return def;
         val = Number(val);
         if (isNaN(val)) {
-          document.getElementById(name).style.color = "red";
+          document.getElementById(name).style.color = 'red';
           throw "bad input";
         }
         return val;
       }
 
       function updateResult() {
-        // assume success. show results element and hide error element
-        document.getElementById('results').style.display = "block";
-        document.getElementById('error').style.display = "none";
+        // Assume success: show results element and hide error element
+        document.getElementById('results').style.display = '';
+        document.getElementById('error').style.display = 'none';
         try {
-          // get the fields and convert to numbers
           var ft = getField('ft', 0);
           var inch = getField('inch', 0);
           var num = getField('num', 0);
@@ -27,14 +26,13 @@
           var times = getField('times', 1);
           var div = getField('div', 1);
 
-          // compute total inches
           var totalInches = (ft*12 + inch + num/denom) * times / div;
           if (!isFinite(totalInches)) throw "divide by zero";
 
           document.getElementById('resultIn').textContent = totalInches;
           document.getElementById('resultFt').textContent = totalInches/12;
 
-          // recover feet and inches form from result
+          // Recover feet and inches from from result
           var inches = totalInches;
           ft = (inches/12)|0;      // "n|0" truncates to an integer
           inches = inches - ft*12;
@@ -61,14 +59,14 @@
               delta = " (+" + frac + '")';  // add a "+" sign
           }
           var str = exact + " " + ft + "' " + inches;
-          if (num != 0)
+          if (num !== 0)
             str += " " + num + "/" + denom;
           str += '"' + delta;
           document.getElementById('resultFtDetail').textContent = str;
 
           // format inches
           var str = exact + " " + (12*ft + inches);
-          if (num != 0)
+          if (num !== 0)
             str += " " + num + "/" + denom;
           str += '"' + delta;
           document.getElementById('resultInDetail').textContent = str;
@@ -78,8 +76,8 @@
         }
         catch (e) {
           // we had an error so hide the results block and show the error block
-          document.getElementById('results').style.display = "none";
-          document.getElementById('error').style.display = "block";
+          document.getElementById('results').style.display = 'none';
+          document.getElementById('error').style.display = '';
           document.getElementById('error').textContent = String(e);
         }
       }
@@ -93,9 +91,6 @@
       &nbsp;&nbsp;
       times <input type="text" onchange="updateResult()" size="2" id="times" value="">
       divided by <input type="text" onchange="updateResult()" size="2" id="div" value="">
-      <br>
-      &nbsp;&nbsp;&nbsp;&nbsp;
-      <small>(update fields and hit enter/return)</small>
     </p>
     <p id="results">
       <span id="resultFt"></span> feet, <span id="resultFtDetail"></span>
@@ -106,7 +101,23 @@
     </p>
     </p>
     <p id="error">
-      haha no
     </p>
+    <div style="margin-left: 2em; font-size: 85%;">
+      <bl>
+        <li>
+          Fields may be left empty when not relevent
+        </li>
+        <li>
+          A value like five and a half feet can be entered as 5.5 ft or as 5 ft 6 inches
+        </li>
+        <li>
+          A value like six and a quarter inches can be entered as 6.25 inches or
+          as 6 inches and 1/4
+        </li>
+        <li>
+          Hit enter/return to calculate
+        </li>
+      </bl>
+    </div>
   </body>
 </html>
