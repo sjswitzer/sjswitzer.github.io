@@ -1,10 +1,11 @@
 <html>
   <title>Feet & Inch Calculator</title>
-  <body onload="updateResult()" style="font-family: system-ui; color: #212121">
+  <body onload="updateResult()"
+      style="margin: 1em 2em; font-family: system-ui; color: #212121">
     <script type="text/javascript">
-      function getField(name, def) {
+      const getField = (name, def) => {
         document.getElementById(name).style.color = '';  // default
-        var val = document.getElementById(name).value.trim();
+        let val = document.getElementById(name).value.trim();
         if (val === "") return def;
         val = Number(val);
         if (isNaN(val) || (val === 0 && def !== 0))
@@ -12,33 +13,39 @@
         return val;
       }
 
-      function updateResult() {
+      const isDiv0 = (val) => !isFinite(val) && !isNaN(val);
+
+      const updateResult = () => {
         // Assume success: show results element and hide error element
         document.getElementById('results').style.display = '';
         document.getElementById('error').style.display = 'none';
         try {
-          var ft = getField('ft', 0);
-          var inch = getField('inch', 0);
-          var num = getField('num', 0);
-          var denom = getField('denom', 1);
-          var times = getField('times', 1);
-          var div = getField('div', 1);
+          let ft = getField('ft', 0);
+          let inch = getField('inch', 0);
+          let num = getField('num', 0);
+          let denom = getField('denom', 1);
+          let times = getField('times', 1);
+          let div = getField('div', 1);
 
-          var totalInches = (ft*12 + inch + num/denom) * times / div;
+          let totalInches = (ft*12 + inch + num/denom);
+          if (isDiv0(totalInches)) throw "Divide by zero";
+
+          totalInches = totalInches * times / div;
+          if (isDiv0(totalInches)) throw "Divide by zero";
           if (isNaN(totalInches)) throw "Bad input";
-          if (!isFinite(totalInches)) throw "Divide by zero";
-
+	
           document.getElementById('resultIn').textContent = totalInches;
           document.getElementById('resultFt').textContent = totalInches/12;
 
           // Recover feet and inches from from result
-          var inches = totalInches;
+          // (round to nearest 1/denom)
+          denom = 32;
+          let inches =  ((totalInches*denom + 0.5)|0)/denom;
           ft = (inches/12)|0;      // "n|0" truncates to an integer
           inches = inches - ft*12;
-          var frac = inches - (inches|0);
+          let frac = inches - (inches|0);
           inches = inches|0;
-          var denom = 32;
-          num = (frac*denom + 0.5)|0; // round
+          num = (frac*denom)|0; // round
           frac = frac - num/denom;
           while (denom > 2 && num%2 === 0) {
             denom = denom/2;
@@ -46,7 +53,8 @@
           }
 
           // format that string and output it
-          var exact, delta;
+          let exact, delta;
+          frac = totalInches - (ft*12 + inches + num/denom);
           if (frac === 0) {
             exact = "exactly";
             delta = "";
@@ -57,14 +65,14 @@
             else
               delta = " (+" + frac + '")';  // add a "+" sign
           }
-          var str = exact + " " + ft + "' " + inches;
+          let str = exact + " " + ft + "' " + inches;
           if (num !== 0)
             str += " " + num + "/" + denom;
           str += '"' + delta;
           document.getElementById('resultFtDetail').textContent = str;
 
           // format inches
-          var str = exact + " " + (12*ft + inches);
+          str = exact + " " + (12*ft + inches);
           if (num !== 0)
             str += " " + num + "/" + denom;
           str += '"' + delta;
@@ -81,7 +89,7 @@
         }
       }
     </script>
-    <p>
+    <p style="transform-origin: left; transform: scale(1.5)">
       <input type="text" onchange="updateResult()" size="4" id="ft" value="5"> ft
       <input type="text" onchange="updateResult()" size="4" id="inch" value=""> in
       &nbsp;&nbsp;
@@ -91,6 +99,7 @@
       times <input type="text" onchange="updateResult()" size="2" id="times" value="">
       divided by <input type="text" onchange="updateResult()" size="2" id="div" value="">
     </p>
+    <div style="float: left; min-width: 30em; border: 2px solid; margin: 10px 0px; padding: 0px 10px">
     <p id="results">
       <span id="resultFt"></span> feet, <span id="resultFtDetail"></span>
       <br>
@@ -101,7 +110,8 @@
     </p>
     <p id="error" style="color: red">
     </p>
-    <div style="margin-left: 2em; font-size: 85%;">
+    </div>
+    <div style="font-size: 85%; clear: both">
       <bl>
         <li>
           Fields may be left empty when not relevent
