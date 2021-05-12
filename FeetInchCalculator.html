@@ -1,16 +1,14 @@
 <html>
   <title>Feet & Inch Calculator</title>
-  <body onload="updateResult()" style="font: medium helvetica, arial, sans-serif;">
+  <body onload="updateResult()" style="font-family: system-ui">
     <script type="text/javascript">
       function getField(name, def) {
         document.getElementById(name).style.color = '';  // default
         var val = document.getElementById(name).value.trim();
         if (val === "") return def;
         val = Number(val);
-        if (isNaN(val)) {
+        if (isNaN(val) || (val === 0 && def !== 0))
           document.getElementById(name).style.color = 'red';
-          throw "bad input";
-        }
         return val;
       }
 
@@ -27,6 +25,7 @@
           var div = getField('div', 1);
 
           var totalInches = (ft*12 + inch + num/denom) * times / div;
+          if (isNaN(totalInches)) throw "bad input";
           if (!isFinite(totalInches)) throw "divide by zero";
 
           document.getElementById('resultIn').textContent = totalInches;
