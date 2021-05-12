@@ -1,6 +1,6 @@
 <html>
   <title>Feet & Inch Calculator</title>
-  <body onload="updateResult()" style="font-family: system-ui; font-weight: 300">
+  <body onload="updateResult()" style="font-family: system-ui; color: #212121">
     <script type="text/javascript">
       function getField(name, def) {
         document.getElementById(name).style.color = '';  // default
@@ -25,8 +25,8 @@
           var div = getField('div', 1);
 
           var totalInches = (ft*12 + inch + num/denom) * times / div;
-          if (isNaN(totalInches)) throw "bad input";
-          if (!isFinite(totalInches)) throw "divide by zero";
+          if (isNaN(totalInches)) throw "Bad input";
+          if (!isFinite(totalInches)) throw "Divide by zero";
 
           document.getElementById('resultIn').textContent = totalInches;
           document.getElementById('resultFt').textContent = totalInches/12;
@@ -99,7 +99,7 @@
       <span id="resultMeters"></span> meters
     </p>
     </p>
-    <p id="error">
+    <p id="error" style="color: red">
     </p>
     <div style="margin-left: 2em; font-size: 85%;">
       <bl>
