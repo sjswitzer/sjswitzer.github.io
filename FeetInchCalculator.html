@@ -46,7 +46,6 @@
           let frac = inches - (inches|0);
           inches = inches|0;
           num = (frac*denom)|0;
-          frac = frac - num/denom;
           while (denom > 2 && num%2 === 0) {  // reduce fraction
             denom = denom/2;
             num = num/2;
