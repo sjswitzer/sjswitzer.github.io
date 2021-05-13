@@ -10,7 +10,7 @@
       // fractional inches. So doing all arithmetic in units of inches means that
       // calculations can be exact when exact results are possible.
 
-      const getField = (name, def) => {
+      function getField(name, def) {
         document.getElementById(name).style.color = '';
         let val = document.getElementById(name).value.trim();
         if (val === "") return def;
@@ -20,9 +20,7 @@
         return val;
       }
 
-      const isDiv0 = (val) => !isFinite(val) && !isNaN(val);
-
-      const num2str = (val) => {
+      function num2str(val) {
         // Avoids display of nonsense like 2.5000...001 while
         // maintaining accuracy to 10 decimal digits.
         val = val.toPrecision(10);
@@ -35,7 +33,8 @@
         return val;
       }
 
-      const updateResult = () => {
+      function updateResult() {
+        const isDiv0 = (val) => !isFinite(val) && !isNaN(val);
         // Assume success: show results element and hide error element
         document.getElementById('results').style.display = '';
         document.getElementById('error').style.display = 'none';
