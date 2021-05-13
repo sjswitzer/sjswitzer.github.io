@@ -61,10 +61,16 @@
             else
               delta = " + " + delta + '"';
           }
-          let str = "" + ft + "' " + inches;
+          let str = "";
+          if (ft !== 0 || (inches === 0 && num === 0))
+            str += ft + "'";
+          if (inches !== 0)
+            str += " " + inches;
           if (num !== 0)
             str += " " + num + "/" + denom;
-          str += '"' + delta;
+          if (inches !== 0 || num !== 0)
+             str += '"';
+          str += delta
           document.getElementById('resultFtDetail').textContent = str;
 
           // format inches
