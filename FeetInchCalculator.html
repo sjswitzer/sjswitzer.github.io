@@ -22,6 +22,17 @@
 
       const isDiv0 = (val) => !isFinite(val) && !isNaN(val);
 
+      const num2str = (val) => {
+        // Avoids display of nonsense like 2.5000...001 while
+        // maintaining accuracy to 10 decimal digits.
+        val = val.toPrecision(10);
+        while (val.endsWith("0"))
+          val = val.substr(0, val.length-1);
+        if (val.endsWith("."))
+          val = val.substr(0, val.length-1);
+        return val;
+      }
+
       const updateResult = () => {
         // Assume success: show results element and hide error element
         document.getElementById('results').style.display = '';
@@ -41,8 +52,8 @@
           if (isDiv0(totalInches)) throw "Divide by zero";
           if (isNaN(totalInches)) throw "Bad input";
 
-          document.getElementById('resultIn').textContent = totalInches;
-          document.getElementById('resultFt').textContent = totalInches/12;
+          document.getElementById('resultIn').textContent = num2str(totalInches);
+          document.getElementById('resultFt').textContent = num2str(totalInches/12);
 
           // Recover feet and inches from from result
           // (round to nearest 1/denom)
@@ -64,9 +75,9 @@
             delta = "";
           } else {
             if (delta < 0)
-              delta = " - " + -delta + '"';
+              delta = " - " + num2str(-delta) + '"';
             else
-              delta = " + " + delta + '"';
+              delta = " + " + num2str(delta) + '"';
           }
           let str = "";
           if (ft !== 0 || (inches === 0 && num === 0))
@@ -88,8 +99,10 @@
           document.getElementById('resultInDetail').textContent = str;
 
           // show metric for good measure
-          document.getElementById('resultMeters').textContent = String(totalInches * 0.0254);
-          document.getElementById('resultMetersMetricFeet').textContent = String(totalInches * 0.025);
+          document.getElementById('resultMeters').textContent =
+            num2str(totalInches * 0.0254);
+          document.getElementById('resultMetersMetricFeet').textContent =
+            num2str(totalInches * 0.025);
         }
         catch (e) {
           // we had an error so hide the results block and show the error block
