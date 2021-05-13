@@ -71,15 +71,6 @@
           }
 
           // format that string and output it
-          let delta = totalInches - (ft*12 + inches + num/denom);
-          if (Math.abs(delta) < 1.0e-10) {
-            delta = "";
-          } else {
-            if (delta < 0)
-              delta = " - " + num2str(-delta) + '"';
-            else
-              delta = " + " + num2str(delta) + '"';
-          }
           let str = "";
           if (ft !== 0 || (inches === 0 && num === 0))
             str += ft + "'";
@@ -89,6 +80,15 @@
             str += " " + num + "/" + denom;
           if (inches !== 0 || num !== 0)
              str += '"';
+          let delta = totalInches - (ft*12 + inches + num/denom);
+          if (Math.abs(delta) < 1.0e-10) {
+            delta = "";
+          } else {
+            if (delta < 0)
+              delta = " - " + num2str(-delta) + '"';
+            else
+              delta = " + " + num2str(delta) + '"';
+          }
           str += delta
           document.getElementById('resultFtDetail').textContent = str;
 
