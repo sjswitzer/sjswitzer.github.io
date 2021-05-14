@@ -34,7 +34,6 @@
       }
 
       function updateResult() {
-        const isDiv0 = val => !isFinite(val) && !isNaN(val);
         // Assume success: show results element and hide error element
         document.getElementById('results').style.display = '';
         document.getElementById('error').style.display = 'none';
@@ -46,11 +45,9 @@
           let times = getField('times', 1);
           let div = getField('div', 1);
 
-          let totalInches = (ft*12 + inch + num/denom);
-          if (isDiv0(totalInches)) throw "Divide by zero";
+          if (denom === 0 || div === 0) throw "Divide by zero";
 
-          totalInches = totalInches * times / div;
-          if (isDiv0(totalInches)) throw "Divide by zero";
+          let totalInches = (ft*12 + inch + num/denom) * times / div;
           if (isNaN(totalInches)) throw "Bad input";
 
           document.getElementById('resultIn').textContent = num2str(totalInches);
