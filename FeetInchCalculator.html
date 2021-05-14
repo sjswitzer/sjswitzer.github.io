@@ -93,7 +93,10 @@
           document.getElementById('resultFtDetail').textContent = str;
 
           // format inches
-          str = "" + (12*ft + inches);
+          str = "";
+          inches = ft*12 + inches;
+          if (inches !== 0 || num === 0)
+            str += inches;
           if (num !== 0)
             str += " " + num + "/" + denom;
           str += '"' + delta;
