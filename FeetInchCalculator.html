@@ -20,10 +20,12 @@
         return val;
       }
 
+      const digits = 10, epsilon = Math.pow(10, -digits);
+
       function num2str(val) {
         // Avoids display of nonsense like 2.5000...001 while
-        // maintaining accuracy to 10 decimal digits.
-        val = val.toFixed(10);
+        // maintaining accuracy to "digits" decimal digits.
+        val = val.toFixed(digits);
         while (val.endsWith("0"))
           val = val.substr(0, val.length-1);
         if (val.endsWith("."))
@@ -79,7 +81,7 @@
           if (inches !== 0 || num !== 0)
              str += '"';
           let delta = totalInches - (ft*12 + inches + num/denom);
-          if (Math.abs(delta) < 1.0e-10) {
+          if (Math.abs(delta) < epsilon) {
             delta = "";
           } else {
             if (delta < 0)
