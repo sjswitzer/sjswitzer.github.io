@@ -23,9 +23,7 @@
       function num2str(val) {
         // Avoids display of nonsense like 2.5000...001 while
         // maintaining accuracy to 10 decimal digits.
-        val = val.toPrecision(10);
-        if (val.includes('e'))  // watch out for scientific notation!
-          return val;
+        val = val.toFixed(10);
         while (val.endsWith("0"))
           val = val.substr(0, val.length-1);
         if (val.endsWith("."))
