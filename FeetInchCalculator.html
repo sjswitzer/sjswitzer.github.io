@@ -34,7 +34,7 @@
       }
 
       function updateResult() {
-        const isDiv0 = (val) => !isFinite(val) && !isNaN(val);
+        const isDiv0 = val => !isFinite(val) && !isNaN(val);
         // Assume success: show results element and hide error element
         document.getElementById('results').style.display = '';
         document.getElementById('error').style.display = 'none';
