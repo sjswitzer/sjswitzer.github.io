@@ -157,7 +157,7 @@
       //    ddd.dd
       //    .ddd
 
-      function parseNumber() {
+      function parseNum() {
         const digits = "0123456789";
         let nDigits = 0
         let backtrack = parsepos;
@@ -194,13 +194,13 @@
       //    n/n
 
       function parseNumFrac() {
-        let val = parseNumber();
+        let val = parseNum();
         if (val === null)
           return null;
         skipSpaces();
         let backtrack = parsepos;
         if (take('/')) {
-          let denom = parseNumber();
+          let denom = parseNum();
           if (denom === null) {
             parsepos = backtrack;
             return val;
@@ -209,12 +209,12 @@
             throw new MessageError("Divide by zero");
           return val/denom;
         }
-        let num = parseNumber();
+        let num = parseNum();
         if (num === null)
           return val;
         skipSpaces();
         if (take('/')) {
-          let denom = parseNumber();
+          let denom = parseNum();
           if (denom !== null) {
             if (denom === 0) new MessageError("Divide by zero");
             return val + num/denom;
@@ -259,7 +259,7 @@
 
         // if there are no units, we can only use the plain number
         parsepos = backtrack1;
-        let val = parseNumber();
+        let val = parseNum();
         if (val !== null)
           return { type: 'num', val: val };
         return null;
@@ -272,25 +272,29 @@
       //    - primitive
 
       function parsePrimitive() {
+        let backtrack = parsepos;
         if (take('(')) {
           let val = parseExpr();
           skipSpaces();
           if (val !== null && take(')')) {
             return val;
           }
+          parsepos = backtrack;
           return null;
         }
         if (take('+')) {
           let val = parsePrimitive();
-          if (val === null)
-            return null;
-          return val;
+          if (val !== null)
+            return val;
+          parsepos = backtrack;
+          return null;
         }
         if (take('-')) {
           let val = parsePrimitive();
-          if (val === null)
-            return null;
-          return { type: val.type, val: -val.val };
+          if (val !== null)
+            return { type: val.type, val: -val.val };
+          parsepos = backtrack;
+          return null;
         }
         return parseVal();
       }
@@ -300,35 +304,45 @@
       //    primitive / primitive
 
       function parseMulExpr() {
-        let val1 = parsePrimitive();
-        if (val1 === null)
+        let backtrack = parsepos;
+        let val = parsePrimitive();
+        if (val === null)
           return null;
-        skipSpaces();
-        if (take("*")) {
-          let val2 = parseMulExpr();
-          if (val2 === null)
-            return null;
-          if (val1.type === 'num' && val2.type === 'num')
-            return { type: 'num', val: val1.val * val2.val };
-          if (!(val1.type === 'in' && val2.type === 'in'))
-            return { type: 'in', val: val1.val * val2.val };
-          throw new MessageError("Cannot multiply lengths");
+        while (true) {
+          skipSpaces();
+          if (take("*")) {
+            let val2 = parsePrimitive();
+            if (val2 === null) {
+              parsepos = backtrack;
+              return null;
+            }
+            if (val.type === 'num' && val2.type === 'num')
+              val = { type: 'num', val: val.val * val2.val };
+            else if (!(val.type === 'in' && val2.type === 'in'))
+              val =  { type: 'in', val: val.val * val2.val };
+            else
+              throw new MessageError("Cannot multiply lengths");
+          } else if (take("/")) {
+            let val2 = parsePrimitive();
+            if (val2 === null) {
+              parsepos = backtrack;
+              return null;
+            }
+            if (val2.val === 0)
+              throw new MessageError("Divide by zero");
+            if (val.type === 'num' && val2.type === 'num')
+              val =  { type: 'num', val: val.val / val2.val };
+            else if (val.type === 'in' && val2.type === 'num')
+              val =  { type: 'in', val: val.val / val2.val };
+            else if (val.type === 'in' && val2.type === 'in')
+              val =  { type: 'num', val: val.val / val2.val };
+            else
+              throw new MessageError("Cannot divide numbers by lengths");
+          } else {
+            break;
+          }
         }
-        if (take("/")) {
-          let val2 = parsePrimitive();
-          if (val2 === null)
-            return null;
-          if (val2.val === 0)
-            throw new MessageError("Divide by zero");
-          if (val1.type === 'num' && val2.type === 'num')
-            return { type: 'num', val: val1.val / val2.val };
-          if (val1.type === 'in' && val2.type === 'num')
-            return { type: 'in', val: val1.val / val2.val };
-          if (val1.type === 'in' && val2.type === 'in')
-            return { type: 'num', val: val1.val / val2.val };
-          throw new MessageError("Cannot divide numbers by lengths");
-        }
-        return val1;
+        return val;
       }
 
       // Parse an (additive) expression:
@@ -336,31 +350,45 @@
       //    mulexpr - mulexpr
 
       function parseExpr() {
-        let val1 = parseMulExpr();
-        if (val1 === null)
+        let backtrack = parsepos;
+        let val = parseMulExpr();
+        if (val === null)
           return null;
-        skipSpaces();
-        if (take("+")) {
-          let val2 = parseExpr();
-          if (val2 === null)
-            return null;
-          if (val1.type === 'num' && val2.type === 'num')
-            return { type: 'num', val: val1.val + val2.val };
-          if (val1.type === 'in' && val2.type === 'in')
-            return { type: 'in', val: val1.val + val2.val };
-          throw "Cannot add numbers and lengths";   // does not nessage
+        while (true) {
+          skipSpaces();
+          if (take("+")) {
+            let val2 = parseMulExpr();
+            if (val2 === null) {
+              parsepos = backtrack;
+              return null;
+            }
+            if (val.type === 'num' && val2.type === 'num')
+              val = { type: 'num', val: val.val + val2.val };
+            else if (val.type === 'in' && val2.type === 'in')
+              val = { type: 'in', val: val.val + val2.val };
+            else if (val.type === 'num')
+              throw new MessageError("Cannot add numbers and lengths");
+            else if (val.type === 'in')
+              throw "Cannot add numbers and lengths";   // does not message; too distracting
+          } else if (take("-")) {
+            let val2 = parseMulExpr();
+            if (val2 === null) {
+              parsepos = backtrack;
+              return null;
+            }
+            if (val.type === 'num' && val2.type === 'num')
+              val = { type: 'num', val: val.val - val2.val };
+            else if (val.type === 'in' && val2.type === 'in')
+              val = { type: 'in', val: val.val - val2.val };
+            else if (val.type === 'num')
+              throw new MessageError("Cannot subtract numbers and lengths");
+            else if (val.type === 'in')
+              throw "Cannot subtract numbers and lengths";   // does not message; too distracting
+          } else {
+            break;
+          }
         }
-        if (take("-")) {
-          let val2 = parseMulExpr();
-          if (val2 === null)
-            return null;
-          if (val1.type === 'num' && val2.type === 'num')
-            return { type: 'num', val: val1.val - val2.val };
-          if (val1.type === 'in' && val2.type === 'in')
-            return { type: 'in', val: val1.val - val2.val };
-          throw "Cannot subtract numbers and lengths"; // does not message
-       }
-        return val1;
+        return val;
       }
 
       function updateParse() {
@@ -384,8 +412,9 @@
           }
         }
 
-        document.getElementById('results').style.color = '#808080';  
-        document.getElementById('numberResults').style.color = '#808080';
+        // Gray out the result since we can't parse correctly right now
+        document.getElementById('results').style.color = '#aaaaaa';  
+        document.getElementById('numberResults').style.color = '#aaaaaa';
       }
 
       function clearFields() {
