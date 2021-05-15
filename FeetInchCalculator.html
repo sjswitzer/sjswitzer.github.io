@@ -47,7 +47,9 @@
       // fractional inches. So doing all arithmetic in units of inches means that
       // calculations can be exact when exact results are possible.
 
-      // Simple calculator
+      //
+      // Simple interface for common operations
+      //
 
       function getField(name, def) {
         document.getElementById(name).style.color = '';
@@ -408,9 +410,7 @@
           }
         }
         catch (e) {
-          if (e instanceof MessageError) {
-            showError(e);
-          }
+          showError(e);
         }
 
         // Gray out the result since we can't parse correctly right now
