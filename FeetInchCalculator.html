@@ -1,8 +1,44 @@
 <html>
   <title>Feet & Inch Calculator</title>
-  <body onload="updateResult()"
+  <body onload="updateResult()" 
       style="margin: 1em 2em; font-family: system-ui; background-color: white; color: #212121">
+    <style>
+      .help {
+        padding: 20px;
+        background-color: #eeeeee;
+        position: fixed;
+        display: none;
+        width: 80%;
+        height: 80%; /* Full height (cover the whole page) */
+        top: 10%;
+        left: 10%;
+        border: 4px;
+        border-color: black
+        z-index: 2; /* Specify a stack order in case you're using a different order for other elements */
+      }
+      .help .closebtn {
+        margin-left: 15px;
+        color: white;
+        font-weight: bold;
+        float: right;
+        font-size: 40px;
+        line-height: 20px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      .help .closebtn:hover {
+        color: black;
+      }
+      .help td {
+        padding: 0px 10px;
+      }
+      .help th {
+         padding: 0px 10px;
+         text-align: left;
+      }
+    </style>
     <script type="text/javascript">
+      "use strict";
 
       // A curious thing worth noting: It turns out that fractions of the form
       // "n / power-of-2" are precicely the values that can be represented exactly
@@ -10,11 +46,13 @@
       // fractional inches. So doing all arithmetic in units of inches means that
       // calculations can be exact when exact results are possible.
 
+      // Simple calculator
+
       function getField(name, def) {
         document.getElementById(name).style.color = '';
         let val = document.getElementById(name).value.trim();
         if (val === "") return def;
-        val = Number(val);
+        val = parseFloat(val);
         if (isNaN(val) || (val === 0 && def !== 0))
           document.getElementById(name).style.color = 'red';
         return val;
@@ -34,9 +72,6 @@
       }
 
       function updateResult() {
-        // Assume success: show results element and hide error element
-        document.getElementById('results').style.display = '';
-        document.getElementById('error').style.display = 'none';
         try {
           let ft = getField('ft', 0);
           let inch = getField('inch', 0);
@@ -45,73 +80,454 @@
           let times = getField('times', 1);
           let div = getField('div', 1);
 
-          if (denom === 0 || div === 0) throw "Divide by zero";
+          if (denom === 0 || div === 0)
+            throw new MessageError("Divide by zero");
 
           let totalInches = (ft*12 + inch + num/denom) * times / div;
-          if (isNaN(totalInches)) throw "Bad input";
+          if (isNaN(totalInches))
+            throw new MessageError("Bad input");
 
-          document.getElementById('resultIn').textContent = num2str(totalInches);
-          document.getElementById('resultFt').textContent = num2str(totalInches/12);
-
-          // Recover feet and inches from from result
-          // (round to nearest 1/denom)
-          denom = 32;
-          let inches =  ((totalInches*denom + 0.5)|0)/denom;
-          ft = (inches/12)|0;      // "n|0" truncates to an integer
-          inches = inches - ft*12;
-          let frac = inches - (inches|0);
-          inches = inches|0;
-          num = (frac*denom)|0;
-          while (denom > 2 && num%2 === 0) {  // reduce fraction
-            denom = denom/2;
-            num = num/2;
-          }
-
-          // format that string and output it
-          let str = "";
-          if (ft !== 0 || (inches === 0 && num === 0))
-            str += ft + "'";
-          if (inches !== 0)
-            str += " " + inches;
-          if (num !== 0)
-            str += " " + num + "/" + denom;
-          if (inches !== 0 || num !== 0)
-             str += '"';
-          let delta = totalInches - (ft*12 + inches + num/denom);
-          if (Math.abs(delta) < epsilon) {
-            delta = "";
-          } else {
-            if (delta < 0)
-              delta = " - " + num2str(-delta) + '"';
-            else
-              delta = " + " + num2str(delta) + '"';
-          }
-          str += delta
-          document.getElementById('resultFtDetail').textContent = str;
-
-          // format inches
-          str = "";
-          inches = ft*12 + inches;
-          if (inches !== 0 || num === 0)
-            str += inches;
-          if (num !== 0)
-            str += " " + num + "/" + denom;
-          str += '"' + delta;
-          document.getElementById('resultInDetail').textContent = str;
-
-          // show metric for good measure
-          document.getElementById('resultMeters').textContent =
-            num2str(totalInches * 0.0254);
-          document.getElementById('resultMetersMetricFeet').textContent =
-            num2str(totalInches * 0.025);
+          showResult(totalInches, true);
         }
         catch (e) {
-          // we had an error so hide the results block and show the error block
-          document.getElementById('results').style.display = 'none';
-          document.getElementById('error').style.display = '';
-          document.getElementById('error').textContent = String(e);
+          showError(e);
         }
       }
+
+      function showError(e) {
+        if (e instanceof MessageError) {
+          // we had an error so hide the results block and show the error block
+          document.getElementById('results').style.display = 'none';
+          document.getElementById('numberResults').style.display = 'none';
+          document.getElementById('error').style.display = '';
+          document.getElementById('error').textContent = String(e.msg);
+        }
+      }
+
+      //
+      // Parser
+      //
+
+      let parsestr = "", parsepos = 0;
+
+      function peekc() {
+        if (parsepos < parsestr.length)
+          return parsestr.charAt(parsepos);
+        return null;
+      }
+
+      function getc() {
+        let ch = peekc();
+        if (parsepos < parsestr.length)
+          parsepos += 1;
+        return ch;
+      }
+
+      function take(match) {
+        if (Array.isArray(match)) {
+          for (const m of match) {
+            if (take(m))
+              return true;
+          }
+          return false;
+        }
+        if (parsestr.substr(parsepos, match.length) !== match)
+          return false;
+        parsepos += match.length;
+        return true;
+      }
+
+      function skipSpaces() {
+        let foundSpace = false;
+        while (take(" ")) {
+          foundSpace = true;
+        }
+        return foundSpace;
+      }
+
+      class MessageError extends Error {
+        constructor(msg) {
+          super();
+          this.msg = msg;
+        }
+      }
+
+      // Numbers of form:
+      //    ddd
+      //    ddd.dd
+      //    .ddd
+
+      function parseNumber() {
+        const digits = "0123456789";
+        let nDigits = 0
+        let backtrack = parsepos;
+        skipSpaces();
+        let ch = peekc();
+        if (digits.includes(ch) || ch === ".") {
+          let val = 0, div = 1;
+          while (digits.includes(ch)) {
+            val = val*10 + parseInt(ch);
+            getc();
+            ch = peekc();
+            nDigits += 1;
+          }
+          if (take('.')) {
+            ch = peekc();
+            while (digits.includes(ch)) {
+              val = val*10 + parseInt(ch);
+              div *= 10;
+              getc();
+              ch = peekc();
+              nDigits += 1;
+            }
+          }
+          if (nDigits > 0)
+            return val/div; 
+          parsepos = backtrack;    
+        }
+        return null;
+      }
+
+      // Parse a number or a number followed by fraction or a fraction:
+      //    n
+      //    n n/n
+      //    n/n
+
+      function parseNumFrac() {
+        let val = parseNumber();
+        if (val === null)
+          return null;
+        skipSpaces();
+        let backtrack = parsepos;
+        if (take('/')) {
+          let denom = parseNumber();
+          if (denom === null) {
+            parsepos = backtrack;
+            return val;
+          }
+          if (denom === 0)
+            throw new MessageError("Divide by zero");
+          return val/denom;
+        }
+        let num = parseNumber();
+        if (num === null)
+          return val;
+        skipSpaces();
+        if (take('/')) {
+          let denom = parseNumber();
+          if (denom !== null) {
+            if (denom === 0) new MessageError("Divide by zero");
+            return val + num/denom;
+          }
+        }
+        parsepos = backtrack;
+        return val;
+      }
+
+      // Parse a value, which is either a plain number (n) or a sequesnce of
+      // number-fractions (nf) each followed by a unit:
+      //    n
+      //    nf unit
+      //    nf unit nf unit ...
+          
+      function parseVal() {
+        let backtrack1 = parsepos;
+        let inches = 0, haveLength = false;
+
+        while (true) {
+          let backtrack2 = parsepos;
+          let val = parseNumFrac();
+          if (val === null)
+            break;
+          skipSpaces();
+          if (take(["'", "ft", "foot", "feet"])) {
+            inches += val*12;
+          } else if (take(['"', "inches", "inch", "in"])) {
+            inches += val;
+          } else if (take(["meters", "meter", "metres", "metre", "m"])) {
+            inches += val/0.0254;
+          } else if (take("cm")) {
+            inches += val/2.54;
+          } else {
+             parsepos = backtrack2;
+             break;
+          }
+          haveLength = true;
+        }
+        if (haveLength)
+          return { type: 'in', val: inches };
+
+        // if there are no units, we can only use the plain number
+        parsepos = backtrack1;
+        let val = parseNumber();
+        if (val !== null)
+          return { type: 'num', val: val };
+        return null;
+      }
+
+      // Parse a primitive, which is either a parenthesized expression
+      // or a + or - sign followed by a primitive:
+      //    ( expr )
+      //    + primitive
+      //    - primitive
+
+      function parsePrimitive() {
+        if (take('(')) {
+          let val = parseExpr();
+          skipSpaces();
+          if (val !== null && take(')')) {
+            return val;
+          }
+          return null;
+        }
+        if (take('+')) {
+          let val = parsePrimitive();
+          if (val === null)
+            return null;
+          return val;
+        }
+        if (take('-')) {
+          let val = parsePrimitive();
+          if (val === null)
+            return null;
+          return { type: val.type, val: -val.val };
+        }
+        return parseVal();
+      }
+
+      // Parse a multiplicitive expression:
+      //    primitive * primitive
+      //    primitive / primitive
+
+      function parseMulExpr() {
+        let val1 = parsePrimitive();
+        if (val1 === null)
+          return null;
+        skipSpaces();
+        if (take("*")) {
+          let val2 = parseMulExpr();
+          if (val2 === null)
+            return null;
+          if (val1.type === 'num' && val2.type === 'num')
+            return { type: 'num', val: val1.val * val2.val };
+          if (!(val1.type === 'in' && val2.type === 'in'))
+            return { type: 'in', val: val1.val * val2.val };
+          throw new MessageError("Cannot multiply lengths");
+        }
+        if (take("/")) {
+          let val2 = parsePrimitive();
+          if (val2 === null)
+            return null;
+          if (val2.val === 0)
+            throw new MessageError("Divide by zero");
+          if (val1.type === 'num' && val2.type === 'num')
+            return { type: 'num', val: val1.val / val2.val };
+          if (val1.type === 'in' && val2.type === 'num')
+            return { type: 'in', val: val1.val / val2.val };
+          if (val1.type === 'in' && val2.type === 'in')
+            return { type: 'num', val: val1.val / val2.val };
+          throw new MessageError("Cannot divide numbers by lengths");
+        }
+        return val1;
+      }
+
+      // Parse an (additive) expression:
+      //    mulexpr + mulexpr
+      //    mulexpr - mulexpr
+
+      function parseExpr() {
+        let val1 = parseMulExpr();
+        if (val1 === null)
+          return null;
+        skipSpaces();
+        if (take("+")) {
+          let val2 = parseExpr();
+          if (val2 === null)
+            return null;
+          if (val1.type === 'num' && val2.type === 'num')
+            return { type: 'num', val: val1.val + val2.val };
+          if (val1.type === 'in' && val2.type === 'in')
+            return { type: 'in', val: val1.val + val2.val };
+          throw "Cannot add numbers and lengths";   // does not nessage
+        }
+        if (take("-")) {
+          let val2 = parseMulExpr();
+          if (val2 === null)
+            return null;
+          if (val1.type === 'num' && val2.type === 'num')
+            return { type: 'num', val: val1.val - val2.val };
+          if (val1.type === 'in' && val2.type === 'in')
+            return { type: 'in', val: val1.val - val2.val };
+          throw "Cannot subtract numbers and lengths"; // does not message
+       }
+        return val1;
+      }
+
+      function updateParse() {
+        clearFields();
+        try {
+          parsestr = document.getElementById('expr').value;
+          parsepos = 0;
+          let val = parseExpr();
+          skipSpaces();
+          if (val !== null && !getc()) { // nothing left over at the end
+            if (val.type === 'in')
+              showResult(val.val);
+            else
+              showNumberResult(val.val);
+            return;
+          }
+        }
+        catch (e) {
+          if (e instanceof MessageError) {
+            showError(e);
+          }
+        }
+
+        document.getElementById('results').style.color = '#808080';  
+        document.getElementById('numberResults').style.color = '#808080';
+      }
+
+      function clearFields() {
+        for (const field of ['ft', 'inch', 'num', 'times', 'div'])
+          document.getElementById(field).value = "";
+      }
+
+      function showNumberResult(num) {
+        document.getElementById('results').style.display = 'none';
+        document.getElementById('numberResults').style.display = '';
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('numberResults').style.color = '';
+
+        document.getElementById('numberResultsDetail').textContent = num2str(num);
+      }
+
+      function showResult(totalInches, updateExpr) {
+        document.getElementById('results').style.display = '';
+        document.getElementById('numberResults').style.display = 'none';
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('results').style.color = '';
+
+        document.getElementById('resultIn').textContent = num2str(totalInches);
+        document.getElementById('resultFt').textContent = num2str(totalInches/12);
+
+        let minus = "";
+        if (totalInches < 0) {
+          totalInches = -totalInches;
+          minus = "-";
+        }
+
+        // Recover feet and inches from from result
+        // (round to nearest 1/denom)
+        let denom = 32;
+        let inches =  ((totalInches*denom + 0.5)|0)/denom;
+        let ft = (inches/12)|0;      // "n|0" truncates to an integer
+        inches = inches - ft*12;
+        let frac = inches - (inches|0);
+        inches = inches|0;
+        let num = (frac*denom)|0;
+        while (denom > 2 && num%2 === 0) {  // reduce fraction
+          denom = denom/2;
+          num = num/2;
+        }
+
+        // format that string and output it
+        let str = minus;
+        if (ft !== 0 || (inches === 0 && num === 0))
+          str += ft + "'";
+        if (inches !== 0)
+        str += " " + inches;
+        if (num !== 0)
+          str += " " + num + "/" + denom;
+        if (inches !== 0 || num !== 0)
+           str += '"';
+        let delta = totalInches - (ft*12 + inches + num/denom);
+        if (Math.abs(delta) < epsilon) {
+          delta = "";
+        } else {
+          if (delta < 0)
+            delta = " - " + num2str(-delta) + '"';
+          else
+            delta = " + " + num2str(delta) + '"';
+        }
+        str += delta
+        document.getElementById('resultFtDetail').textContent = str;
+        if (updateExpr)
+          document.getElementById('expr').value = str;
+
+        // format inches
+        str = minus;
+        inches = ft*12 + inches;
+        if (inches !== 0 || num === 0)
+          str += inches;
+        if (num !== 0)
+          str += " " + num + "/" + denom;
+        str += '"' + delta;
+        document.getElementById('resultInDetail').textContent = str;
+
+        // show metric for good measure
+        document.getElementById('resultMeters').textContent =
+          num2str(totalInches * 0.0254);
+        document.getElementById('resultMetersMetricFeet').textContent =
+          num2str(totalInches * 0.025);
+      }
+
+      function showHelp(msg) {
+        document.getElementById('helpContent').innerHTML = msg;
+        document.getElementById('help').style.display = "block"; 
+      }
+
+      document.onkeydown = function(evt) {
+        evt = evt || window.event;
+        if (evt.key === "Escape" || evt.key === "Esc" || evt.keyCode === 27) {
+          document.getElementById('help').style.display = 'none';
+        }
+      }
+
+      function exprHelp() {
+        showHelp(`
+          <p> Expressions can contain numbers and units and the operators + - * and /.
+          Multiplication and division are performed before adition and subtraction and
+          parenthesis can be used to force grouping. </p>
+          <p> As you type, the expression might be momentarily unparsable, e.g., "3' +" until you 
+          finish typing. The results box will be grayed out while that happens.</p>
+          <table>
+            <tr><th>Example</th><th>Comment</th></tr>
+            <tr><td> 5' 6"
+              </td><td> an ordinary distance
+              </td></tr>
+            <tr><td> 5' 6 3/8" / 3
+              </td><td> divide 5 feet 6 and 3/8 inches by 3
+              </td></tr>
+            <tr><td> 5 1/2' - 8"
+              </td><td> subtracts lengths
+              </td></tr>
+            <tr><td> 5.5'
+              </td><td> can use decimal values instead of fractions
+              </td></tr>
+            <tr><td> 3/4"
+              </td><td> you can use just a fraction
+              </td></tr>
+            <tr><td> (5'6" + 7') / 2
+              </td><td> the average of 5'6" and 7'
+              </td></tr>
+            <tr><td> 5'10 3/8" * 3/4
+              </td><td> 3/4 of 5' 10 3/4"
+              </td></tr>
+            <tr><td> 12' / 6"
+              </td><td> the ratio of 12' and 6" (24)
+              </td></tr>
+            <tr><td> 1 + 2 * 3
+              </td><td> ordinary math (result is 7)
+              </td></tr>
+           <tr><td> 1m - 2cm
+              </td><td> one meter minus two centimeters
+              </td></tr>
+          </table>
+        `);
+        return false;
+      }
+
     </script>
     <p style="transform-origin: left; transform: scale(1.5)">
       <input type="text" style="text-align: right;" oninput="updateResult()" size="4" id="ft" value="5">
@@ -127,7 +543,11 @@
       &nbsp; divided by
       <input type="text" oninput="updateResult()" size="3" id="div" value="">
     </p>
-    <div style="float: left; min-width: 30em; border: 2px solid; margin: 10px 0px; padding: 0px 10px">
+    <p style="transform-origin: left; transform: scale(1.5)">
+      <input type="text" oninput="updateParse()" size="60" id="expr" value="">
+      <span onclick="return exprHelp();" style="border-radius: 3px; color: white; background: blue">&nbsp; ? &nbsp;</span>
+    </p>
+    <div style="float: left; min-width: 40em; border: 2px solid; margin: 10px 0px; padding: 0px 10px">
       <p id="results">
         <span id="resultFt"></span> feet = <span id="resultFtDetail"></span>
         <br>
@@ -136,6 +556,9 @@
         <span id="resultMeters"></span> meters
         <br>
         <span id="resultMetersMetricFeet"></span> meters (assuming "metric feet")
+      </p>
+      <p id="numberResults">
+        <span id="numberResultsDetail"></span>
       </p>
       <p id="error" style="color: red"></p>
     </div>
@@ -155,7 +578,15 @@
           A "metric foot" is a convention for metric designs where a foot is taken
           to be exactly 30cm instead of 30.48cm
         </li>
+        <li>
+          You can type a fairly general expression into the text box. Click the "?"
+          button for more information.
+        </li>
       </bl>
+    </div>
+    <div id="help" class="help">
+      <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
+      <div id="helpContent"></div>
     </div>
   </body>
 </html>
