@@ -301,7 +301,7 @@
         const backtrack = parsepos;
         skipSpaces();
         if (ALPHA.includes(peekc())) {
-           var word = getc();
+           let word = getc();
            while (ALPHANUM.includes(peekc()))
              word += getc();
            return word;
@@ -322,9 +322,9 @@
         hyp: (name, params) => {
           if (params.length < 1)
             return { type: 'num', val: 0 };
-          var val = params.pop();
-          var type = val.type;
-          var accum = 0;
+          let val = params.pop();
+          let type = val.type;
+          let accum = 0;
           while (true) {
             if (val.val !== 0) {
               if (val.type !== type) {
@@ -340,7 +340,8 @@
           }
           return { type: type, val: Math.sqrt(accum) };
         }
-      };      
+      };
+      const userSymbols = {};    
 
       // Parse a primitive, which is either a parenthesized expression
       // or a + or - sign followed by a primitive:
@@ -376,12 +377,14 @@
           parsepos = backtrack;
           return null;
         }
-        var word = parseWord();
+        let word = parseWord();
         if (word !== null) {
-          const symVal = symbols[word];
+          let symVal = symbols[word];
+          if (!symVal)
+            symVal = userSymbols[word];
           skipSpaces();
           if (take('(')) {
-            var params = [];
+            let params = [];
             let val = parseExpr();
             while (val !== null) {
               params.push(val);
@@ -512,14 +515,40 @@
         return val;
       }
 
+      // Parse a statement:
+      //    word = expr
+      //    expr
+
+      function parseStatement() {
+        const backtrack = parsepos;
+        let word = parseWord();
+        skipSpaces();
+        if (word !== null) {
+          if (take('=')) {
+            let val = parseExpr();
+            if (val) {
+              val.sym = word;
+              return val;
+            }
+          }
+          parsepos = backtrack;
+        }
+        return parseExpr();
+      }
+
       function updateParse() {
         clearFields();
         try {
           parsestr = document.getElementById('expr').value;
           parsepos = 0;
-          let val = parseExpr();
+          let val = parseStatement();
           skipSpaces();
           if (val !== null && !getc()) { // nothing left over at the end
+            if (val.sym) {
+              if (symbols[val.sym])
+                throw "Cannot redefine system symbols";
+              userSymbols[val.sym] = val;
+            }
             if (val.type === 'in')
               showResult(val.val);
             else
