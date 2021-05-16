@@ -93,11 +93,11 @@
           let div = getField('div', 1);
 
           if (denom === 0 || div === 0)
-            throw new MessageError("Divide by zero");
+            throw "Divide by zero";
 
           let totalInches = (ft*12 + inch + num/denom) * times / div;
           if (isNaN(totalInches))
-            throw new MessageError("Bad input");
+            throw "Bad input";
 
           showResult(totalInches, true);
         }
@@ -107,13 +107,14 @@
       }
 
       function showError(e) {
-        if (e instanceof MessageError) {
-          // we had an error so hide the results block and show the error block
-          document.getElementById('results').style.display = 'none';
-          document.getElementById('numberResults').style.display = 'none';
-          document.getElementById('error').style.display = '';
-          document.getElementById('error').textContent = String(e.msg);
-        }
+        if (e instanceof SilentError)
+          return;
+
+        // we had an error so hide the results block and show the error block
+        document.getElementById('results').style.display = 'none';
+        document.getElementById('numberResults').style.display = 'none';
+        document.getElementById('error').style.display = '';
+        document.getElementById('error').textContent = String(e);
       }
 
       //
@@ -121,6 +122,11 @@
       //
 
       let parsestr = "", parsepos = 0;
+      const DIGITS = "0123456789";
+      const ALPHA =
+        "abcdefghijklmnopqrstuvwxyz" +
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+      const ALPHANUM = ALPHA + DIGITS;
 
       function peekc() {
         if (parsepos < parsestr.length)
@@ -149,15 +155,25 @@
         return true;
       }
 
+      function skipSpaces2() {
+        let foundSpace = false;
+        while (take(" ", "\t")) {
+          foundSpace = true;
+        }
+        return foundSpace;
+      }
       function skipSpaces() {
         let foundSpace = false;
-        while (take(" ")) {
+        let ch = peekc();
+        while (ch === " " || ch === "\t") {
+          getc();
+          ch = peekc();
           foundSpace = true;
         }
         return foundSpace;
       }
 
-      class MessageError extends Error {
+      class SilentError extends Error {
         constructor(msg) {
           super();
           this.msg = msg;
@@ -170,14 +186,13 @@
       //    .ddd
 
       function parseNum() {
-        const digits = "0123456789";
+        const backtrack = parsepos;
         let nDigits = 0
-        let backtrack = parsepos;
         skipSpaces();
         let ch = peekc();
-        if (digits.includes(ch) || ch === ".") {
+        if (DIGITS.includes(ch) || ch === ".") {
           let val = 0, div = 1;
-          while (digits.includes(ch)) {
+          while (DIGITS.includes(ch)) {
             val = val*10 + parseInt(ch);
             getc();
             ch = peekc();
@@ -185,7 +200,7 @@
           }
           if (take('.')) {
             ch = peekc();
-            while (digits.includes(ch)) {
+            while (DIGITS.includes(ch)) {
               val = val*10 + parseInt(ch);
               div *= 10;
               getc();
@@ -209,8 +224,8 @@
         let val = parseNum();
         if (val === null)
           return null;
+        const backtrack = parsepos;
         skipSpaces();
-        let backtrack = parsepos;
         if (take('/')) {
           let denom = parseNum();
           if (denom === null) {
@@ -218,7 +233,7 @@
             return val;
           }
           if (denom === 0)
-            throw new MessageError("Divide by zero");
+            throw "Divide by zero";
           return val/denom;
         }
         let num = parseNum();
@@ -277,16 +292,56 @@
         return null;
       }
 
+      // Parse a word
+
+      function parseWord() {
+        const backtrack = parsepos;
+        skipSpaces();
+        if (ALPHA.includes(peekc())) {
+           var word = getc();
+           while (ALPHANUM.includes(peekc()))
+             word += getc();
+           return word;
+        }
+        parsepos = backtrack;
+        return null;
+      }
+
+      const symbols = {
+        pi: Math.PI,
+        in: { type: 'in', val: 1 },
+        ft: { type: 'in', val: 12 },
+        m: { type: 'in', val: 1/0.0254 },
+        cm: { type: 'in', val: 1/2.54 },
+        in: { type: 'in', val: 1 },
+        hyp: (name, params) => {
+          if (params.length < 1)
+            throw name + "() no arguments";
+          var val = params.pop();
+          const type = val.type;
+          var accum = 0;
+          while (true) {
+            if (val.type !== type)
+              throw name + "() argument types incompatible";
+            accum += val.val * val.val;
+            val = params.pop();
+            if (!val)
+              break;
+          }
+          return { type: type, val: Math.sqrt(accum) };
+        }
+      };      
+
       // Parse a primitive, which is either a parenthesized expression
       // or a + or - sign followed by a primitive:
       //    ( expr )
       //    + primitive
       //    - primitive
-      //    hyp ( expr, expr )    -- hypotenuse
-      //    pi
+      //    fn ( expr, expr, ... )
+      //    const
 
       function parsePrimitive() {
-        let backtrack = parsepos;
+        const backtrack = parsepos;
         skipSpaces();
         if (take('(')) {
           let val = parseExpr();
@@ -311,31 +366,43 @@
           parsepos = backtrack;
           return null;
         }
-        if (take('hyp')) {
-          // TODO: generalize constant and function notations
+        var word = parseWord();
+        if (word !== null) {
+          const symVal = symbols[word];
           skipSpaces();
           if (take('(')) {
-             let val1 = parseExpr();
-             if (val1 !== null) {
-               skipSpaces();
-               if (take(',')) {
-                 let val2 = parseExpr();
-                 if (val2 !== null) {
-                   skipSpaces();
-                   if (take(')')) {                
-                     if (val1.type !== val2.type)
-                       throw new MessageError("hyp() argument types incompatible");
-                     return { type: val1.type, val: Math.sqrt(val1.val*val1.val + val2.val*val2.val) };
-                   }
-                 }
-               }
-             }
-           }
+            var params = [];
+            let val = parseExpr();
+            if (val !== null) {
+              params.push(val);
+              skipSpaces();
+              while (take(',')) {
+                let val = parseExpr();
+                if (val === null) {
+                  parsepos = backtrack;
+                  return null;
+                }
+                params.push(val);
+              }
+              skipSpaces();
+              if (take(')')) {
+                if (symVal instanceof Function) {
+                  val = symVal(word, params);
+                  if (val !== null)
+                    return val;
+                }
+              }
+            }
+            parsepos = backtrack;
+            return null;
+          }
+          let val = symVal;
+          if (typeof val === 'number')
+            val = { type: 'num', val: val };
+          if (val instanceof Object && val.type)
+            return val;
           parsepos = backtrack;
           return null;
-        }
-        if (take("pi")) {
-          return { type: 'num', val: Math.PI };
         }
         return parseVal();
       }
@@ -345,7 +412,7 @@
       //    primitive / primitive
 
       function parseMulExpr() {
-        let backtrack = parsepos;
+        const backtrack = parsepos;
         let val = parsePrimitive();
         if (val === null)
           return null;
@@ -362,7 +429,7 @@
             else if (!(val.type === 'in' && val2.type === 'in'))
               val =  { type: 'in', val: val.val * val2.val };
             else
-              throw new MessageError("Cannot multiply lengths");
+              throw "Cannot multiply lengths";
           } else if (take("/")) {
             let val2 = parsePrimitive();
             if (val2 === null) {
@@ -370,7 +437,7 @@
               return null;
             }
             if (val2.val === 0)
-              throw new MessageError("Divide by zero");
+              throw "Divide by zero";
             if (val.type === 'num' && val2.type === 'num')
               val =  { type: 'num', val: val.val / val2.val };
             else if (val.type === 'in' && val2.type === 'num')
@@ -378,7 +445,7 @@
             else if (val.type === 'in' && val2.type === 'in')
               val =  { type: 'num', val: val.val / val2.val };
             else
-              throw new MessageError("Cannot divide numbers by lengths");
+              throw "Cannot divide numbers by lengths";
           } else {
             break;
           }
@@ -391,7 +458,7 @@
       //    mulexpr - mulexpr
 
       function parseExpr() {
-        let backtrack = parsepos;
+        const backtrack = parsepos;
         let val = parseMulExpr();
         if (val === null)
           return null;
@@ -408,9 +475,9 @@
             else if (val.type === 'in' && val2.type === 'in')
               val = { type: 'in', val: val.val + val2.val };
             else if (val.type === 'num')
-              throw new MessageError("Cannot add numbers and lengths");
+              throw "Cannot add numbers and lengths";
             else if (val.type === 'in')
-              throw "Cannot add numbers and lengths";   // does not message; too distracting
+              throw new SilentError("Cannot add numbers and lengths");
           } else if (take("-")) {
             let val2 = parseMulExpr();
             if (val2 === null) {
@@ -422,9 +489,9 @@
             else if (val.type === 'in' && val2.type === 'in')
               val = { type: 'in', val: val.val - val2.val };
             else if (val.type === 'num')
-              throw new MessageError("Cannot subtract numbers and lengths");
+              throw "Cannot subtract numbers and lengths";
             else if (val.type === 'in')
-              throw "Cannot subtract numbers and lengths";   // does not message; too distracting
+              throw new SilentError("Cannot subtract numbers and lengths");
           } else {
             break;
           }
