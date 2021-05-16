@@ -141,7 +141,9 @@
         return ch;
       }
 
-      function take(match) {
+      function take(match, noskip) {
+        if (!noskip)
+          skipSpaces();
         if (peekc() == match) { // make the single character case faster
           parsepos += 1;
           return true;
@@ -152,13 +154,6 @@
         return true;
       }
 
-      function skipSpaces2() {
-        let foundSpace = false;
-        while (take(" ", "\t")) {
-          foundSpace = true;
-        }
-        return foundSpace;
-      }
       function skipSpaces() {
         let foundSpace = false;
         let ch = peekc();
@@ -195,7 +190,7 @@
             ch = peekc();
             nDigits += 1;
           }
-          if (take('.')) {
+          if (take('.', true)) {
             ch = peekc();
             while (DIGITS.includes(ch)) {
               val = val*10 + parseInt(ch);
@@ -222,7 +217,6 @@
         if (val === null)
           return null;
         const backtrack = parsepos;
-        skipSpaces();
         if (take('/')) {
           let denom = parseNum();
           if (denom === null) {
@@ -236,7 +230,6 @@
         let num = parseNum();
         if (num === null)
           return val;
-        skipSpaces();
         if (take('/')) {
           let denom = parseNum();
           if (denom !== null) {
@@ -263,7 +256,6 @@
           let val = parseNumFrac();
           if (val === null)
             break;
-          skipSpaces();
           if (take("'")) {
             inches += val*12;
           } else if (take('"')) {
@@ -364,10 +356,8 @@
 
       function parsePrimitive() {
         const backtrack = parsepos;
-        skipSpaces();
         if (take('(')) {
           let val = parseExpr();
-          skipSpaces();
           if (val !== null && take(')')) {
             return val;
           }
@@ -391,18 +381,15 @@
         let word = parseWord();
         if (word !== null) {
           const symVal = getSymbol(word);
-          skipSpaces();
           if (take('(')) {
             let params = [];
             let val = parseExpr();
             while (val !== null) {
               params.push(val);
-              skipSpaces();
               if (!take(','))
                 break;
               val = parseExpr();
             }
-            skipSpaces();
             if (take(')')) {
               if (symVal instanceof Function) {
                 val = symVal(word, params);
@@ -432,7 +419,6 @@
         if (val === null)
           return null;
         while (true) {
-          skipSpaces();
           if (take("*")) {
             let val2 = parsePrimitive();
             if (val2 === null) {
@@ -478,7 +464,6 @@
         if (val === null)
           return null;
         while (true) {
-          skipSpaces();
           if (take("+")) {
             let val2 = parseMulExpr();
             if (val2 === null) {
@@ -529,7 +514,6 @@
       function parseStatement() {
         const backtrack = parsepos;
         let word = parseWord();
-        skipSpaces();
         if (word !== null) {
           if (take('=')) {
             let val = parseExpr();
