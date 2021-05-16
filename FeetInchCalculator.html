@@ -543,7 +543,7 @@
         return parseExpr();
       }
 
-      function updateParse() {
+      function updateParse(updateVars) {
         clearFields();
         try {
           parsestr = document.getElementById('expr').value;
@@ -551,15 +551,18 @@
           let val = parseStatement();
           skipSpaces();
           if (val !== null && !getc()) { // nothing left over at the end
-            if (val.sym) {
-              if (symbols[val.sym])
+            if (updateVars  && val.sym) {
+              let sym = val.sym;
+              if (symbols[sym])
                 throw "Cannot redefine system symbols";
-              userSymbols[val.sym] = val;
-            }
-            if (val.type === 'in')
+              showAssignResult(val);
+              delete val.sym;
+              userSymbols[sym] = val;
+            } else if (val.type === 'in') {
               showResult(val.val);
-            else
+            } else {
               showNumberResult(val.val);
+            }
             return;
           }
         }
@@ -586,6 +589,23 @@
         document.getElementById('numberResultsDetail').textContent = num2str(num);
       }
 
+      function showAssignResult(val) {
+        document.getElementById('results').style.display = 'none';
+        document.getElementById('numberResults').style.display = '';
+        document.getElementById('error').style.display = 'none';
+        document.getElementById('numberResults').style.color = '';
+
+        if (val.type == 'in') {
+          let [ftStr, inStr, delta] = inchesToStringReps(val.val);
+          document.getElementById('numberResultsDetail').textContent =
+            val.sym + " = " + ftStr + delta;
+        }
+        if (val.type == 'num') {
+          document.getElementById('numberResultsDetail').textContent =
+            val.sym + " = " + val.val;
+        }
+      }
+
       function showResult(totalInches, updateExpr) {
         document.getElementById('results').style.display = '';
         document.getElementById('numberResults').style.display = 'none';
@@ -595,6 +615,21 @@
         document.getElementById('resultIn').textContent = num2str(totalInches);
         document.getElementById('resultFt').textContent = num2str(totalInches/12);
 
+        let [ftStr, inStr, delta] = inchesToStringReps(totalInches);
+        document.getElementById('resultFtDetail').textContent = ftStr + delta;
+        if (updateExpr)
+          document.getElementById('expr').value = ftStr + delta;
+
+        document.getElementById('resultInDetail').textContent = inStr + delta;
+
+        // show metric for good measure
+        document.getElementById('resultMeters').textContent =
+          num2str(totalInches * 0.0254);
+        document.getElementById('resultMetersMetricFeet').textContent =
+          num2str(totalInches * 0.025);
+      }
+
+      function inchesToStringReps(totalInches) {
         let minus = "";
         if (totalInches < 0) {
           totalInches = -totalInches;
@@ -615,20 +650,20 @@
           num = num/2;
         }
 
-        // format that string and output it
-        let str = minus, sp = "";
+        // format that string
+        let ftStr = minus, sp = "";
         if (ft !== 0 || (inches === 0 && num === 0)) {
-          str += ft + "'";
+          ftStr += ft + "'";
           sp = " ";
         }
         if (inches !== 0) {
-          str += sp + inches;
+          ftStr += sp + inches;
           sp = " ";
         }
         if (num !== 0)
-          str += sp + num + "/" + denom;
+          ftStr += sp + num + "/" + denom;
         if (inches !== 0 || num !== 0)
-           str += '"';
+           ftStr += '"';
         let delta = totalInches - (ft*12 + inches + num/denom);
         if (Math.abs(delta) < epsilon) {
           delta = "";
@@ -638,29 +673,19 @@
           else
             delta = " + " + num2str(delta) + '"';
         }
-        str += delta
-        document.getElementById('resultFtDetail').textContent = str;
-        if (updateExpr)
-          document.getElementById('expr').value = str;
-
+ 
         // format inches
-        str = minus;
+        let inStr = minus;
         sp = "";
         inches = ft*12 + inches;
         if (inches !== 0 || num === 0) {
-          str += inches;
+          inStr += inches;
           sp = " ";
         }
         if (num !== 0)
-          str += sp + num + "/" + denom;
-        str += '"' + delta;
-        document.getElementById('resultInDetail').textContent = str;
-
-        // show metric for good measure
-        document.getElementById('resultMeters').textContent =
-          num2str(totalInches * 0.0254);
-        document.getElementById('resultMetersMetricFeet').textContent =
-          num2str(totalInches * 0.025);
+          inStr += sp + num + "/" + denom;
+        inStr += '"';
+	  return [ftStr, inStr, delta];
       }
 
       function showHelp(msg) {
@@ -748,7 +773,7 @@
       <input type="text" oninput="updateResult()" size="3" id="div" value="">
     </p>
     <p style="transform-origin: left; transform: scale(1.5)">
-      <input type="text" oninput="updateParse()" size="60" id="expr" value="">
+      <input type="text" oninput="updateParse()" onchange="updateParse(true)" size="60" id="expr" value="">
       <span onclick="return exprHelp();" class="button">&nbsp; ? &nbsp;</span>
     </p>
     <div style="float: left; min-width: 40em; border: 2px solid; margin: 10px 0px; padding: 0px 10px">
