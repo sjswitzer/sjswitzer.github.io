@@ -22,7 +22,7 @@
         font-weight: bold;
         float: right;
         font-size: 40px;
-        line-height: 20px;
+        line-height: 40px;
         cursor: pointer;
         transition: 0.3s;
       }
@@ -36,6 +36,16 @@
       .help th {
          padding: 0px 10px;
          text-align: left;
+      }
+      .button {
+        cursor: pointer;
+        background: blue;
+        border-radius: 4px;
+        color: white;
+        transition: 0.3s;
+      }
+      .button:hover {
+        font-weight: bold;
       }
     </style>
     <script type="text/javascript">
@@ -575,7 +585,7 @@
     </p>
     <p style="transform-origin: left; transform: scale(1.5)">
       <input type="text" oninput="updateParse()" size="60" id="expr" value="">
-      <span onclick="return exprHelp();" style="border-radius: 3px; color: white; background: blue">&nbsp; ? &nbsp;</span>
+      <span onclick="return exprHelp();" class="button">&nbsp; ? &nbsp;</span>
     </p>
     <div style="float: left; min-width: 40em; border: 2px solid; margin: 10px 0px; padding: 0px 10px">
       <p id="results">
