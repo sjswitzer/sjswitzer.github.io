@@ -313,14 +313,19 @@
         in: { type: 'in', val: 1 },
         hyp: (name, params) => {
           if (params.length < 1)
-            throw name + "() no arguments";
+            return { type: 'num', val: 0 };
           var val = params.pop();
-          const type = val.type;
+          var type = val.type;
           var accum = 0;
           while (true) {
-            if (val.type !== type)
-              throw name + "() argument types incompatible";
-            accum += val.val * val.val;
+            if (val.val !== 0) {
+              if (val.type !== type) {
+                if (accum !== 0)
+                  throw name + "() argument types incompatible";
+                type = val.type;
+              }
+              accum += val.val * val.val;
+            }
             val = params.pop();
             if (!val)
               break;
@@ -370,24 +375,19 @@
           if (take('(')) {
             var params = [];
             let val = parseExpr();
-            if (val !== null) {
+            while (val !== null) {
               params.push(val);
               skipSpaces();
-              while (take(',')) {
-                let val = parseExpr();
-                if (val === null) {
-                  parsepos = backtrack;
-                  return null;
-                }
-                params.push(val);
-              }
-              skipSpaces();
-              if (take(')')) {
-                if (symVal instanceof Function) {
-                  val = symVal(word, params);
-                  if (val !== null)
-                    return val;
-                }
+              if (!take(','))
+                break;
+              val = parseExpr();
+            }
+            skipSpaces();
+            if (take(')')) {
+              if (symVal instanceof Function) {
+                val = symVal(word, params);
+                if (val !== null)
+                  return val;
               }
             }
             parsepos = backtrack;
@@ -471,6 +471,10 @@
               val = { type: 'num', val: val.val + val2.val };
             else if (val.type === 'in' && val2.type === 'in')
               val = { type: 'in', val: val.val + val2.val };
+            else if (val.type === 'in' && val2.type === 'num' && val2.val == 0)
+              {}   // special case for adding 0; take first val
+            else if (val2.type === 'in' && val.type === 'num' && val.val == 0)
+              val = val2;  // special case for adding 0; take second val
             else if (val.type === 'num')
               throw "Cannot add numbers and lengths";
             else if (val.type === 'in')
@@ -485,6 +489,10 @@
               val = { type: 'num', val: val.val - val2.val };
             else if (val.type === 'in' && val2.type === 'in')
               val = { type: 'in', val: val.val - val2.val };
+            else if (val.type === 'in' && val2.type === 'num' && val2.val == 0)
+              {}   // special case for subtracting 0; take first val
+            else if (val2.type === 'in' && val.type === 'num' && val.val == 0)
+              val = { type: 'in', val: -val2.val };  // special case for subtracting 0;
             else if (val.type === 'num')
               throw "Cannot subtract numbers and lengths";
             else if (val.type === 'in')
