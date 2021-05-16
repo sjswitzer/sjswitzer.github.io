@@ -266,10 +266,16 @@
           skipSpaces();
           if (take("'") || take("ft")) {
             inches += val*12;
+          } else if (take("yd")) {
+            inches += val*36;
+          } else if (take("mi")) {
+            inches += val*12*5280;
           } else if (take('"') || take("in")) {
             inches += val;
           } else if (take("m")) {
             inches += val/0.0254;
+          } else if (take("km")) {
+            inches += val*1000/0.0254;
           } else if (take("cm")) {
             inches += val/2.54;
           } else {
@@ -308,9 +314,11 @@
         pi: Math.PI,
         in: { type: 'in', val: 1 },
         ft: { type: 'in', val: 12 },
-        m: { type: 'in', val: 1/0.0254 },
+        yd: { type: 'in', val: 36 },
+        mi: { type: 'in', val: 5280*12 },
         cm: { type: 'in', val: 1/2.54 },
-        in: { type: 'in', val: 1 },
+        m:  { type: 'in', val: 1/0.0254 },
+        km: { type: 'in', val: 1000/0.0254 },
         hyp: (name, params) => {
           if (params.length < 1)
             return { type: 'num', val: 0 };
