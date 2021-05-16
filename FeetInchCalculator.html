@@ -472,13 +472,17 @@
         }
 
         // format that string and output it
-        let str = minus;
-        if (ft !== 0 || (inches === 0 && num === 0))
+        let str = minus, sp = "";
+        if (ft !== 0 || (inches === 0 && num === 0)) {
           str += ft + "'";
-        if (inches !== 0)
-        str += " " + inches;
+          sp = " ";
+        }
+        if (inches !== 0) {
+          str += sp + inches;
+          sp = " ";
+        }
         if (num !== 0)
-          str += " " + num + "/" + denom;
+          str += sp + num + "/" + denom;
         if (inches !== 0 || num !== 0)
            str += '"';
         let delta = totalInches - (ft*12 + inches + num/denom);
@@ -497,11 +501,14 @@
 
         // format inches
         str = minus;
+        sp = "";
         inches = ft*12 + inches;
-        if (inches !== 0 || num === 0)
+        if (inches !== 0 || num === 0) {
           str += inches;
+          sp = " ";
+        }
         if (num !== 0)
-          str += " " + num + "/" + denom;
+          str += sp + num + "/" + denom;
         str += '"' + delta;
         document.getElementById('resultInDetail').textContent = str;
 
