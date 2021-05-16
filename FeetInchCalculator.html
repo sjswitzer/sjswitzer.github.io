@@ -142,12 +142,9 @@
       }
 
       function take(match) {
-        if (Array.isArray(match)) {
-          for (const m of match) {
-            if (take(m))
-              return true;
-          }
-          return false;
+        if (peekc() == match) { // make the single character case faster
+          parsepos += 1;
+          return true;
         }
         if (parsestr.substr(parsepos, match.length).toLowerCase() !== match)
           return false;
@@ -267,11 +264,11 @@
           if (val === null)
             break;
           skipSpaces();
-          if (take(["'", "ft", "foot", "feet"])) {
+          if (take("'") || take("ft")) {
             inches += val*12;
-          } else if (take(['"', "inches", "inch", "in"])) {
+          } else if (take('"') || take("in")) {
             inches += val;
-          } else if (take(["meters", "meter", "metres", "metre", "m"])) {
+          } else if (take("m")) {
             inches += val/0.0254;
           } else if (take("cm")) {
             inches += val/2.54;
