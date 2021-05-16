@@ -144,7 +144,7 @@
           }
           return false;
         }
-        if (parsestr.substr(parsepos, match.length) !== match)
+        if (parsestr.substr(parsepos, match.length).toLowerCase() !== match)
           return false;
         parsepos += match.length;
         return true;
@@ -283,9 +283,12 @@
       //    ( expr )
       //    + primitive
       //    - primitive
+      //    hyp ( expr, expr )    -- hypotenuse
+      //    pi
 
       function parsePrimitive() {
         let backtrack = parsepos;
+        skipSpaces();
         if (take('(')) {
           let val = parseExpr();
           skipSpaces();
@@ -308,6 +311,32 @@
             return { type: val.type, val: -val.val };
           parsepos = backtrack;
           return null;
+        }
+        if (take('hyp')) {
+          // TODO: generalize constant and function notations
+          skipSpaces();
+          if (take('(')) {
+             let val1 = parseExpr();
+             if (val1 !== null) {
+               skipSpaces();
+               if (take(',')) {
+                 let val2 = parseExpr();
+                 if (val2 !== null) {
+                   skipSpaces();
+                   if (take(')')) {                
+                     if (val1.type !== val2.type)
+                       throw new MessageError("hyp() argument types incompatible");
+                     return { type: val1.type, val: Math.sqrt(val1.val*val1.val + val2.val*val2.val) };
+                   }
+                 }
+               }
+             }
+           }
+          parsepos = backtrack;
+          return null;
+        }
+        if (take("pi")) {
+          return { type: 'num', val: Math.PI };
         }
         return parseVal();
       }
@@ -569,6 +598,12 @@
               </td></tr>
            <tr><td> 1m - 2cm
               </td><td> one meter minus two centimeters
+              </td></tr>
+           <tr><td> 5' 6" * pi
+              </td><td> circumference of a 5' 6" diameter circle
+              </td></tr>
+           <tr><td> hyp(3', 4')
+              </td><td> hypotenuse of a right triangle with sides 3' and 4' (result is 5')
               </td></tr>
           </table>
         `);
