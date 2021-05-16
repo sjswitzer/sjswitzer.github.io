@@ -3,20 +3,19 @@
   <body onload="updateResult()" 
       style="margin: 1em 2em; font-family: system-ui; background-color: white; color: #212121">
     <style>
-      .help {
-        padding: 20px;
+      #help {
+        padding: 0px 20px;
         background-color: #eeeeee;
         position: fixed;
         display: none;
-        width: 80%;
-        height: 80%;
+        width: 70%;
+        height: auto;
         top: 10%;
-        left: 10%;
-        border: 4px;
-        border-color: black
+        left: 20%;
+        border: 1px solid black;
         z-index: 2;
       }
-      .help .closebtn {
+      #help .closebtn {
         margin-left: 15px;
         color: #888888;
         font-weight: bold;
@@ -26,14 +25,14 @@
         cursor: pointer;
         transition: 0.3s;
       }
-      .help .closebtn:hover {
+      #help .closebtn:hover {
         color: black;
-        font-size: 50px;
       }
-      .help td {
+      #help td {
         padding: 0px 10px;
+        vertical-align: top;
       }
-      .help th {
+      #help th {
          padding: 0px 10px;
          text-align: left;
       }
@@ -568,44 +567,49 @@
           <p> As you type, the expression might be momentarily unparsable, e.g., "3' +" until you 
           finish typing. The results box will be grayed out while that happens.</p>
           <table>
-            <tr><th>Example</th><th>Comment</th></tr>
+            <colgroup>
+              <col style="width: 8em">
+              <col style="width: auto">
+            </colgroup>
+            <tr><th>Example</th><th>Description</th></tr>
             <tr><td> 5' 6"
-              </td><td> an ordinary distance
+              </td><td> An ordinary distance
               </td></tr>
             <tr><td> 5' 6 3/8" / 3
-              </td><td> divide 5 feet 6 and 3/8 inches by 3
+              </td><td> Divide 5 feet 6 and 3/8 inches by 3
               </td></tr>
             <tr><td> 5 1/2' - 8"
-              </td><td> subtracts lengths
+              </td><td> Subtracts lengths
               </td></tr>
             <tr><td> 5.5'
-              </td><td> can use decimal values instead of fractions
+              </td><td> You can use decimal values instead of fractions
               </td></tr>
             <tr><td> 3/4"
-              </td><td> you can use just a fraction
+              </td><td> You can use just a fraction
               </td></tr>
             <tr><td> (5'6" + 7') / 2
-              </td><td> the average of 5'6" and 7'
+              </td><td> Yhe average of 5'6" and 7'
               </td></tr>
             <tr><td> 5'10 3/8" * 3/4
               </td><td> 3/4 of 5' 10 3/8"
               </td></tr>
             <tr><td> 12' / 6"
-              </td><td> the ratio of 12' and 6" (24)
+              </td><td> The ratio of 12' and 6" (24)
               </td></tr>
             <tr><td> 1 + 2 * 3
-              </td><td> ordinary math (result is 7)
+              </td><td> Ordinary math (result is 7)
               </td></tr>
            <tr><td> 1m - 2cm
-              </td><td> one meter minus two centimeters
+              </td><td> One meter minus two centimeters
               </td></tr>
            <tr><td> 5' 6" * pi
-              </td><td> circumference of a 5' 6" diameter circle
+              </td><td> Circumference of a 5' 6" diameter circle
               </td></tr>
            <tr><td> hyp(3', 4')
-              </td><td> hypotenuse of a right triangle with sides 3' and 4' (result is 5')
+              </td><td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
               </td></tr>
           </table>
+          <p></p>
         `);
         return false;
       }
@@ -666,7 +670,7 @@
         </li>
       </bl>
     </div>
-    <div id="help" class="help">
+    <div id="help">
       <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
       <div id="helpContent"></div>
     </div>
