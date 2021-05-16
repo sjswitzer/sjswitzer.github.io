@@ -259,28 +259,29 @@
         let inches = 0, haveLength = false;
 
         while (true) {
-          let backtrack2 = parsepos;
+          const backtrack2 = parsepos;
           let val = parseNumFrac();
           if (val === null)
             break;
           skipSpaces();
-          if (take("'") || take("ft")) {
+          if (take("'")) {
             inches += val*12;
-          } else if (take("yd")) {
-            inches += val*36;
-          } else if (take("mi")) {
-            inches += val*12*5280;
-          } else if (take('"') || take("in")) {
+          } else if (take('"')) {
             inches += val;
-          } else if (take("m")) {
-            inches += val/0.0254;
-          } else if (take("km")) {
-            inches += val*1000/0.0254;
-          } else if (take("cm")) {
-            inches += val/2.54;
-          } else {
-             parsepos = backtrack2;
-             break;
+           } else {
+            // system and user-defined units
+            let word = parseWord(), ok = false;
+            if (word) {
+              const symVal = getSymbol(word);
+              if (symVal && symVal.type === 'in') {
+                inches += val * symVal.val;
+                ok = true;
+              }
+            }
+            if (!ok) {
+              parsepos = backtrack2;
+              break;
+            }
           }
           haveLength = true;
         }
@@ -314,11 +315,12 @@
         pi: Math.PI,
         in: { type: 'in', val: 1 },
         ft: { type: 'in', val: 12 },
-        yd: { type: 'in', val: 36 },
-        mi: { type: 'in', val: 5280*12 },
         cm: { type: 'in', val: 1/2.54 },
         m:  { type: 'in', val: 1/0.0254 },
-        km: { type: 'in', val: 1000/0.0254 },
+        // Let the user define these if they want to
+        //   yd: { type: 'in', val: 36 },  
+        //   mi: { type: 'in', val: 5280*12 },
+        //   km: { type: 'in', val: 1000/0.0254 },
         hyp: (name, params) => {
           if (params.length < 1)
             return { type: 'num', val: 0 };
@@ -341,7 +343,16 @@
           return { type: type, val: Math.sqrt(accum) };
         }
       };
-      const userSymbols = {};    
+      const userSymbols = {}; 
+
+      function getSymbol(name) {
+        let val = symbols[name];
+        if (val === undefined)
+          val = userSymbols[name];
+        if (typeof val === 'number')
+            val = { type: 'num', val: val };
+        return val;
+      }   
 
       // Parse a primitive, which is either a parenthesized expression
       // or a + or - sign followed by a primitive:
@@ -379,9 +390,7 @@
         }
         let word = parseWord();
         if (word !== null) {
-          let symVal = symbols[word];
-          if (!symVal)
-            symVal = userSymbols[word];
+          const symVal = getSymbol(word);
           skipSpaces();
           if (take('(')) {
             let params = [];
@@ -405,8 +414,6 @@
             return null;
           }
           let val = symVal;
-          if (typeof val === 'number')
-            val = { type: 'num', val: val };
           if (val instanceof Object && val.type)
             return val;
           parsepos = backtrack;
@@ -673,7 +680,7 @@
           <p> Expressions can contain numbers and units and the operators + - * and /.
           Multiplication and division are performed before addition and subtraction and
           parenthesis can be used to force grouping. </p>
-          <p> Units include: ft ' in " yd mi cm m km.
+          <p> Units include: ft ' in " m cm.
           The unit names can be used as constants as well</p>
           <p> As you type, the expression might be momentarily unparsable, e.g., "3' +" until you 
           finish typing. The results box will be grayed out while that happens.</p>
@@ -718,12 +725,6 @@
               </td></tr>
            <tr><td> hyp(3', 4')
               </td><td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
-              </td></tr>
-           <tr><td> mi / km
-              </td><td> Number of kilometers in a mile
-              </td></tr>
-           <tr><td> 35 mi / km
-              </td><td> Number of kilometers in 35 miles
               </td></tr>
           </table>
           <p></p>
