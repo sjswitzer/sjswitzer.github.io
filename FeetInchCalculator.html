@@ -49,6 +49,12 @@
       .button:hover {
         background: #0000cc;
       }
+      #symdefs p {
+        margin: 0px;
+      }
+      .code {
+        font-family: ui-monospace, monospace;
+      }
     </style>
     <script type="text/javascript">
       "use strict";
@@ -352,6 +358,7 @@
           return { type: type, val: Math.sqrt(accum) };
         }
       };
+
       const userSymbols = {}; 
       let environment = {};
 
@@ -647,6 +654,7 @@
               showAssignResult(val);
               delete val.defined;
               userSymbols[sym] = val;
+              showUserSymbols();
             } else if (val.type === 'in') {
               showResult(val.val);
             } else if (val.type === 'num') {
@@ -680,25 +688,41 @@
         document.getElementById('numberResultsDetail').textContent = num2str(num);
       }
 
+      function showUserSymbols() {
+        document.getElementById('symdefs');
+        let str = "";
+        let keys = Object.keys(userSymbols).sort();
+        for (const val of keys) {
+          let symStr = symString(userSymbols[val]);
+          if (symStr)
+            str += "<p>" + symStr + "</p>";
+        }
+        document.getElementById('symdefs').innerHTML = str;
+      }
+
+      function symString(val) {
+        if (val.type == 'in') {
+          let [ftStr, inStr, delta] = inchesToStringReps(val.val);
+          return val.sym + " = " + ftStr + delta;
+        }
+        if (val.type == 'num') {
+          return val.sym + " = " + val.val;
+        }
+        if (val.type == 'fn') {
+          return val.sym + "(" + val.params.join(", ") + ") = " + val.body;
+        }
+        return undefined;
+      }
+
       function showAssignResult(val) {
+        let str = symString(val);
+        if (!str)
+          return;
         document.getElementById('results').style.display = 'none';
         document.getElementById('numberResults').style.display = '';
         document.getElementById('error').style.display = 'none';
         document.getElementById('numberResults').style.color = '';
-
-        if (val.type == 'in') {
-          let [ftStr, inStr, delta] = inchesToStringReps(val.val);
-          document.getElementById('numberResultsDetail').textContent =
-            val.sym + " = " + ftStr + delta;
-        }
-        if (val.type == 'num') {
-          document.getElementById('numberResultsDetail').textContent =
-            val.sym + " = " + val.val;
-        }
-        if (val.type == 'fn') {
-          document.getElementById('numberResultsDetail').textContent =
-            val.sym + "(" + val.params.join(", ") + ") = " + val.body;
-        }
+        document.getElementById('numberResultsDetail').textContent = str;
       }
 
       function showResult(totalInches, updateExpr) {
@@ -800,8 +824,8 @@
           <p> Expressions can contain numbers and units and the operators + - * and /.
           Multiplication and division are performed before addition and subtraction and,
           parenthesis can be used to force grouping. </p>
-          <p> Units include: ft ' in " m cm.
-          The unit names can be used as constants as well</p>
+          <p> Units include: &ldquo;<span class="code">ft ' in " m cm</span>&rdquo;.
+          The unit names can be used as constants as well.</p>
           <p> As you type, the expression might be momentarily unparsable, e.g., "3' +" until you 
           finish typing. The results box will be grayed out while that happens.</p>
           <table>
@@ -886,7 +910,9 @@
       </p>
       <p id="error" style="color: red"></p>
     </div>
-    <div style="font-size: 85%; clear: both">
+    <div style="clear: both"></div>
+    <div id="symdefs"></div>
+    <div style="font-size: 85%; margin-block-start: 1em;">
       <bl>
         <li>
           Fields may be left empty when not relevent
