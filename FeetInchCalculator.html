@@ -5,19 +5,19 @@
       body {
         margin: 1em 2em;
         font-family: system-ui;
-        background-color: white;
-        color: #212121"
+        background-color: #fcfcfc;
+        color: black;
       }
       .bigger {
         transform-origin: left;
         transform: scale(1.5)
       }
       .tips {
-        font-size: 85%;
+        font-size: 90%;
         margin-block-start: 1em;
       }
       .help {
-        padding: 0px 20px;
+        padding: 10px 20px;
         background-color: #eeeeee;
         position: fixed;
         display: none;
@@ -911,7 +911,7 @@
     <div style="clear: both"></div>
     <div id="symdefs"></div>
     <div class="tips">
-      <bl>
+      <ul>
         <li>
           Fields may be left empty when not relevent
         </li>
@@ -930,7 +930,7 @@
           You can type a fairly general expression into the text box. Click the "?"
           button for more information.
         </li>
-      </bl>
+      </ul>
     </div>
     <div class="help" id="exprhelp">
       <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
@@ -1001,14 +1001,14 @@
         </table>
         <h3> Terms </h3>
         <p> Expressions are built up out of <i>terms</i> which are either
-            <bl>
-              <li> A plain number such as <code>12</code>, <code>3.14</code>, <code>.15,</code> etc.
-              <li> A variable name, such as <code>pi</code>
-              <li> A <i>length</i> which can be a number, a fraction, or a number
-                   and a fraction followed buy a <i>unit</i>
-              <li> Any sequence of the the previous length-unit combinations as long as
-                   the units are of descending size
-            </bl>
+          <ul>
+            <li> A plain number such as <code>12</code>, <code>3.14</code>, <code>.15,</code> etc.
+            <li> A variable name, such as <code>pi</code>
+            <li> A <i>length</i> which can be a number, a fraction, or a number
+                 and a fraction followed buy a <i>unit</i>
+            <li> Any sequence of the the previous length-unit combinations as long as
+                 the units are of descending size
+            </ul>
         <p> A <i>unit</i> is either <code>'</code> (feet), <code>ft</code> (feet),
             <code>"</code> (inches), <code>in</code> (inches), <code>m</code> (meters),
             or <code>cm</code> (centimeters).
