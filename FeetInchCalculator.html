@@ -1,8 +1,21 @@
 <html>
   <title>Feet & Inch Calculator</title>
-  <body onload="updateResult()" 
-      style="margin: 1em 2em; font-family: system-ui; background-color: white; color: #212121">
+  <body onload="updateResult()">
     <style>
+      body {
+        margin: 1em 2em;
+        font-family: system-ui;
+        background-color: white;
+        color: #212121"
+      }
+      .bigger {
+        transform-origin: left;
+        transform: scale(1.5)
+      }
+      .tips {
+        font-size: 85%;
+        margin-block-start: 1em;
+      }
       .help {
         padding: 0px 20px;
         background-color: #eeeeee;
@@ -862,7 +875,7 @@
       });
 
     </script>
-    <p style="transform-origin: left; transform: scale(1.5)">
+    <p class="bigger">
       <input type="text" style="text-align: right;" oninput="updateResult()" size="4" id="ft" value="5">
       feet &nbsp;
       <input type="text" style="text-align: right;" oninput="updateResult()" size="2" id="inch" value="">
@@ -876,7 +889,7 @@
       &nbsp; divided by
       <input type="text" oninput="updateResult()" size="3" id="div" value="">
     </p>
-    <p style="transform-origin: left; transform: scale(1.5)">
+    <p class="bigger">
       <input type="text" oninput="updateParse()" onchange="updateParse(true)" size="60" id="expr" value="">
       <span onclick="return showHelp('exprhelp')" class="button">&nbsp; ? &nbsp;</span>
     </p>
@@ -897,7 +910,7 @@
     </div>
     <div style="clear: both"></div>
     <div id="symdefs"></div>
-    <div style="font-size: 85%; margin-block-start: 1em;">
+    <div class="tips">
       <bl>
         <li>
           Fields may be left empty when not relevent
