@@ -28,7 +28,6 @@
         border: 2px solid black;
       }
       .help .closebtn {
-        margin-left: 15px;
         color: #888888;
         font-weight: bold;
         float: right;
@@ -61,6 +60,7 @@
       } 
       span.button {
         cursor: pointer;
+        padding: 0px 5px;
         background: #4444ff;
         border-radius: 4px;
         color: white;
@@ -891,7 +891,7 @@
     </p>
     <p class="bigger">
       <input type="text" oninput="updateParse()" onchange="updateParse(true)" size="60" id="expr" value="">
-      <span onclick="return showHelp('exprhelp')" class="button">&nbsp; ? &nbsp;</span>
+      <span onclick="return showHelp('exprhelp')" class="button"> ? </span>
     </p>
     <div style="float: left; min-width: 40em; border: 2px solid; margin: 10px 0px; padding: 0px 10px">
       <p id="results">
