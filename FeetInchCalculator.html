@@ -8,10 +8,10 @@
         background-color: #eeeeee;
         position: fixed;
         display: none;
-        width: 70%;
+        width: 60%;
         height: 80%;
         top: 10%;
-        left: 20%;
+        left: 30%;
         border: 2px solid black;
       }
       #help .closebtn {
@@ -349,7 +349,7 @@
             if (val.val !== 0) {
               if (val.type !== type) {
                 if (accum !== 0)
-                  throw name + "(): argument types incompatible";
+                  throw name + "(): parameter types incompatible";
                 type = val.type;
               }
               accum += val.val * val.val;
@@ -362,7 +362,7 @@
         },
         mean: (name, params) => {
           if (params.length < 1)
-            throw name + "(): no arguments";
+            throw name + "(): no parameters";
           let val = params.pop();
           let type = val.type;
           let accum = 0, n = 0;
@@ -372,7 +372,7 @@
             } else {
               if (val.type !== type) {
                 if (accum !== 0)
-                  throw name + "(): argument types incompatible";
+                  throw name + "(): parameter types incompatible";
                 type = val.type;
               }
               accum += val.val;
@@ -396,7 +396,9 @@
         if (val === undefined)
           val = symbols[name];
         if (typeof val === 'number')
-            val = { type: 'num', val: val };
+          val = { type: 'num', val: val };
+        if (val instanceof Function)
+          val = { type: 'fn', sym: name, params:["..."], native: val, body: "#builtin#" };
         return val;
       }   
 
@@ -456,12 +458,12 @@
                   paramsParse = true;
               if (paramsParse || symVal.type === 'parse')
                 return { type: 'parse', name: word, params: params };
-              if (symVal instanceof Function) {
-                val = symVal(word, params);
-                if (val !== null)
-                  return val;
-              }
               if (symVal.type === 'fn') {
+                if (symVal.native) {
+                  val = symVal.native(word, params);
+                  if (val !== null)
+                    return val;
+                }
                 if (params.length != symVal.params.length)
                   throw "incorrect number of params for " + word;
                 const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
