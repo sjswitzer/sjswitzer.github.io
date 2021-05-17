@@ -465,7 +465,7 @@
                     return val;
                 }
                 if (params.length != symVal.params.length)
-                  throw "incorrect number of params for " + word;
+                  throw `incorrect number of params for ${word}(${symVal.params.join(',')})`;
                 const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
                 try {
                   environment = {};
@@ -717,6 +717,15 @@
         document.getElementById('numberResultsDetail').textContent = num2str(num);
       }
 
+      function escapeHTML(str) {
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
       function showUserSymbols() {
         document.getElementById('symdefs');
         let str = "";
@@ -724,7 +733,7 @@
         for (const val of keys) {
           let symStr = symString(userSymbols[val]);
           if (symStr)
-            str += "<p>" + symStr + "</p>";
+            str += `<p> ${escapeHTML(symStr)} </p>`;
         }
         document.getElementById('symdefs').innerHTML = str;
       }
@@ -732,13 +741,13 @@
       function symString(val) {
         if (val.type == 'in') {
           let [ftStr, inStr, delta] = inchesToStringReps(val.val);
-          return val.sym + " = " + ftStr + delta;
+          return `${val.sym} = ${ftStr}${delta}`;
         }
         if (val.type == 'num') {
-          return val.sym + " = " + val.val;
+          return `${val.sym} = ${val.val}`;
         }
         if (val.type == 'fn') {
-          return val.sym + "(" + val.params.join(", ") + ") = " + val.body;
+          return `${val.sym}(${val.params.join(", ")}) = ${val.body}`;
         }
         return undefined;
       }
@@ -809,7 +818,7 @@
           sp = " ";
         }
         if (num !== 0)
-          ftStr += sp + num + "/" + denom;
+          ftStr += `${sp}${num}/${denom}`;
         if (inches !== 0 || num !== 0)
            ftStr += '"';
         let delta = totalInches - (ft*12 + inches + num/denom);
@@ -817,9 +826,9 @@
           delta = "";
         } else {
           if (delta < 0)
-            delta = " - " + num2str(-delta) + '"';
+            delta = ` - ${num2str(-delta)}"`;
           else
-            delta = " + " + num2str(delta) + '"';
+            delta = ` + ${num2str(delta)}"`;
         }
  
         // format inches
@@ -831,7 +840,7 @@
           sp = " ";
         }
         if (num !== 0)
-          inStr += sp + num + "/" + denom;
+          inStr += `${sp}${num}/${denom}`;
         inStr += '"';
 	  return [ftStr, inStr, delta];
       }
