@@ -3,7 +3,7 @@
   <body onload="updateResult()" 
       style="margin: 1em 2em; font-family: system-ui; background-color: white; color: #212121">
     <style>
-      #help {
+      .help {
         padding: 0px 20px;
         background-color: #eeeeee;
         position: fixed;
@@ -14,7 +14,7 @@
         left: 30%;
         border: 2px solid black;
       }
-      #help .closebtn {
+      .help .closebtn {
         margin-left: 15px;
         color: #888888;
         font-weight: bold;
@@ -24,29 +24,29 @@
         cursor: pointer;
         transition: 0.3s;
       }
-      #help .closebtn:hover {
+      .help .closebtn:hover {
         color: black;
       }
-      #help td {
+      .help td {
         padding: 0px 10px;
         vertical-align: top;
       }
-      #help th {
+      .help th {
         padding: 0px 10px;
         text-align: left;
       }
-      #helpContent {
+      .helpContent {
         overflow-y: scroll;
         height: 100%;
       }
-      #help code {
+      .help code {
         font-size: 140%;
         font-weight: bold;
       } 
-      #help code.abstract {
+      .help code.abstract {
         font-style: oblique;
       } 
-      .button {
+      span.button {
         cursor: pointer;
         background: #4444ff;
         border-radius: 4px;
@@ -845,100 +845,18 @@
 	  return [ftStr, inStr, delta];
       }
 
-      function showHelp(msg) {
-        document.getElementById('helpContent').innerHTML = msg;
-        document.getElementById('help').style.display = "block"; 
+      function showHelp(id) {
+        document.getElementById(id).style.display = "block"; 
       }
 
-      document.onkeydown = function(evt) {
+      document.addEventListener("keydown", function(evt) {
         evt = evt || window.event;
         if (evt.key === "Escape" || evt.key === "Esc" || evt.keyCode === 27) {
-          document.getElementById('help').style.display = 'none';
+          let elts = document.querySelectorAll('.help');
+          for (let e of elts)
+            e.style.display = ''; // back to inherited 'none'
         }
-      }
-
-      function exprHelp() {
-        showHelp(`
-          <h3> Expressions </h3>
-          <p> Expressions can contain numbers, units and the operators + - * and /.
-          Multiplication and division are performed before addition and subtraction, and
-          parenthesis can be used for grouping. </p>
-          <p> Units include:
-          <code>ft</code> <code>'</code> 
-          <code>in</code> <code>"</code> 
-          <code>m</code> and <code>cm</code> .
-          The unit names can be used as constants as well.</p>
-          <p> As you type, the expression might be momentarily unparsable, e.g.,
-          <code>3'+</code>, until you finish typing. The results box will be grayed out while that happens.</p>
-          <table>
-            <colgroup>
-              <col style="width: 8em">
-              <col style="width: auto">
-            </colgroup>
-            <tr><th>Example</th><th>Description</th></tr>
-            <tr><td> 5' 6"
-              </td><td> An ordinary distance
-              </td></tr>
-            <tr><td> 5' 6 3/8" / 3
-              </td><td> Divide 5 feet 6 and 3/8 inches by 3
-              </td></tr>
-            <tr><td> 5 1/2' - 8"
-              </td><td> Subtracts lengths
-              </td></tr>
-            <tr><td> 5.5'
-              </td><td> You can use decimal values instead of fractions
-              </td></tr>
-            <tr><td> 3/4"
-              </td><td> You can use just a fraction
-              </td></tr>
-            <tr><td> (5'6" + 7') / 2
-              </td><td> The average of 5'6" and 7'
-              </td></tr>
-            <tr><td> 5'10 3/8" * 3/4
-              </td><td> 3/4 of 5' 10 3/8"
-              </td></tr>
-            <tr><td> 12' / 6"
-              </td><td> The ratio of 12' and 6" (result is 24)
-              </td></tr>
-            <tr><td> 1 + 2 * 3
-              </td><td> Ordinary math (result is 7)
-              </td></tr>
-           <tr><td> 1m - 2cm
-              </td><td> One meter minus two centimeters
-              </td></tr>
-           <tr><td> 5' 6" * pi
-              </td><td> Circumference of a 5' 6" diameter circle
-              </td></tr>
-           <tr><td> hyp(3', 4')
-              </td><td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
-              </td></tr>
-          </table>
-          <h3> Variables </h3>
-          <p> Define variables by typing <code class="abstract">name = expression</code>
-            then hitting "enter."
-            For instance, <code>frontage = 45'4 3/4"</code>. You can then use those values
-            in later expressions, e.g. <code>frontage/3</code>.</p>
-          <p> If a variable is a <i>length</i>, you can use that variable as a unit. For example,
-            <code>yd = 3'</code>. Then you can use expressions like <code>3yd 5 1/2"</code>.
-            Potentially useful definitions besides <code>yd</code> are <code>mi = 5280'</code>
-            and <code>km = 1000m</code>.</p>
-          <p>The variables <code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code>
-            are predefined for use as values or as units. The variable <code>pi</code> is
-            predefined in case you care about circles.</p>
-          <h3> Functions </h3>
-          <p> Define functions by typing
-            <code class="abstract">name(param,param,&hellip;) = expression</code>
-            then hitting "enter." For instance, you can define a function to average to numbers
-            or lengths: <code>average(x,y) = (x+y)/2</code> , but the prefefined function
-            <code>mean(&hellip;)</code> already does that.</p>
-          <p> The function <code>hyp(x,y)</code> is predefined to find the hypotenuse of a
-            a triangle or, more usefully, the diagonal of a rectangle.
-            The function <code>mean(x,y,&hellip;)</code> is predefined to find the average of
-            a set of numbers or lengths.</p>
-          <p></p>
-        `);
-        return false;
-      }
+      });
 
     </script>
     <p style="transform-origin: left; transform: scale(1.5)">
@@ -957,7 +875,7 @@
     </p>
     <p style="transform-origin: left; transform: scale(1.5)">
       <input type="text" oninput="updateParse()" onchange="updateParse(true)" size="60" id="expr" value="">
-      <span onclick="return exprHelp();" class="button">&nbsp; ? &nbsp;</span>
+      <span onclick="return showHelp('exprhelp')" class="button">&nbsp; ? &nbsp;</span>
     </p>
     <div style="float: left; min-width: 40em; border: 2px solid; margin: 10px 0px; padding: 0px 10px">
       <p id="results">
@@ -998,9 +916,90 @@
         </li>
       </bl>
     </div>
-    <div id="help">
+    <div class="help" id="exprhelp">
       <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
-      <div id="helpContent"></div>
+      <div class="helpContent">
+          <h3> Expressions </h3>
+          <p> Expressions can contain numbers, units and the operators + - * and /.
+          Multiplication and division are performed before addition and subtraction, and
+          parenthesis can be used for grouping. </p>
+          <p> Units include:
+          <code>ft</code> <code>'</code> 
+          <code>in</code> <code>"</code> 
+          <code>m</code> and <code>cm</code> .
+          The unit names can be used as constants as well.</p>
+          <p> As you type, the expression might be momentarily unparsable, e.g.,
+          <code>3'+</code>, until you finish typing. The results box will be grayed out while that happens.</p>
+          <table>
+            <colgroup>
+              <col style="width: 8em">
+              <col style="width: auto">
+            </colgroup>
+            <!-- it's neater without the optional closing tags -->
+            <tr>
+              <th>Example
+              <th>Description
+            <tr>
+              <td> 5' 6"
+              <td> An ordinary distance
+            <tr>
+              <td> 5' 6 3/8" / 3
+              <td> Divide 5 feet 6 and 3/8 inches by 3
+            <tr>
+              <td> 5 1/2' - 8"
+              <td> Subtracts lengths
+            <tr>
+              <td> 5.5'
+              <td> You can use decimal values instead of fractions
+            <tr>
+              <td> 3/4"
+              <td> You can use just a fraction
+            <tr>
+              <td> (5'6" + 7') / 2
+              <td> The average of 5'6" and 7'
+            <tr>
+              <td> 5'10 3/8" * 3/4
+              <td> 3/4 of 5' 10 3/8"
+            <tr>
+              <td> 12' / 6"
+              <td> The ratio of 12' and 6" (result is 24)
+            <tr>
+              <td> 1 + 2 * 3
+              <td> Ordinary math (result is 7)
+            <tr>
+              <td> 1m - 2cm
+              <td> One meter minus two centimeters
+            <tr>
+              <td> 5' 6" * pi
+              <td> Circumference of a 5' 6" diameter circle
+            <tr>
+              <td> hyp(3', 4')
+              <td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
+          </table>
+          <h3> Variables </h3>
+          <p> Define variables by typing <code class="abstract">name = expression</code>
+            then hitting "enter."
+            For instance, <code>frontage = 45'4 3/4"</code>. You can then use those values
+            in later expressions, e.g. <code>frontage/3</code>.</p>
+          <p> If a variable is a <i>length</i>, you can use that variable as a unit. For example,
+            <code>yd = 3'</code>. Then you can use expressions like <code>3yd 5 1/2"</code>.
+            Potentially useful definitions besides <code>yd</code> are <code>mi = 5280'</code>
+            and <code>km = 1000m</code>.</p>
+          <p>The variables <code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code>
+            are predefined for use as values or as units. The variable <code>pi</code> is
+            predefined in case you care about circles.</p>
+          <h3> Functions </h3>
+          <p> Define functions by typing
+            <code class="abstract">name(param,param,&hellip;) = expression</code>
+            then hitting "enter." For instance, you can define a function to average to numbers
+            or lengths: <code>average(x,y) = (x+y)/2</code> , but the prefefined function
+            <code>mean(&hellip;)</code> already does that.</p>
+          <p> The function <code>hyp(x,y)</code> is predefined to find the hypotenuse of a
+            a triangle or, more usefully, the diagonal of a rectangle.
+            The function <code>mean(x,y,&hellip;)</code> is predefined to find the average of
+            a set of numbers or lengths.</p>
+          <p></p>
+      </div>
     </div>
   </body>
 </html>
