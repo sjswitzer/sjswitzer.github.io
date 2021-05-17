@@ -249,7 +249,10 @@
           
       function parseVal() {
         let backtrack1 = parsepos;
-        let inches = 0, haveLength = false;
+        let inches = 0, haveLength = false, lastUnit = Number.POSITIVE_INFINITY;
+
+        // The idea of ;astUnit is that units should get progressively smaller.
+        // Otherwise, someone could enter 2'3' when they meant 2'3"
 
         while (true) {
           const backtrack2 = parsepos;
@@ -257,15 +260,24 @@
           if (val === null)
             break;
           if (take("'")) {
+            if (12 >= lastUnit)
+              throw "Implausible units";
+            lastUnit = 12;
             inches += val*12;
           } else if (take('"')) {
+            if (1 >= lastUnit)
+              throw "Implausible units";
+            lastUnit = 1;
             inches += val;
-           } else {
+          } else {
             // system and user-defined units
             let word = parseWord(), ok = false;
             if (word) {
               const symVal = getSymbol(word);
               if (symVal && symVal.type === 'in') {
+                if (symVal.val >= lastUnit)
+                  throw "Implausible units";
+                lastUnit = symVal.val;
                 inches += val * symVal.val;
                 ok = true;
               }
@@ -318,6 +330,8 @@
             return { type: 'num', val: 0 };
           let val = params.pop();
           let type = val.type;
+          if (type === 'parse')
+            return { type: parse, op: 'call', name: name, params: params };
           let accum = 0;
           while (true) {
             if (val.val !== 0) {
@@ -336,11 +350,14 @@
         }
       };
       const userSymbols = {}; 
+      let environment = {};
 
       function getSymbol(name) {
-        let val = symbols[name];
+        let val = environment[name];
         if (val === undefined)
           val = userSymbols[name];
+        if (val === undefined)
+          val = symbols[name];
         if (typeof val === 'number')
             val = { type: 'num', val: val };
         return val;
@@ -373,15 +390,20 @@
         }
         if (take('-')) {
           let val = parsePrimitive();
-          if (val !== null)
+          if (val !== null) {
+            if (val.type == 'fn')
+              throw "Can't negate functions";
+            if (val.type == 'parse')
+              return { type: 'parse', op: 'neg', expr: val };
             return { type: val.type, val: -val.val };
+          }
           parsepos = backtrack;
           return null;
         }
         let word = parseWord();
         if (word !== null) {
           const symVal = getSymbol(word);
-          if (take('(')) {
+          if (symVal && take('(')) {
             let params = [];
             let val = parseExpr();
             while (val !== null) {
@@ -391,10 +413,42 @@
               val = parseExpr();
             }
             if (take(')')) {
+              let paramsParse = false;
+              for (const p of params)
+                if (p.type === 'parse')
+                  paramsParse = true;
+              if (paramsParse || symVal.type === 'parse')
+                return { type: 'parse', name: word, params: params };
               if (symVal instanceof Function) {
                 val = symVal(word, params);
                 if (val !== null)
                   return val;
+              }
+              if (symVal.type === 'fn') {
+                if (params.length != symVal.params.length)
+                  throw "incorrect number of params for " + word;
+                const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
+                try {
+                  environment = {};
+                  parsestr = symVal.body;
+                  parsepos = 0;
+                  for (const i in params)
+                    environment[symVal.params[i]] = params[i];
+                  let val = parseExpr();
+                  skipSpaces();
+                  if (peekc())
+                    throw "Invalid function";
+                  environment = saveEnv;
+                  parsestr = saveParsestr;
+                  parsepos = saveParsepos
+                  return val;
+                }
+                catch (e) {
+                  environment = saveEnv;
+                  parsestr = saveParsestr;
+                  parsepos = saveParsepos;
+                  throw e;
+                }
               }
             }
             parsepos = backtrack;
@@ -425,6 +479,10 @@
               parsepos = backtrack;
               return null;
             }
+            if (val.type == 'fn' || val2.type == 'fn')
+              throw "Can't multiply functions";
+            if (val.type == 'parse' || val2.type == 'parse')
+              return { type: 'parse', op: '*', expr1: val, expr2: val2 };
             if (val.type === 'num' && val2.type === 'num')
               val = { type: 'num', val: val.val * val2.val };
             else if (!(val.type === 'in' && val2.type === 'in'))
@@ -437,6 +495,10 @@
               parsepos = backtrack;
               return null;
             }
+            if (val.type == 'fn' || val2.type == 'fn')
+              throw "Can't divide functions";
+            if (val.type == 'parse' || val2.type == 'parse')
+              return { type: 'parse', op: '/', expr1: val, expr2: val2 };
             if (val2.val === 0)
               throw "Divide by zero";
             if (val.type === 'num' && val2.type === 'num')
@@ -470,6 +532,10 @@
               parsepos = backtrack;
               return null;
             }
+            if (val.type == 'fn' || val2.type == 'fn')
+              throw "Can't add functions";
+            if (val.type == 'parse' || val2.type == 'parse')
+              return { type: 'parse', op: '+', expr1: val, expr2: val2 };
             if (val.type === 'num' && val2.type === 'num')
               val = { type: 'num', val: val.val + val2.val };
             else if (val.type === 'in' && val2.type === 'in')
@@ -488,6 +554,10 @@
               parsepos = backtrack;
               return null;
             }
+            if (val.type == 'fn' || val2.type == 'fn')
+              throw "Can't subtract functions";
+            if (val.type == 'parse' || val2.type == 'parse')
+              return { type: 'parse', op: '-', expr1: val, expr2: val2 };
             if (val.type === 'num' && val2.type === 'num')
               val = { type: 'num', val: val.val - val2.val };
             else if (val.type === 'in' && val2.type === 'in')
@@ -508,8 +578,9 @@
       }
 
       // Parse a statement:
-      //    word = expr
       //    expr
+      //    word = expr
+      //    word(p, p, ...) = expr
 
       function parseStatement() {
         const backtrack = parsepos;
@@ -519,10 +590,40 @@
             let val = parseExpr();
             if (val) {
               val.sym = word;
+              val.defined = true;
               return val;
             }
           }
-          parsepos = backtrack;
+          if (take('(')) {
+            let params = [];
+            let param = parseWord();
+            while (param !== null) {
+              params.push(param);
+              if (!take(','))
+                break;
+              param = parseWord();
+            }
+            if (take(')') && take('=')) {
+              const saveEnv = environment;
+              try {
+                environment = {};
+                for (const p of params)
+                  environment[p] = { type: 'parse', sym: p };
+                skipSpaces();
+                const exprStart = parsepos;
+                let expr = parseExpr();
+                environment = saveEnv;
+                if (expr !== null)
+                  return { type: 'fn', expr: expr, sym: word, defined: true,
+                           params: params, body: parsestr.substr(exprStart) };
+               }
+               catch (e) {
+                 environment = saveEnv;
+                 throw e;
+               }
+             }
+           }
+           parsepos = backtrack;
         }
         return parseExpr();
       }
@@ -532,20 +633,23 @@
         try {
           parsestr = document.getElementById('expr').value;
           parsepos = 0;
+          environment = {};
           let val = parseStatement();
           skipSpaces();
           if (val !== null && !getc()) { // nothing left over at the end
-            if (updateVars  && val.sym) {
+            if (updateVars && val.defined) {
               let sym = val.sym;
               if (symbols[sym])
                 throw "Cannot redefine system symbols";
               showAssignResult(val);
-              delete val.sym;
+              delete val.defined;
               userSymbols[sym] = val;
             } else if (val.type === 'in') {
               showResult(val.val);
-            } else {
+            } else if (val.type === 'num') {
               showNumberResult(val.val);
+            } else if (val.type === 'fn' && !val.defined) {
+              showAssignResult(val);
             }
             return;
           }
@@ -587,6 +691,10 @@
         if (val.type == 'num') {
           document.getElementById('numberResultsDetail').textContent =
             val.sym + " = " + val.val;
+        }
+        if (val.type == 'fn') {
+          document.getElementById('numberResultsDetail').textContent =
+            val.sym + "(" + val.params.join(", ") + ") = " + val.body;
         }
       }
 
