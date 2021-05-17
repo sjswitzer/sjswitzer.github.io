@@ -113,7 +113,8 @@
       <table class="layout">
         <td> <input style="width: 100%" type="text" oninput="updateParse()"
           onchange="updateParse(true)" id="expr" value="">
-        <td style="width: 1px"> <span class="button" onclick="return showHelp('exprhelp')"> ? </span>
+        <td style="width: 1px">
+          <span class="button" style="margin-left: 4px" onclick="return showHelp('exprhelp')"> ? </span>
       </table>
       <div class="results">
         <p id="results">
@@ -135,7 +136,7 @@
       </span>
       <div id="symdefs"></div>
       <div class="help" id="tipshelp">
-        <span class="closebtn" onclick="this.parentElement.style.display=''">&times;</span>
+        <span class="closebtn" onclick="hideHelp()">&times;</span>
         <div>
           <h3>Tips</h3>
           <p> Some quick tips to get you started:
@@ -152,7 +153,7 @@
         </div>
       </div>
       <div class="help" id="exprhelp">
-        <span class="closebtn" onclick="this.parentElement.style.display=''">&times;</span> 
+        <span class="closebtn" onclick="hideHelp()">&times;</span> 
         <div>
           <h3> Expressions </h3>
           <p> Expressions can contain numbers, units and the operators + - * and /.
@@ -1071,13 +1072,16 @@
         helpElement.style.display = "block"; // inherits 'none' from "help" class
       }
 
+      function hideHelp() {
+        let elts = document.querySelectorAll('.help');
+        for (let e of elts)
+          e.style.display = ''; // back to inherited 'none'
+      }
+
       document.addEventListener("keydown", function(evt) {
         evt = evt || window.event;
-        if (evt.key === "Escape" || evt.key === "Esc" || evt.keyCode === 27) {
-          let elts = document.querySelectorAll('.help');
-          for (let e of elts)
-            e.style.display = ''; // back to inherited 'none'
-        }
+        if (evt.key === "Escape" || evt.key === "Esc" || evt.keyCode === 27)
+          hideHelp();
       });
 
     </script>
