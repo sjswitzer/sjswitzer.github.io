@@ -26,9 +26,6 @@
       .spread-container {
         width: max-content
       }
-      .tips {
-        font-size: 11pt;
-      }
       .help {
         padding: 0px 20px;
         background-color: #f4f4f4;
@@ -73,9 +70,9 @@
       } 
       span.button {
         cursor: pointer;
-        padding: 0px 5px;
+        padding: 2px 5px;
         background: #4444ff;
-        font-size: 16pt;
+        font-size: 14pt;
         border-radius: 4px;
         color: white;
         transition: 0.3s;
@@ -85,7 +82,7 @@
       }
       #symdefs p {
         margin: 0px;
-        font-size: 120%;
+        font-size: 12pt;
       }
       .results {
         border: 2px solid;
@@ -133,21 +130,29 @@
         </p>
         <p id="error" style="color: red"></p>
       </div>
+      <span class="button" style="float: right" onclick="return showHelp('tipshelp')">
+        Tips!
+      </span>
       <div id="symdefs"></div>
-      <div class="tips">
-        <ul>
-          <li> Fields may be left empty when not relevent
-          <li> A value like five and a half feet may be entered as 5.5 ft or as 5 ft 6 inches
-          <li> A value like six and a quarter inches may be entered as 6.25 inches or
-               as 6 inches and 1/4
-          <li> A "metric foot" is a convention for metric designs where a foot is taken
-               to be exactly 30cm instead of 30.48cm
-          <li> You can type a fairly general expression into the text box. Click the "?"
-               button for more information.
-        </ul>
+      <div class="help" id="tipshelp">
+        <span class="closebtn" onclick="this.parentElement.style.display=''">&times;</span>
+        <div>
+          <h3>Tips</h3>
+          <p> Some quick tips to get you started:
+          <ul>
+            <li> Fields may be left empty when not relevent
+            <li> A value like five and a half feet may be entered as 5.5 ft or as 5 ft 6 inches
+            <li> A value like six and a quarter inches may be entered as 6.25 inches or
+                 as 6 inches and 1/4
+            <li> A "metric foot" is a convention for metric designs where a foot is taken
+                 to be exactly 30cm instead of 30.48cm
+            <li> You can type a fairly general expression into the text box. Click the "?"
+                 button for more information.
+          </ul>
+        </div>
       </div>
       <div class="help" id="exprhelp">
-        <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
+        <span class="closebtn" onclick="this.parentElement.style.display=''">&times;</span> 
         <div>
           <h3> Expressions </h3>
           <p> Expressions can contain numbers, units and the operators + - * and /.
@@ -1062,7 +1067,8 @@
       }
 
       function showHelp(id) {
-        document.getElementById(id).style.display = "block"; // inherits 'none' from "help" class
+        let helpElement = document.getElementById(id);
+        helpElement.style.display = "block"; // inherits 'none' from "help" class
       }
 
       document.addEventListener("keydown", function(evt) {
