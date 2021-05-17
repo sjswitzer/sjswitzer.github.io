@@ -35,7 +35,7 @@
         padding: 0px 10px;
         text-align: left;
       }
-      .helpContent {
+      .help > div {
         overflow-y: scroll;
         height: 100%;
       }
@@ -402,15 +402,15 @@
         return val;
       }   
 
-      // Parse a primitive, which is either a parenthesized expression
-      // or a + or - sign followed by a primitive:
+      // Parse a term, which is either a parenthesized expression
+      // or a + or - sign followed by a term:
       //    ( expr )
-      //    + primitive
-      //    - primitive
+      //    + term
+      //    - term
       //    fn ( expr, expr, ... )
       //    const
 
-      function parsePrimitive() {
+      function parseTerm() {
         const backtrack = parsepos;
         if (take('(')) {
           let val = parseExpr();
@@ -421,14 +421,14 @@
           return null;
         }
         if (take('+')) {
-          let val = parsePrimitive();
+          let val = parseTerm();
           if (val !== null)
             return val;
           parsepos = backtrack;
           return null;
         }
         if (take('-')) {
-          let val = parsePrimitive();
+          let val = parseTerm();
           if (val !== null) {
             if (val.type == 'fn')
               throw "Can't negate functions";
@@ -508,12 +508,12 @@
 
       function parseMulExpr() {
         const backtrack = parsepos;
-        let val = parsePrimitive();
+        let val = parseTerm();
         if (val === null)
           return null;
         while (true) {
           if (take("*")) {
-            let val2 = parsePrimitive();
+            let val2 = parseTerm();
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -529,7 +529,7 @@
             else
               throw "Cannot multiply lengths";
           } else if (take("/")) {
-            let val2 = parsePrimitive();
+            let val2 = parseTerm();
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -918,87 +918,109 @@
     </div>
     <div class="help" id="exprhelp">
       <span class="closebtn" onclick="this.parentElement.style.display='none';">&times;</span> 
-      <div class="helpContent">
-          <h3> Expressions </h3>
-          <p> Expressions can contain numbers, units and the operators + - * and /.
-          Multiplication and division are performed before addition and subtraction, and
-          parenthesis can be used for grouping. </p>
-          <p> Units include:
-          <code>ft</code> <code>'</code> 
-          <code>in</code> <code>"</code> 
-          <code>m</code> and <code>cm</code> .
-          The unit names can be used as constants as well.</p>
-          <p> As you type, the expression might be momentarily unparsable, e.g.,
-          <code>3'+</code>, until you finish typing. The results box will be grayed out while that happens.</p>
-          <table>
-            <colgroup>
-              <col style="width: 8em">
-              <col style="width: auto">
-            </colgroup>
-            <!-- it's neater without the optional closing tags -->
-            <tr>
-              <th>Example
-              <th>Description
-            <tr>
-              <td> 5' 6"
-              <td> An ordinary distance
-            <tr>
-              <td> 5' 6 3/8" / 3
-              <td> Divide 5 feet 6 and 3/8 inches by 3
-            <tr>
-              <td> 5 1/2' - 8"
-              <td> Subtracts lengths
-            <tr>
-              <td> 5.5'
-              <td> You can use decimal values instead of fractions
-            <tr>
-              <td> 3/4"
-              <td> You can use just a fraction
-            <tr>
-              <td> (5'6" + 7') / 2
-              <td> The average of 5'6" and 7'
-            <tr>
-              <td> 5'10 3/8" * 3/4
-              <td> 3/4 of 5' 10 3/8"
-            <tr>
-              <td> 12' / 6"
-              <td> The ratio of 12' and 6" (result is 24)
-            <tr>
-              <td> 1 + 2 * 3
-              <td> Ordinary math (result is 7)
-            <tr>
-              <td> 1m - 2cm
-              <td> One meter minus two centimeters
-            <tr>
-              <td> 5' 6" * pi
-              <td> Circumference of a 5' 6" diameter circle
-            <tr>
-              <td> hyp(3', 4')
-              <td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
-          </table>
-          <h3> Variables </h3>
-          <p> Define variables by typing <code class="abstract">name = expression</code>
+      <div>
+        <!-- it's neater without the optional closing tags -->
+        <h3> Expressions </h3>
+        <p> Expressions can contain numbers, units and the operators + - * and /.
+            Multiplication and division are performed before addition and subtraction, and
+            parenthesis can be used for grouping.
+        <p> Units include:
+            <code>ft</code> <code>'</code> <code>in</code> <code>"</code> 
+            <code>m</code> and <code>cm</code> .
+            The unit names can be used as constants as well.
+        <p> As you type, the expression might be momentarily unparsable, e.g.,
+            <code>3'+</code>, until you finish typing. 
+            The results box will be grayed out while that happens.
+        </p>
+        <table>
+          <colgroup>
+            <col style="width: 8em">
+            <col style="width: auto">
+          </colgroup>
+          <tr>
+            <th> Example
+            <th> Description
+          <tr>
+            <td> 5' 6"
+            <td> An ordinary distance
+          <tr>
+            <td> 5' 6 3/8" / 3
+            <td> Divide 5 feet 6 and 3/8 inches by 3
+          <tr>
+            <td> 5 1/2' - 8"
+            <td> Subtracts lengths
+          <tr>
+            <td> 5.5'
+            <td> You can use decimal values instead of fractions
+          <tr>
+            <td> 3/4"
+            <td> You can use just a fraction
+          <tr>
+            <td> (5'6" + 7') / 2
+            <td> The average of 5'6" and 7'
+          <tr>
+            <td> 5'10 3/8" * 3/4
+            <td> 3/4 of 5' 10 3/8"
+          <tr>
+            <td> 12' / 6"
+            <td> The ratio of 12' and 6" (result is 24)
+          <tr>
+            <td> 1 + 2 * 3
+            <td> Ordinary math (result is 7)
+          <tr>
+            <td> 1m - 2cm
+            <td> One meter minus two centimeters
+          <tr>
+            <td> 5' 6" * pi
+            <td> Circumference of a 5' 6" diameter circle
+          <tr>
+            <td> hyp(3', 4')
+            <td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
+        </table>
+        <h4> Terms </h4>
+        <p> Expressions are built up out of <i>terms</i> which are either
+            <bl>
+              <li> A plain number such as <code>12</code>, <code>3.14</code>, <code>.15,</code> etc.
+              <li> A variable name, such as <code>pi</code>
+              <li> A <i>length</i> which can be a number, a fraction, or a number
+                   and a fraction followed buy a <i>unit</i>
+              <li> Any sequence of the the previous length-unit combinations as long as
+                   the units are of descending size
+            </bl>
+        <p> A <i>unit</i> is either <code>'</code> (feet), <code>ft</code>,
+            <code>"</code> (inches), <code>in</code>, <code>m</code> (meters),
+            or <code>cm</code>.
+            In fact, any <i>variable</i> you define as a length can be used as a unit
+            (<code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code> are simply
+            predefined immutable variables).
+        <p> Units must be specified in descending order.
+            You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
+            This is to prevent accidentally typing <code>12'3'</code> when you really
+            meant <code>12'3"</code>.
+            You can type nonsense like <code>3 1/2m 3.5"</code> if you want, but you won't
+            do it by accident.
+        <h3> Variables </h3>
+        <p> Define variables by typing <code class="abstract">name = expression</code>
             then hitting "enter."
             For instance, <code>frontage = 45'4 3/4"</code>. You can then use those values
-            in later expressions, e.g. <code>frontage/3</code>.</p>
-          <p> If a variable is a <i>length</i>, you can use that variable as a unit. For example,
+            in later expressions, e.g. <code>frontage/3</code>.
+        <p> If a variable is a <i>length</i>, you can use that variable as a unit. For example,
             <code>yd = 3'</code>. Then you can use expressions like <code>3yd 5 1/2"</code>.
             Potentially useful definitions besides <code>yd</code> are <code>mi = 5280'</code>
-            and <code>km = 1000m</code>.</p>
-          <p>The variables <code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code>
+            and <code>km = 1000m</code>.
+        <p>The variables <code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code>
             are predefined for use as values or as units. The variable <code>pi</code> is
-            predefined in case you care about circles.</p>
-          <h3> Functions </h3>
-          <p> Define functions by typing
+            predefined in case you care about circles.
+        <h3> Functions </h3>
+        <p> Define functions by typing
             <code class="abstract">name(param,param,&hellip;) = expression</code>
             then hitting "enter." For instance, you can define a function to average to numbers
             or lengths: <code>average(x,y) = (x+y)/2</code> , but the prefefined function
-            <code>mean(&hellip;)</code> already does that.</p>
-          <p> The function <code>hyp(x,y)</code> is predefined to find the hypotenuse of a
+            <code>mean(&hellip;)</code> already does that.
+        <p> The function <code>hyp(x,y)</code> is predefined to find the hypotenuse of a
             a triangle or, more usefully, the diagonal of a rectangle.
             The function <code>mean(x,y,&hellip;)</code> is predefined to find the average of
-            a set of numbers or lengths.</p>
-          <p></p>
+            a set of numbers or lengths.
       </div>
     </div>
   </body>
