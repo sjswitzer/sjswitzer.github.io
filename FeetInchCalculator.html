@@ -339,7 +339,7 @@
         //   yd: { type: 'in', val: 36 },  
         //   mi: { type: 'in', val: 5280*12 },
         //   km: { type: 'in', val: 1000/0.0254 },
-        hyp: (name, params) => {
+        hyp: function(...params) {
           if (params.length < 1)
             return { type: 'num', val: 0 };
           let val = params.pop();
@@ -349,7 +349,7 @@
             if (val.val !== 0) {
               if (val.type !== type) {
                 if (accum !== 0)
-                  throw name + "(): parameter types incompatible";
+                  throw this.sym + "(): parameter types incompatible";
                 type = val.type;
               }
               accum += val.val * val.val;
@@ -360,9 +360,9 @@
           }
           return { type: type, val: Math.sqrt(accum) };
         },
-        mean: (name, params) => {
+        mean: function(...params) {
           if (params.length < 1)
-            throw name + "(): no parameters";
+            throw this.sym + "(): no parameters";
           let val = params.pop();
           let type = val.type;
           let accum = 0, n = 0;
@@ -372,7 +372,7 @@
             } else {
               if (val.type !== type) {
                 if (accum !== 0)
-                  throw name + "(): parameter types incompatible";
+                  throw this.sym + "(): parameter types incompatible";
                 type = val.type;
               }
               accum += val.val;
@@ -398,7 +398,7 @@
         if (typeof val === 'number')
           val = { type: 'num', val: val };
         if (val instanceof Function)
-          val = { type: 'fn', sym: name, params:["..."], native: val, body: "#builtin#" };
+          val = { type: 'fn', sym: name, params:["..."], native: val, body: `#builtin-${name}#` };
         return val;
       }   
 
@@ -460,7 +460,7 @@
                 return { type: 'parse', name: word, params: params };
               if (symVal.type === 'fn') {
                 if (symVal.native) {
-                  val = symVal.native(word, params);
+                  val = symVal.native(...params);
                   if (val !== null)
                     return val;
                 }
