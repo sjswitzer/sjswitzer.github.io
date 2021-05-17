@@ -9,11 +9,10 @@
         position: fixed;
         display: none;
         width: 70%;
-        height: auto;
+        height: 80%;
         top: 10%;
         left: 20%;
-        border: 1px solid black;
-        z-index: 2;
+        border: 2px solid black;
       }
       #help .closebtn {
         margin-left: 15px;
@@ -33,8 +32,12 @@
         vertical-align: top;
       }
       #help th {
-         padding: 0px 10px;
-         text-align: left;
+        padding: 0px 10px;
+        text-align: left;
+      }
+      #helpContent {
+        overflow-y: scroll;
+        height: 100%;
       }
       .button {
         cursor: pointer;
@@ -795,7 +798,7 @@
       function exprHelp() {
         showHelp(`
           <p> Expressions can contain numbers and units and the operators + - * and /.
-          Multiplication and division are performed before addition and subtraction and
+          Multiplication and division are performed before addition and subtraction and,
           parenthesis can be used to force grouping. </p>
           <p> Units include: ft ' in " m cm.
           The unit names can be used as constants as well</p>
