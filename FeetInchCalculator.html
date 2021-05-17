@@ -341,14 +341,12 @@
             return { type: 'num', val: 0 };
           let val = params.pop();
           let type = val.type;
-          if (type === 'parse')
-            return { type: parse, op: 'call', name: name, params: params };
           let accum = 0;
           while (true) {
             if (val.val !== 0) {
               if (val.type !== type) {
                 if (accum !== 0)
-                  throw name + "() argument types incompatible";
+                  throw name + "(): argument types incompatible";
                 type = val.type;
               }
               accum += val.val * val.val;
@@ -358,6 +356,30 @@
               break;
           }
           return { type: type, val: Math.sqrt(accum) };
+        },
+        mean: (name, params) => {
+          if (params.length < 1)
+            throw name + "(): no arguments";
+          let val = params.pop();
+          let type = val.type;
+          let accum = 0, n = 0;
+          while (true) {
+            if (val.val === 0) {
+              n += 1;
+            } else {
+              if (val.type !== type) {
+                if (accum !== 0)
+                  throw name + "(): argument types incompatible";
+                type = val.type;
+              }
+              accum += val.val;
+              n += 1;
+            }
+            val = params.pop();
+            if (!val)
+              break;
+          }
+          return { type: type, val: accum/n };
         }
       };
 
