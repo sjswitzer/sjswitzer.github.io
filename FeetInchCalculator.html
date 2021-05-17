@@ -39,6 +39,13 @@
         overflow-y: scroll;
         height: 100%;
       }
+      #help code {
+        font-size: 140%;
+        font-weight: bold;
+      } 
+      #help code.abstract {
+        font-style: oblique;
+      } 
       .button {
         cursor: pointer;
         background: #4444ff;
@@ -53,10 +60,6 @@
         margin: 0px;
         font-size: 120%;
       }
-      code {
-        font-size: 140%;
-        font-weight: bold;
-      } 
     </style>
     <script type="text/javascript">
       "use strict";
@@ -849,7 +852,10 @@
           <p> Expressions can contain numbers, units and the operators + - * and /.
           Multiplication and division are performed before addition and subtraction, and
           parenthesis can be used for grouping. </p>
-          <p> Units include: <code>ft ' in " m cm</code> .
+          <p> Units include:
+          <code>ft</code> <code>'</code> 
+          <code>in</code> <code>"</code> 
+          <code>m</code> and <code>cm</code> .
           The unit names can be used as constants as well.</p>
           <p> As you type, the expression might be momentarily unparsable, e.g.,
           <code>3'+</code>, until you finish typing. The results box will be grayed out while that happens.</p>
@@ -897,22 +903,27 @@
               </td></tr>
           </table>
           <h3> Variables </h3>
-          <p> You can define variables by typing "name = expression" then hitting enter.
-            For instance, <code>frontage = 45' 4 3/4"</code>. You can then use those values
-            in later expressions, e.g. <code>frontage / 3</code>.</p>
+          <p> Define variables by typing <code class="abstract">name = expression</code>
+            then hitting "enter."
+            For instance, <code>frontage = 45'4 3/4"</code>. You can then use those values
+            in later expressions, e.g. <code>frontage/3</code>.</p>
           <p> If a variable is a <i>length</i>, you can use that variable as a unit. For example,
-            <code>yd = 3'</code>. Then you can use expressions like <code>3yd 1' 1/2"</code>.
+            <code>yd = 3'</code>. Then you can use expressions like <code>3yd 5 1/2"</code>.
             Potentially useful definitions besides <code>yd</code> are <code>mi = 5280'</code>
             and <code>km = 1000m</code>.</p>
           <p>The variables <code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code>
             are predefined for use as values or as units. The variable <code>pi</code> is
             predefined in case you care about circles.</p>
           <h3> Functions </h3>
-          <p> You can define functions by typing "name(param, param, ...) = expression"
-            then hitting enter. For instance, you can define a function to average to numbers
-            or lengths: <code>average(x, y) = (x+y)/2</code></p>
-          <p> The function <code>hyp(x, y)</code> is predefined to find the hypotenuse of a
-            a triangle or, more usefully, the diagonal of a rectangle.</p>
+          <p> Define functions by typing
+            <code class="abstract">name(param,param,&hellip;) = expression</code>
+            then hitting "enter." For instance, you can define a function to average to numbers
+            or lengths: <code>average(x,y) = (x+y)/2</code> , but the prefefined function
+            <code>mean(&hellip;)</code> already does that.</p>
+          <p> The function <code>hyp(x,y)</code> is predefined to find the hypotenuse of a
+            a triangle or, more usefully, the diagonal of a rectangle.
+            The function <code>mean(x,y,&hellip;)</code> is predefined to find the average of
+            a set of numbers or lengths.</p>
           <p></p>
         `);
         return false;
