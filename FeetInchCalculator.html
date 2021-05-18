@@ -649,7 +649,37 @@
         if (val instanceof Function)
           val = { type: 'fn', sym: name, params:["..."], native: val, body: `#builtin-${name}#` };
         return val;
-      }   
+      }
+
+      function invokeFunction(symVal, params) {
+        if (symVal.type !== 'fn')
+          throw "Not a function";  // This should never happen
+        if (symVal.native) {
+          let val = symVal.native(...params);
+          if (val !== null)
+             return val;
+        }
+        if (params.length != symVal.params.length)
+           throw `incorrect number of params for ${word}(${symVal.params.join(',')})`;
+        const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
+        try {
+          environment = {};
+          parsestr = symVal.body;
+          parsepos = 0;
+          for (const i in params)
+            environment[symVal.params[i]] = params[i];
+          let val = parseExpr();
+          skipSpaces();
+          if (peekc())
+             throw "Invalid function";
+          return val;
+        }
+        finally {
+          environment = saveEnv;
+          parsestr = saveParsestr;
+          parsepos = saveParsepos;
+        }
+      }
 
       // Parse a term, which is either a parenthesized expression
       // or a + or - sign followed by a term:
@@ -707,42 +737,15 @@
                   paramsParse = true;
               if (paramsParse || symVal.type === 'parse')
                 return { type: 'parse', name: word, params: params };
-              if (symVal.type === 'fn') {
-                if (symVal.native) {
-                  val = symVal.native(...params);
-                  if (val !== null)
-                    return val;
-                }
-                if (params.length != symVal.params.length)
-                  throw `incorrect number of params for ${word}(${symVal.params.join(',')})`;
-                const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
-                try {
-                  environment = {};
-                  parsestr = symVal.body;
-                  parsepos = 0;
-                  for (const i in params)
-                    environment[symVal.params[i]] = params[i];
-                  let val = parseExpr();
-                  skipSpaces();
-                  if (peekc())
-                    throw "Invalid function";
-                  environment = saveEnv;
-                  parsestr = saveParsestr;
-                  parsepos = saveParsepos
-                  return val;
-                }
-                catch (e) {
-                  environment = saveEnv;
-                  parsestr = saveParsestr;
-                  parsepos = saveParsepos;
-                  throw e;
-                }
-              }
+              return invokeFunction(symVal, params);
             }
             parsepos = backtrack;
             return null;
           }
           let val = symVal;
+          // As a special case, a function of no arguments can be used as a constant
+          if (val instanceof Object && val.type === 'fn' && symVal.params.length == 0)
+            return invokeFunction(symVal, []);
           if (val instanceof Object && val.type)
             return val;
           parsepos = backtrack;
