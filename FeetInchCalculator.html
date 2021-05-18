@@ -29,23 +29,34 @@
         background-color: #f8f8f8;
         color: black;
       }
+
+      /* Spiff up input fields */
       input[type="text"] {
         font-size:13pt;
         border-radius: 4px;
         padding: 1px 4px;
       }
-      .shrink-container {
+
+      /*
+       * A container that shrinks to its largest-width content
+       */
+      div.shrink-container {
         display: inline-table;
         width: 1px;
       }
-      table.layout td {
+      .spread-container {  /* an element who's width forces a shrink-container's width */
+        width: max-content
+      }
+      table.layout td { /* makes the expression input field fill the full width available */
         padding: 0px 0px;
         table-layout: auto;
         width: 100%
       }
-      .spread-container {
-        width: max-content
-      }
+
+      /*
+       * Initially-hidden help content.
+       * Help contains a <span> for a close button and <div>s which are made scrollable.
+       */
       .help {
         padding: 0px 5px 0px 20px;
         background-color: #e8e8e8;
@@ -57,7 +68,7 @@
         left: 30%;
         border: 2px solid black;
       }
-      .help .closebtn {
+      .help > span {  /* the close buton */
         color: #888888;
         font-weight: bold;
         float: right;
@@ -66,9 +77,14 @@
         cursor: pointer;
         transition: 0.3s;
       }
-      .help .closebtn:hover {
+      .help > span:hover {
         color: black;
       }
+      .help > div {
+        overflow-y: scroll;
+        height: 100%;
+      }
+      /* styling for help content */
       .help td {
         padding: 0px 10px;
         vertical-align: top;
@@ -80,17 +96,17 @@
       .help ul {
         padding-left: 20px;
       }
-      .help > div {
-        overflow-y: scroll;
-        height: 100%;
-      }
       .help code {
         font-size: 130%;
         font-weight: bold;
       } 
       .help code.abstract {
         font-style: oblique;
-      } 
+      }
+
+      /*
+       * Makes a <span> into a button
+       */
       span.button {
         cursor: pointer;
         padding: 2px 5px;
@@ -103,6 +119,17 @@
       span.button:hover {
         background: #0000cc;
       }
+
+      /* Looks like a link but is actually a "button" */
+      span.linklike {
+        color: #0000dd;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+
+      /*
+       * Animates the delete button for variable and function definitions
+       */
       p.defn > span {
         cursor: pointer;
         padding: 0px 5px;
@@ -112,19 +139,24 @@
         font-weight: bold;
         border-radius: 4px;
         color: white;
-        transition: 0.3s;     
-        display: none;
+        transition: 0.1s;     
+        visibility: hidden;
       }
       p.defn > span:hover {
-        background: #bb8888;
+        background: #ff8888;
+      }
+      p.defn > span:active {
+        background: #ff0000;
       }
       p.defn:hover > span {
-        display: inline;
+        visibility: visible;
       }
-      #symdefs p {
-        margin: 0px;
+      p.defn {
+        margin: 5px;
         font-size: 12pt;
       }
+
+      /* the results box */
       .results {
         border: 2px solid;
         margin: 10px 0px;
@@ -153,7 +185,7 @@
         <td> <input style="width: 100%" type="text" oninput="updateParse()"
           onchange="updateParse(true)" id="expr" value="">
         <td style="width: 1px">
-          <span class="button" style="margin-left: 4px" onclick="return showHelp('exprhelp')"> ? </span>
+          <span class="button" style="margin-left: 4px" onclick="return showHelp('help-expr')"> ? </span>
       </table>
       <div class="results">
         <p id="results">
@@ -170,15 +202,15 @@
         </p>
         <p id="error" style="color: red"></p>
       </div>
-      <span class="button" style="float: right" onclick="return showHelp('tipshelp')">
+      <span class="button" style="float: right" onclick="return showHelp('help-tips')">
         Help
       </span>
       <div id="symdefs"></div>
     </div>
-    <div class="help" id="tipshelp">
-      <span class="closebtn" onclick="hideHelp()">&times;</span>
+    <div class="help" id="help-tips">
+      <span onclick="hideHelp()">&times;</span>
       <div>
-        <h3>Help</h3>
+        <h3> Help </h3>
         <p> Some quick tips to get you started:
         <ul>
           <li> Fields may be left empty when not relevent
@@ -192,8 +224,8 @@
         </ul>
       </div>
     </div>
-    <div class="help" id="exprhelp">
-      <span class="closebtn" onclick="hideHelp()">&times;</span> 
+    <div class="help" id="help-expr">
+      <span onclick="hideHelp()">&times;</span> 
       <div>
         <h3> Expressions </h3>
         <p> Expressions can contain numbers, units and the operators + - * and /.
@@ -302,7 +334,7 @@
             then hitting "enter." For instance, you can define a function to average to numbers
             or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
             <code>mean(&hellip;)</code> already does that).
-        <h4>Built-In Functions</h4>
+        <h4> Built-In Functions </h4>
         <table>
           <colgroup>
             <col style="width: 8em">
@@ -318,17 +350,29 @@
             <td> hyp(x,y,&hellip;) 
             <td> the hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
         </table>
-        <h3>License</h3>
-          <div style="float: left; margin: 0px 8px 8px 0px">
-          <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
-            <img alt="Creative Commons License" style="border-width:0"
-              src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png">
-          </a></div>
+        <h3> Odds And Ends </h3>
+        <p> I could bore you with 
+            <span class="linklike" onclick="return showHelp('help-boring')">boring details</span>
+            but that would be off-topic.
+        <h3> License </h3>
+          <div style="float: left; margin: 0px 8px 70px 0px">
+            <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+              <img alt="Creative Commons License" style="border-width:0"
+                src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png">
+            </a>
+          </div>
           This work is licensed under a
           <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
             Creative Commons Attribution-ShareAlike 4.0 International License
           </a>.
         </div>
+      </div>
+    </div>
+    <div class="help" id="help-boring">
+      <span onclick="hideHelp()">&times;</span>
+      <div>
+        <h3> Boring Details </h3>
+        <p> TBD...
       </div>
     </div>
     <script type="text/javascript">
@@ -665,8 +709,8 @@
         },
 
         UScu: function() {   // United States customary units
-          // Easter egg function. Defines a bunch of units from the
-          // United States customary units.
+          // Easter egg function
+          // Defines a bunch of United States customary units.
           //    https://en.wikipedia.org/wiki/United_States_customary_units#Length  
           const addUnit = (sym, inches) => {
             userSymbols[sym] = { sym: sym, type: 'in', val: inches };
@@ -675,16 +719,15 @@
           addUnit('fathom', 6*12);      // 6'
           addUnit('mi', 5280*12);       // 5280'
           addUnit('league', 5280*12*3); // 3 mi
-          addUnit('km', 1000/0.0254);   // 1000m
           addUnit('chain', 66*12);      // 66'
           addUnit('furlong', 66*12*10); // 10 chains
           addUnit('rod', 66*12/4);      // chain/4
           addUnit('link', 66*12/100);   // chain/100
           addUnit('pica', 1/6);         // 1/6"
           addUnit('point', 1/27);       // 1/72", 12 pica
+          addUnit('km', 1000/0.0254);   // 1000m -- This isn't a US unit. Whatever.
           showUserSymbols();
-          // Has to return something. Why not 42?
-          return { type: 'num', val: 42 };
+          throw "Surprise!";
         }
       };
 
@@ -1048,8 +1091,8 @@
         for (const sym of keys) {
           let symStr = symString(userSymbols[sym]);
           if (symStr)
-            str += `<p class="defn"> ${escapeHTML(symStr)}
-              <span onclick="deleteDef('${sym}')">&times;</span></p>`;
+            str += `<p class="defn"><span onclick="deleteDef('${sym}')">&times;</span>
+              ${escapeHTML(symStr)}</p>`;
         }
         document.getElementById('symdefs').innerHTML = str;
       }
@@ -1167,6 +1210,7 @@
       }
 
       function showHelp(id) {
+        hideHelp();  // in case other help is already showing
         let helpElement = document.getElementById(id);
         helpElement.style.display = "block"; // inherits 'none' from "help" class
         for (let child of helpElement.children)
