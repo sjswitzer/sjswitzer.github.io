@@ -14,8 +14,6 @@
     Future work might include a comprehensive system of dimensional analysis
     in customary units and notations, but it's unclear if anything good could
     possibly come of such an effort.
-
-    https://en.wikipedia.org/wiki/United_States_customary_units
 -->
 <html>
   <title>Feet & Inch Calculator</title>
@@ -664,19 +662,24 @@
           return { type: type, val: accum/n };
         },
 
-        extraUnits: function() {
-          // Easter-egg function. Defines a bunch of units.
+        UScu: function() {   // United States customary units
+          // Easter egg function. Defines a bunch of units from the
+          // United States customary units.
+          //    https://en.wikipedia.org/wiki/United_States_customary_units#Length  
           const addUnit = (sym, inches) => {
             userSymbols[sym] = { sym: sym, type: 'in', val: inches };
           }
           addUnit('yd', 3*12);          // 3'
           addUnit('fathom', 6*12);      // 6'
           addUnit('mi', 5280*12);       // 5280'
+          addUnit('league', 5280*12*3); // 3 mi
           addUnit('km', 1000/0.0254);   // 1000m
           addUnit('chain', 66*12);      // 66'
           addUnit('furlong', 66*12*10); // 10 chains
           addUnit('rod', 66*12/4);      // chain/4
           addUnit('link', 66*12/100);   // chain/100
+          addUnit('pica', 1/6);         // 1/6"
+          addUnit('point', 1/27);       // 1/72", 12 pica
           showUserSymbols();
           // Has to return something. Why not 42?
           return { type: 'num', val: 42 };
