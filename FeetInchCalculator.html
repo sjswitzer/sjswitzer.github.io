@@ -16,7 +16,10 @@
     possibly come of such an effort.
 -->
 <html>
-  <title>Feet & Inch Calculator</title>
+  <head>
+    <title>Feet & Inch Calculator</title>
+    <base target="_blank"> <!-- all links open in a new tab/page -->
+  </head>
   <body onload="updateResult()">
     <style type="text/css">
       body {
@@ -128,11 +131,6 @@
         padding: 0px 10px;
         border-radius: 4px;
       }
-      div.cc {
-        position:absolute;
-        bottom:0;
-        right:0;
-      }
     </style>
     <div class="shrink-container">
       <div class="spread-container">
@@ -176,156 +174,160 @@
         Help
       </span>
       <div id="symdefs"></div>
-      <div class="help" id="tipshelp">
-        <span class="closebtn" onclick="hideHelp()">&times;</span>
-        <div>
-          <h3>Help</h3>
-          <p> Some quick tips to get you started:
-          <ul>
-            <li> Fields may be left empty when not relevent
-            <li> A value like five and a half feet may be entered as 5.5 ft or as 5 ft 6 inches
-            <li> A value like six and a quarter inches may be entered as 6.25 inches or
-                 as 6 inches and 1/4
-            <li> A "metric foot" is a convention for metric designs where a foot is taken
-                 to be exactly 30cm instead of 30.48cm
-            <li> You can type a fairly general expression into the text box. Click the "?"
-                 button for more information.
-          </ul>
-          <div class="cc">
-            <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">
-              <img alt="Creative Commons License" style="border-width:0"
-                   src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png" />
-            </a>
-          </div>
-        </div>
+    </div>
+    <div class="help" id="tipshelp">
+      <span class="closebtn" onclick="hideHelp()">&times;</span>
+      <div>
+        <h3>Help</h3>
+        <p> Some quick tips to get you started:
+        <ul>
+          <li> Fields may be left empty when not relevent
+          <li> A value like five and a half feet may be entered as 5.5 ft or as 5 ft 6 inches
+          <li> A value like six and a quarter inches may be entered as 6.25 inches or
+               as 6 inches and 1/4
+          <li> A "metric foot" is a convention for metric designs where a foot is taken
+               to be exactly 30cm instead of 30.48cm
+          <li> You can type a fairly general expression into the text box. Click the "?"
+               button for more information.
+        </ul>
       </div>
-      <div class="help" id="exprhelp">
-        <span class="closebtn" onclick="hideHelp()">&times;</span> 
-        <div>
-          <h3> Expressions </h3>
-          <p> Expressions can contain numbers, units and the operators + - * and /.
-              Multiplication and division are performed before addition and subtraction, and
-              parenthesis can be used for grouping. Spaces are generally optional.
-          <p> Units include:
-              <code>ft</code> <code>'</code> <code>in</code> <code>"</code> 
-              <code>m</code> and <code>cm</code>.
-              The unit names can be used as constants as well.
-          <p> As you type, the expression might be momentarily unparsable, e.g.,
-              <code>3'+</code>, until you finish typing. 
-              The results box will be grayed out while that happens.
-              It would be too noisy to alert each of these errors, but if you don't 
-              know why it's grayed out, you can hit enter to see an error message.
-          </p>
-          <table>
-            <colgroup>
-              <col style="width: 8em">
-              <col style="width: auto">
-            </colgroup>
-            <tr>
-              <th> Example
-              <th> Description
-            <tr>
-              <td> 5' 6"
-              <td> An ordinary distance
-            <tr>
-              <td> 5' 6 3/8" / 3
-              <td> Divide 5 feet 6 and 3/8 inches by 3
-            <tr>
-              <td> 5 1/2' - 8"
-              <td> Subtracts lengths
-            <tr>
-              <td> 5.5'
-              <td> You can use decimal values instead of fractions
-            <tr>
-              <td> 3/4"
-              <td> You can use just a fraction
-            <tr>
-              <td> (5'6" + 7') / 2
-              <td> The average of 5'6" and 7'
-            <tr>
-              <td> 5'10 3/8" * 3/4
-              <td> 3/4 of 5' 10 3/8"
-            <tr>
-              <td> 12' / 6"
-              <td> The ratio of 12' and 6" (result is 24)
-            <tr>
-              <td> 1 + 2 * 3
-              <td> Ordinary math (note order of operations; result is 7)
-            <tr>
-              <td> 1m - 2cm
-              <td> One meter minus two centimeters
-           <tr>
-              <td> ft
-              <td> A foot
-            <tr>
-              <td> ft * 12
-              <td> 12 feet; notice that such units are simply length-valued variables
-            <tr>
-              <td> 5' 6" * pi
-              <td> Circumference of a 5' 6" diameter circle
-            <tr>
-              <td> hyp(3', 4')
-              <td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
-          </table>
-          <h3> Terms </h3>
-          <p> Expressions are built up out of <i>terms</i> which are either
-            <ul>
-              <li> A plain number such as <code>12</code>, <code>3.14</code>, <code>.15,</code> etc.
-              <li> A variable name, such as <code>pi</code>
-              <li> A <i>length</i> which can be a number, a fraction, or a number
-                   and a fraction followed buy a <i>unit</i>
-              <li> Any sequence of the the previous length-unit combinations as long as
-                   the units are of descending size
-              </ul>
-          <p> A <i>unit</i> is either <code>'</code> (feet), <code>ft</code> (feet),
-              <code>"</code> (inches), <code>in</code> (inches), <code>m</code> (meters),
-              or <code>cm</code> (centimeters).
-              In fact, any <i>variable</i> you define as a length can be used as a unit
-              (<code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code> are simply
-              predefined immutable variables).
-          <p> For example, if you enter
-              <code>yd = 3'</code>, you can then use expressions like <code>3yd 5 1/2"</code>.
-              Potentially useful definitions besides <code>yd</code> are <code>mi = 5280'</code>
-              and <code>km = 1000m</code>.
-          <p> Units must be specified in descending order.
-              You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
-              This is to prevent accidentally typing <code>12'3'</code> when you really
-              meant <code>12'3"</code>.
-              You can type nonsense like <code>3 1/2m 3.5"</code> if you want, but you won't
-              do it by accident.
-          <h3> Variables </h3>
-          <p> Define variables by typing <code class="abstract">name = expression</code>
-              then hitting "enter."
-              For instance, <code>frontage = 45'4 3/4"</code>. You can then use those values
-              in later expressions, e.g. <code>frontage/3</code>.
-              Amusingly, perhaps, because <code>frontage</code> is a length, it can also be
-              used as a unit: <code>1/3 frontage</code> or <code>1/3frontage</code>.
-          <p>The variables <code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code>
-              are predefined for use as values or as units. The variable <code>pi</code> is
-              predefined in case you care about circles. Predefined variables cannot be changed.
-          <h3> Functions </h3>
-          <p> Define functions by typing
-              <code class="abstract">name(param,param,&hellip;) = expression</code>
-              then hitting "enter." For instance, you can define a function to average to numbers
-              or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
-              <code>mean(&hellip;)</code> already does that).
-          <h4>Built-In Functions</h4>
-          <table>
-            <colgroup>
-              <col style="width: 8em">
-              <col style="width: auto">
-            </colgroup>
-            <tr>
-              <th> Function
-              <th> Description
-            <tr>
-              <td> mean(x,y,&hellip;) 
-              <td> the average of a set of numbers or lengths
-            <tr>
-              <td> hyp(x,y,&hellip;) 
-              <td> the hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
-          </table>
-          <p></p>
+    </div>
+    <div class="help" id="exprhelp">
+      <span class="closebtn" onclick="hideHelp()">&times;</span> 
+      <div>
+        <h3> Expressions </h3>
+        <p> Expressions can contain numbers, units and the operators + - * and /.
+            Multiplication and division are performed before addition and subtraction, and
+            parenthesis can be used for grouping. Spaces are generally optional.
+        <p> Units include:
+            <code>ft</code> <code>'</code> <code>in</code> <code>"</code> 
+            <code>m</code> and <code>cm</code>.
+            The unit names can be used as constants as well.
+        <p> As you type, the expression might be momentarily unparsable, e.g.,
+            <code>3'+</code>, until you finish typing. 
+            The results box will be grayed out while that happens.
+            It would be too noisy to alert each of these errors, but if you don't 
+            know why it's grayed out, you can hit enter to see an error message.
+        </p>
+        <table>
+          <colgroup>
+            <col style="width: 8em">
+            <col style="width: auto">
+          </colgroup>
+          <tr>
+            <th> Example
+            <th> Description
+          <tr>
+            <td> 5' 6"
+            <td> An ordinary distance
+          <tr>
+            <td> 5' 6 3/8" / 3
+            <td> Divide 5 feet 6 and 3/8 inches by 3
+          <tr>
+            <td> 5 1/2' - 8"
+            <td> Subtracts lengths
+          <tr>
+            <td> 5.5'
+            <td> You can use decimal values instead of fractions
+          <tr>
+            <td> 3/4"
+            <td> You can use just a fraction
+          <tr>
+            <td> (5'6" + 7') / 2
+            <td> The average of 5'6" and 7'
+          <tr>
+            <td> 5'10 3/8" * 3/4
+            <td> 3/4 of 5' 10 3/8"
+          <tr>
+            <td> 12' / 6"
+            <td> The ratio of 12' and 6" (result is 24)
+          <tr>
+            <td> 1 + 2 * 3
+            <td> Ordinary math (note order of operations; result is 7)
+          <tr>
+            <td> 1m - 2cm
+            <td> One meter minus two centimeters
+         <tr>
+            <td> ft
+            <td> A foot
+          <tr>
+            <td> ft * 12
+            <td> 12 feet; notice that such units are simply length-valued variables
+          <tr>
+            <td> 5' 6" * pi
+            <td> Circumference of a 5' 6" diameter circle
+          <tr>
+            <td> hyp(3', 4')
+            <td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
+        </table>
+        <h3> Terms </h3>
+        <p> Expressions are built up out of <i>terms</i> which are either
+          <ul>
+            <li> A plain number such as <code>12</code>, <code>3.14</code>, <code>.15,</code> etc.
+            <li> A variable name, such as <code>pi</code>
+            <li> A <i>length</i> which can be a number, a fraction, or a number
+                 and a fraction followed buy a <i>unit</i>
+            <li> Any sequence of the the previous length-unit combinations as long as
+                 the units are of descending size
+          </ul>
+        <p> A <i>unit</i> is either <code>'</code> (feet), <code>ft</code> (feet),
+            <code>"</code> (inches), <code>in</code> (inches), <code>m</code> (meters),
+            or <code>cm</code> (centimeters).
+            In fact, any <i>variable</i> you define as a length can be used as a unit
+            (<code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code> are simply
+            predefined immutable variables).
+        <p> For example, if you enter
+            <code>yd = 3'</code>, you can then use expressions like <code>3yd 5 1/2"</code>.
+            Potentially useful definitions besides <code>yd</code> are <code>mi = 5280'</code>
+            and <code>km = 1000m</code>.
+        <p> Units must be specified in descending order.
+            You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
+            This is to prevent accidentally typing <code>12'3'</code> when you really
+            meant <code>12'3"</code>.
+            You can type nonsense like <code>3 1/2m 3.5"</code> if you want, but you won't
+            do it by accident.
+        <h3> Variables </h3>
+        <p> Define variables by typing <code class="abstract">name = expression</code>
+            then hitting "enter."
+            For instance, <code>frontage = 45'4 3/4"</code>. You can then use those values
+            in later expressions, e.g. <code>frontage/3</code>.
+            Amusingly, perhaps, because <code>frontage</code> is a length, it can also be
+            used as a unit: <code>1/3 frontage</code> or <code>1/3frontage</code>.
+        <p> The variables <code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code>
+            are predefined for use as values or as units. The variable <code>pi</code> is
+            predefined in case you care about circles. Predefined variables cannot be changed.
+        <h3> Functions </h3>
+        <p> Define functions by typing
+            <code class="abstract">name(param,param,&hellip;) = expression</code>
+            then hitting "enter." For instance, you can define a function to average to numbers
+            or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
+            <code>mean(&hellip;)</code> already does that).
+        <h4>Built-In Functions</h4>
+        <table>
+          <colgroup>
+            <col style="width: 8em">
+            <col style="width: auto">
+          </colgroup>
+          <tr>
+            <th> Function
+            <th> Description
+          <tr>
+            <td> mean(x,y,&hellip;) 
+            <td> the average of a set of numbers or lengths
+          <tr>
+            <td> hyp(x,y,&hellip;) 
+            <td> the hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
+        </table>
+        <h3>License</h3>
+          <div style="float: left; margin: 0px 8px 8px 0px">
+          <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+            <img alt="Creative Commons License" style="border-width:0"
+              src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png">
+          </a></div>
+          This work is licensed under a
+          <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+            Creative Commons Attribution-ShareAlike 4.0 International License
+          </a>.
         </div>
       </div>
     </div>
