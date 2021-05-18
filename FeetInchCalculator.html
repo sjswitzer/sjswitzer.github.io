@@ -748,8 +748,7 @@
             return invokeFunction(symVal, []);
           if (val instanceof Object && val.type)
             return val;
-          parsepos = backtrack;
-          return null;
+          throw new ChattyError(`Unknown variable "${word}"`);
         }
         return parseVal();
       }
