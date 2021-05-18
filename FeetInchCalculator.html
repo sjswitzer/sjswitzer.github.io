@@ -153,23 +153,19 @@
         <p id="error" style="color: red"></p>
       </div>
       <span class="button" style="float: right" onclick="return showHelp('tipshelp')">
-        Tips!
+        Help
       </span>
       <div id="symdefs"></div>
       <div class="help" id="tipshelp">
         <span class="closebtn" onclick="hideHelp()">&times;</span>
         <div>
-          <h3>Tips</h3>
+          <h3>Help</h3>
           <p> Some quick tips to get you started:
           <ul>
             <li> Fields may be left empty when not relevent
             <li> A value like five and a half feet may be entered as 5.5 ft or as 5 ft 6 inches
             <li> A value like six and a quarter inches may be entered as 6.25 inches or
                  as 6 inches and 1/4
-            <li> Results are updated as you type but sometimes a partial input can't be
-                 interpreted, e.g., "<code>3 +</code>" before you finish typing.
-                 It would be too noisy to alert each of these errors, but if you don't 
-                 know why it's grayed out, you can hit enter to see the error.
             <li> A "metric foot" is a convention for metric designs where a foot is taken
                  to be exactly 30cm instead of 30.48cm
             <li> You can type a fairly general expression into the text box. Click the "?"
@@ -191,6 +187,8 @@
           <p> As you type, the expression might be momentarily unparsable, e.g.,
               <code>3'+</code>, until you finish typing. 
               The results box will be grayed out while that happens.
+              It would be too noisy to alert each of these errors, but if you don't 
+              know why it's grayed out, you can hit enter to see an error message.
           </p>
           <table>
             <colgroup>
@@ -283,7 +281,7 @@
           <p> Define functions by typing
               <code class="abstract">name(param,param,&hellip;) = expression</code>
               then hitting "enter." For instance, you can define a function to average to numbers
-              or lengths: <code>average(x,y) = (x+y)/2</code> (but the prefefined function
+              or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
               <code>mean(&hellip;)</code> already does that).
           <h4>Built-In Functions</h4>
           <table>
@@ -589,6 +587,7 @@
         //   yd: { type: 'in', val: 36 },  
         //   mi: { type: 'in', val: 5280*12 },
         //   km: { type: 'in', val: 1000/0.0254 },
+
         hyp: function(...params) {
           // General n-dimensional hypotenuse
           if (params.length < 1)
@@ -611,6 +610,7 @@
           }
           return { type: type, val: Math.sqrt(accum) };
         },
+
         mean: function(...params) {
           if (params.length < 1)
             throw this.sym + "(): no parameters";
