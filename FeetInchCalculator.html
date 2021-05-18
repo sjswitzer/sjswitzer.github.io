@@ -1,3 +1,22 @@
+<!--
+  Copyright 2021 Stan Switzer
+
+    This work is licensed under a Creative Commons Attribution-ShareAlike
+    4.0 International License. https://creativecommons.org/licenses/by-sa/4.0/
+
+  Synopsis:
+
+    A simple tool for doing calculations with US customary units
+    of length. It's nothing compared to the legendary Unix "units"
+    command, but it deals with typical notations for units and fractional
+    units, and does useful calculations with US customary units of length.
+
+    Future work might include a comprehensive system of dimensional analysis
+    in customary units and notations, but it's unclear if anything good could
+    possibly come of such an effort.
+
+    https://en.wikipedia.org/wiki/United_States_customary_units
+-->
 <html>
   <title>Feet & Inch Calculator</title>
   <body onload="updateResult()">
@@ -111,9 +130,12 @@
         padding: 0px 10px;
         border-radius: 4px;
       }
+      div.cc {
+        position:absolute;
+        bottom:0;
+        right:0;
+      }
     </style>
-
-    <!-- it's neater without optional closing tags -->
     <div class="shrink-container">
       <div class="spread-container">
         <input type="text" style="text-align: right;"
@@ -171,6 +193,12 @@
             <li> You can type a fairly general expression into the text box. Click the "?"
                  button for more information.
           </ul>
+          <div class="cc">
+            <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">
+              <img alt="Creative Commons License" style="border-width:0"
+                   src="https://i.creativecommons.org/l/by-sa/4.0/80x15.png" />
+            </a>
+          </div>
         </div>
       </div>
       <div class="help" id="exprhelp">
@@ -634,6 +662,24 @@
               break;
           }
           return { type: type, val: accum/n };
+        },
+
+        extraUnits: function() {
+          // Easter-egg function. Defines a bunch of units.
+          const addUnit = (sym, inches) => {
+            userSymbols[sym] = { sym: sym, type: 'in', val: inches };
+          }
+          addUnit('yd', 3*12);          // 3'
+          addUnit('fathom', 6*12);      // 6'
+          addUnit('mi', 5280*12);       // 5280'
+          addUnit('km', 1000/0.0254);   // 1000m
+          addUnit('chain', 66*12);      // 66'
+          addUnit('furlong', 66*12*10); // 10 chains
+          addUnit('rod', 66*12/4);      // chain/4
+          addUnit('link', 66*12/100);   // chain/100
+          showUserSymbols();
+          // Has to return something. Why not 42?
+          return { type: 'num', val: 42 };
         }
       };
 
@@ -662,7 +708,7 @@
              return val;
         }
         if (params.length != symVal.params.length)
-           throw `incorrect number of params for ${word}(${symVal.params.join(',')})`;
+           throw `incorrect number of params for ${symVal.sym}(${symVal.params.join(',')})`;
         const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
         try {
           environment = {};
@@ -881,9 +927,7 @@
           if (take('=')) {
             let val = parseExpr();
             if (val) {
-              val.sym = word;
-              val.defined = true;
-              return val;
+              return { ...val, sym: word, defined: true };
             }
           }
           if (take('(')) {
