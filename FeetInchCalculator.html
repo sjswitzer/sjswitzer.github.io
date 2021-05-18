@@ -80,6 +80,24 @@
       span.button:hover {
         background: #0000cc;
       }
+      p.defn > span {
+        cursor: pointer;
+        padding: 0px 5px;
+        background: #888888;
+        font-size: 16px;
+        line-height: 16px;
+        font-weight: bold;
+        border-radius: 4px;
+        color: white;
+        transition: 0.3s;     
+        display: none;
+      }
+      p.defn > span:hover {
+        background: #bb8888;
+      }
+      p.defn:hover > span {
+        display: inline;
+      }
       #symdefs p {
         margin: 0px;
         font-size: 12pt;
@@ -971,12 +989,18 @@
         document.getElementById('symdefs');
         let str = "";
         let keys = Object.keys(userSymbols).sort();
-        for (const val of keys) {
-          let symStr = symString(userSymbols[val]);
+        for (const sym of keys) {
+          let symStr = symString(userSymbols[sym]);
           if (symStr)
-            str += `<p> ${escapeHTML(symStr)} </p>`;
+            str += `<p class="defn"> ${escapeHTML(symStr)}
+              <span onclick="deleteDef('${sym}')">&times;</span></p>`;
         }
         document.getElementById('symdefs').innerHTML = str;
+      }
+
+      function deleteDef(sym) {
+        delete userSymbols[sym];
+        showUserSymbols()
       }
 
       function symString(val) {
