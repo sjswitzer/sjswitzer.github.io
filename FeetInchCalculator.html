@@ -182,8 +182,8 @@
         <input type="text" oninput="updateResult()" size="3" id="div" value="">
       </div>
       <table class="layout">
-        <td> <input style="width: 100%" type="text" oninput="updateParse()"
-          onchange="updateParse(true)" id="expr" value="">
+        <td> <input style="width: 100%" type="text" spellcheck="false" id="expr" value=""
+          oninput="updateParse()" onchange="updateParse(true)">
         <td style="width: 1px">
           <span class="button" style="margin-left: 4px" onclick="return showHelp('help-expr')"> ? </span>
       </table>
@@ -724,7 +724,7 @@
           addUnit('rod', 66*12/4);      // chain/4
           addUnit('link', 66*12/100);   // chain/100
           addUnit('pica', 1/6);         // 1/6"
-          addUnit('point', 1/27);       // 1/72", 12 pica
+          addUnit('point', 1/72);       // 1/72", 12 pica
           addUnit('km', 1000/0.0254);   // 1000m -- This isn't a US unit. Whatever.
           showUserSymbols();
           throw "Surprise!";
