@@ -145,6 +145,10 @@
             <li> A value like five and a half feet may be entered as 5.5 ft or as 5 ft 6 inches
             <li> A value like six and a quarter inches may be entered as 6.25 inches or
                  as 6 inches and 1/4
+            <li> Results are updated as you type but sometimes a partial input can't be
+                 interpreted, e.g., "<code>3 +</code>" before you finish typing.
+                 It would be too noisy to alert each of these errors, but if you don't 
+                 know why it's grayed out, you can hit enter to see the error.
             <li> A "metric foot" is a convention for metric designs where a foot is taken
                  to be exactly 30cm instead of 30.48cm
             <li> You can type a fairly general expression into the text box. Click the "?"
@@ -335,14 +339,12 @@
           showResult(totalInches, true);
         }
         catch (e) {
-          showError(e);
+          if (!e instanceof ChattyError)
+            showError(e);
         }
       }
 
       function showError(e) {
-        if (e instanceof SilentError)
-          return;
-
         // we had an error so hide the results block and show the error block
         document.getElementById('results').style.display = 'none';
         document.getElementById('numberResults').style.display = 'none';
@@ -354,7 +356,7 @@
       // Parser, for general calculation with expressions
       //
 
-      let parsestr = "", parsepos = 0;
+      let parsestr = "", parsepos = 0, parseFurthest = 0;
       const DIGITS = "0123456789";
       const ALPHA =
         "abcdefghijklmnopqrstuvwxyz" +
@@ -371,6 +373,8 @@
         if (parsepos < parsestr.length) {
           let ch = parsestr.charAt(parsepos);
           parsepos += 1;
+          if (environment === rootEnv && parsepos > parseFurthest)
+            parseFurthest = parsepos;
           return ch;
         }
         return null;
@@ -400,7 +404,8 @@
         return foundSpace;
       }
 
-      class SilentError extends Error {
+      // Errors that are too chatty to show while typing
+      class ChattyError extends Error {
         constructor(msg) {
           super();
           this.msg = msg;
@@ -609,7 +614,7 @@
       };
 
       const userSymbols = {}; 
-      let environment = {};
+      let rootEnv = {}, environment = rootEnv;
 
       function getSymbol(name) {
         let val = environment[name];
@@ -808,7 +813,7 @@
             else if (val.type === 'num')
               throw "Cannot add numbers and lengths";
             else if (val.type === 'in')
-              throw new SilentError("Cannot add numbers and lengths");
+              throw new ChattyError("Cannot add numbers and lengths");
           } else if (take("-")) {
             let val2 = parseMulExpr();
             if (val2 === null) {
@@ -830,7 +835,7 @@
             else if (val.type === 'num')
               throw "Cannot subtract numbers and lengths";
             else if (val.type === 'in')
-              throw new SilentError("Cannot subtract numbers and lengths");
+              throw new ChattyError("Cannot subtract numbers and lengths");
           } else {
             break;
           }
@@ -889,16 +894,17 @@
         return parseExpr();
       }
 
-      function updateParse(updateVars) {
+      function updateParse(userHitEnter) {
         clearFields();
         try {
           parsestr = document.getElementById('expr').value;
           parsepos = 0;
-          environment = {};
+          parseFurthest = 0;
+          environment = rootEnv;
           let val = parseStatement();
           skipSpaces();
-          if (val !== null && !getc()) { // nothing left over at the end
-            if (updateVars && val.defined) {
+          if (val !== null && !peekc()) { // nothing left over at the end
+            if (userHitEnter && val.defined) {
               let sym = val.sym;
               if (symbols[sym])
                 throw "Cannot redefine system symbols";
@@ -914,10 +920,22 @@
               showAssignResult(val);
             }
             return;
+          } else if (userHitEnter) {
+            let rest = parsestr.substr(parseFurthest);
+            if (rest.length > 0)
+              showError(`Cannot parse beyond "${rest}"`);
+            else
+              showError(`Incomplete input`);
           }
         }
         catch (e) {
-          showError(e);
+          if (e instanceof ChattyError) {
+            // if the user hit "enter" it's ok to show chatty errors
+            if (userHitEnter)
+              showError(e.msg);
+          } else {
+            showError(e);
+          }
         }
 
         // Gray out the result since we can't parse correctly right now
