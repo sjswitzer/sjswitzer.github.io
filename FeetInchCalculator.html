@@ -924,7 +924,7 @@
             let rest = parsestr.substr(parseFurthest);
             if (rest.length > 0)
               showError(`Cannot parse beyond "${rest}"`);
-            else
+            else if (parsestr.trim() !== "")
               showError(`Incomplete input`);
           }
         }
