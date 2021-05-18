@@ -333,7 +333,13 @@
             <code class="abstract">name(param,param,&hellip;) = expression</code>
             then hitting "enter." For instance, you can define a function to average to numbers
             or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
-            <code>mean(&hellip;)</code> already does that).
+            <code>mean(&hellip;)</code> already does that, so&hellip;).
+        <p> Function bodies can use any of their parameters (<i>of course</i>) and variables
+            that have already been defined. As a special case, a function with no parameters
+            can be used as a "dynamic variable." That is, assuming variables <code>a</code>
+            and <code>b</code> are already defined, the function
+            <code>c() = a + b</code> can be invoked as <code>c()</code> or <code>c</code>,
+            and in either case gives you the current value of <code>a + b</code>.
         <h4> Built-In Functions </h4>
         <table>
           <colgroup>
@@ -386,7 +392,8 @@
             <a href="https://www.google.com/search?q=5%27+6+3%2F8%22+%2F+3">
             Google will do that for you too</a>.
         <p> Oh well, it was a good excuse to spiff up my HTML, CSS, and JavaScript skills.
-        <h3> License </h3>
+            Not a bad weekend project.
+        <p>Copyright 2021, Stan Switzer</p>
         <div style="float: left; margin: 0px 8px 70px 0px">
           <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
             <img alt="Creative Commons License" style="border-width:0"
