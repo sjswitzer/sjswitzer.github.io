@@ -356,7 +356,8 @@
       // Parser, for general calculation with expressions
       //
 
-      let parsestr = "", parsepos = 0, parseFurthest = 0;
+      let parsestr = "", initialParseStr = "";
+      let parsepos = 0, parseFurthest = 0;
       const DIGITS = "0123456789";
       const ALPHA =
         "abcdefghijklmnopqrstuvwxyz" +
@@ -373,7 +374,7 @@
         if (parsepos < parsestr.length) {
           let ch = parsestr.charAt(parsepos);
           parsepos += 1;
-          if (environment === rootEnv && parsepos > parseFurthest)
+          if (parsepos > parseFurthest && parsestr === initialParseStr)
             parseFurthest = parsepos;
           return ch;
         }
@@ -614,7 +615,7 @@
       };
 
       const userSymbols = {}; 
-      let rootEnv = {}, environment = rootEnv;
+      let environment = {};
 
       function getSymbol(name) {
         let val = environment[name];
@@ -897,10 +898,10 @@
       function updateParse(userHitEnter) {
         clearFields();
         try {
-          parsestr = document.getElementById('expr').value;
+          parsestr = initialParseStr = document.getElementById('expr').value;
           parsepos = 0;
           parseFurthest = 0;
-          environment = rootEnv;
+          environment = {};
           let val = parseStatement();
           skipSpaces();
           if (val !== null && !peekc()) { // nothing left over at the end
