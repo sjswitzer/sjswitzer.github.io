@@ -1116,6 +1116,9 @@
       function showHelp(id) {
         let helpElement = document.getElementById(id);
         helpElement.style.display = "block"; // inherits 'none' from "help" class
+        for (let child of helpElement.children)
+          if (child.tagName === 'DIV')
+            child.scroll(0, 0);
       }
 
       function hideHelp() {
