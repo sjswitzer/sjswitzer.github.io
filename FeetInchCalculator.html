@@ -65,7 +65,7 @@
         height: 100%;
       }
       .help code {
-        font-size: 125%;
+        font-size: 130%;
         font-weight: bold;
       } 
       .help code.abstract {
@@ -275,7 +275,7 @@
               For instance, <code>frontage = 45'4 3/4"</code>. You can then use those values
               in later expressions, e.g. <code>frontage/3</code>.
               Amusingly, perhaps, because <code>frontage</code> is a length, it can also be
-              used as a unit:  <code>1/3 frontage</code>.
+              used as a unit: <code>1/3 frontage</code> or <code>1/3frontage</code>.
           <p>The variables <code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code>
               are predefined for use as values or as units. The variable <code>pi</code> is
               predefined in case you care about circles. Predefined variables cannot be changed.
@@ -513,7 +513,7 @@
         let backtrack1 = parsepos;
         let inches = 0, haveLength = false, lastUnit = Number.POSITIVE_INFINITY;
 
-        // The idea of ;astUnit is that units should get progressively smaller.
+        // The idea of lastUnit is that units should get progressively smaller.
         // Otherwise, someone could enter 2'3' when they meant 2'3"
 
         while (true) {
@@ -536,13 +536,15 @@
             let word = parseWord(), ok = false;
             if (word) {
               const symVal = getSymbol(word);
-              if (symVal && symVal.type === 'in') {
-                if (symVal.val >= lastUnit)
-                  throw "Implausible units";
-                lastUnit = symVal.val;
-                inches += val * symVal.val;
-                ok = true;
-              }
+              if (!symVal)
+                throw new ChattyError(`Unknown unit: "${word}"`);
+              if (symVal.type !== 'in')
+                throw new ChattyError(`Not a unit: "${word}"`);
+              if (symVal.val >= lastUnit)
+                throw "Implausible units";
+              lastUnit = symVal.val;
+              inches += val * symVal.val;
+              ok = true;
             }
             if (!ok) {
               parsepos = backtrack2;
@@ -748,7 +750,7 @@
             return invokeFunction(symVal, []);
           if (val instanceof Object && val.type)
             return val;
-          throw new ChattyError(`Unknown variable "${word}"`);
+          throw new ChattyError(`Unknown variable: "${word}"`);
         }
         return parseVal();
       }
