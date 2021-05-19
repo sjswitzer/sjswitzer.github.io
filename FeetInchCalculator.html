@@ -128,7 +128,7 @@
       p.defn > span {
         cursor: pointer;
         padding: 0px 5px;
-        background: #888888;
+        background: #bb8888;
         font-size: 16px;
         line-height: 16px;
         font-weight: bold;
@@ -138,7 +138,7 @@
         visibility: hidden;
       }
       p.defn > span:hover {
-        background: #ff8888;
+        background: #eeaaaa;
       }
       p.defn > span:active {
         background: #ff0000;
@@ -151,7 +151,7 @@
         font-size: 12pt;
       }
 
-      /* the results box */
+      /* The results box */
       .results {
         border: 2px solid;
         margin: 10px 0px;
@@ -452,12 +452,12 @@
 
       function updateResult() {
         try {
-          let ft = getField('ft', 0);
-          let inch = getField('inch', 0);
-          let num = getField('num', 0);
-          let denom = getField('denom', 1);
-          let times = getField('times', 1);
-          let div = getField('div', 1);
+          const ft = getField('ft', 0);
+          const inch = getField('inch', 0);
+          const num = getField('num', 0);
+          const denom = getField('denom', 1);
+          const times = getField('times', 1);
+          const div = getField('div', 1);
 
           if (denom === 0 || div === 0)
             throw "Divide by zero";
@@ -747,24 +747,26 @@
           return { type: type, val: accum/n };
         },
 
-        UScu: function() {   // United States customary units
-          // Easter egg function
-          // Defines a bunch of United States customary units.
-          //    https://en.wikipedia.org/wiki/United_States_customary_units#Length  
+        Egg: function(p) {
+          // Easter egg function that defines a bunch of units
           const addUnit = (sym, inches) => {
             userSymbols[sym] = { sym: sym, type: 'in', val: inches };
           }
+          // if there's no parameter (of any type or value) just add the useful ones
           addUnit('yd', 3*12);          // 3'
-          addUnit('fathom', 6*12);      // 6'
           addUnit('mi', 5280*12);       // 5280'
-          addUnit('league', 5280*12*3); // 3 mi
-          addUnit('chain', 66*12);      // 66'
-          addUnit('furlong', 66*12*10); // 10 chains
-          addUnit('rod', 66*12/4);      // chain/4
-          addUnit('link', 66*12/100);   // chain/100
-          addUnit('pica', 1/6);         // 1/6"
-          addUnit('point', 1/72);       // 1/72", 12 pica
-          addUnit('km', 1000/0.0254);   // 1000m -- This isn't a US unit. Whatever.
+          addUnit('km', 1000/0.0254);   // 1000m
+          if (p) {
+             // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
+            addUnit('fathom', 6*12);      // 6'
+            addUnit('league', 5280*12*3); // 3 mi
+            addUnit('chain', 66*12);      // 66'
+            addUnit('furlong', 66*12*10); // 10 chains
+            addUnit('rod', 66*12/4);      // chain/4
+            addUnit('link', 66*12/100);   // chain/100
+            addUnit('pica', 1/6);         // 1/6"
+            addUnit('point', 1/72);       // 1/72", 12 pica
+          }
           showUserSymbols();
           throw "Surprise!";
         }
