@@ -460,7 +460,7 @@
           showResult(totalInches, true);
         }
         catch (e) {
-          if (!e instanceof ChattyError)
+          if (!(e instanceof ChattyError))
             showError(e);
         }
       }
