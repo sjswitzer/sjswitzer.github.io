@@ -31,6 +31,8 @@
         padding: 1px 4px;
       }
 
+      .right { float: right; }
+
       /*
        * A container that shrinks to its largest-width content
        */
@@ -49,7 +51,7 @@
 
       /*
        * Initially-hidden help content.
-       * Help contains a <span> for a close button and <div>s which are made scrollable.
+       * Help contains a <span> for a close button and a <div> which is made scrollable.
        */
       .help {
         padding: 0px 5px 0px 20px;
@@ -145,7 +147,7 @@
         visibility: visible;
       }
       p.defn {
-        margin: 5px;
+        margin: 5px 0px;
         font-size: 12pt;
       }
 
@@ -195,17 +197,17 @@
         </p>
         <p id="error" style="color: red"></p>
       </div>
-      <span class="button" style="float: right" onclick="showHelp('help-tips')">
+      <span class="button right" onclick="showHelp('help-tips')">
         Help
       </span>
 <!-- Debugging aids
-      <span class="button" style="float: right" onclick="saveUserSymbols()">
+      <span class="button right" onclick="saveUserSymbols()">
         Save
       </span>
-      <span class="button" style="float: right" onclick="loadUserSymbols()">
+      <span class="button right" onclick="loadUserSymbols()">
         Load
       </span>
-      <span class="button" style="float: right" onclick="clearUserSymbols()">
+      <span class="button right" onclick="clearUserSymbols()">
         Clear
       </span>
 -->
