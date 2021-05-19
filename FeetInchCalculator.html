@@ -452,13 +452,10 @@
           const denom = getField('denom', 1);
           const times = getField('times', 1);
           const div = getField('div', 1);
-
-          if (denom === 0 || div === 0)
-            throw "Divide by zero";
+          if (denom === 0 || div === 0) throw "Divide by zero";
 
           let totalInches = (ft*12 + inch + num/denom) * times / div;
-          if (isNaN(totalInches))
-            throw "Bad input";
+          if (isNaN(totalInches)) throw "Bad input";
 
           showResult(totalInches, true);
         }
@@ -529,7 +526,8 @@
         return foundSpace;
       }
 
-      // Errors that are too chatty to show while typing
+      // Errors that are too chatty to show while typing.
+      // Error will be shown if the user hits "enter."
       class ChattyError extends Error {
         constructor(msg) {
           super();
@@ -721,8 +719,7 @@
               n += 1;
             } else {
               if (val.type !== type) {
-                if (accum !== 0)
-                  throw `${this.sym}(): parameter types incompatible`;
+                if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
                 type = val.type;
               }
               accum += val.val;
@@ -777,8 +774,7 @@
       }
 
       function invokeFunction(symVal, params) {
-        if (symVal.type !== 'fn')
-          throw "Not a function";  // This should never happen
+        if (symVal.type !== 'fn') throw "Not a function";
         if (symVal.native) {
           let val = symVal.native(...params);
           if (val !== null)
@@ -912,8 +908,7 @@
               throw "Can't divide functions";
             if (val.type === 'parse' || val2.type === 'parse')
               return { type: 'parse', op: '/', expr1: val, expr2: val2 };
-            if (val2.val === 0)
-              throw "Divide by zero";
+            if (val2.val === 0) throw "Divide by zero";
             if (val.type === 'num' && val2.type === 'num')
               val =  { type: 'num', val: val.val / val2.val };
             else if (val.type === 'in' && val2.type === 'num')
@@ -1051,8 +1046,7 @@
           if (val !== null && !peekc()) { // nothing left over at the end
             if (userHitEnter && val.defined) {
               let sym = val.sym;
-              if (symbols[sym])
-                throw "Cannot redefine system symbols";
+              if (symbols[sym]) throw "Cannot redefine system symbols";
               showAssignResult(val);
               delete val.defined;
               userSymbols[sym] = val;
