@@ -588,8 +588,7 @@
             parsepos = backtrack;
             return val;
           }
-          if (denom === 0)
-            throw "Divide by zero";
+          if (denom === 0) throw "Divide by zero";
           return val/denom;
         }
         let num = parseNum();
@@ -598,7 +597,7 @@
         if (take('/')) {
           let denom = parseNum();
           if (denom !== null) {
-            if (denom === 0) new MessageError("Divide by zero");
+            if (denom === 0) throw "Divide by zero";
             return val + num/denom;
           }
         }
@@ -625,13 +624,11 @@
           if (val === null)
             break;
           if (take("'")) {
-            if (12 >= lastUnit)
-              throw "Implausible units";
+            if (12 >= lastUnit) throw "Implausible units";
             lastUnit = 12;
             inches += val*12;
           } else if (take('"')) {
-            if (1 >= lastUnit)
-              throw "Implausible units";
+            if (1 >= lastUnit) throw "Implausible units";
             lastUnit = 1;
             inches += val;
           } else {
@@ -643,8 +640,7 @@
                 throw new ChattyError(`Unknown unit: "${word}"`);
               if (symVal.type !== 'in')
                 throw new ChattyError(`Not a unit: "${word}"`);
-              if (symVal.val >= lastUnit)
-                throw "Implausible units";
+              if (symVal.val >= lastUnit) throw "Implausible units";
               lastUnit = symVal.val;
               inches += val * symVal.val;
               ok = true;
@@ -703,8 +699,7 @@
           while (true) {
             if (val.val !== 0) {
               if (val.type !== type) {
-                if (accum !== 0)
-                  throw this.sym + "(): parameter types incompatible";
+                if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
                 type = val.type;
               }
               accum += val.val * val.val;
@@ -717,8 +712,7 @@
         },
 
         mean: function(...params) {
-          if (params.length < 1)
-            throw this.sym + "(): no parameters";
+          if (params.length < 1) throw `${this.sym}()(): no parameters`;
           let val = params.pop();
           let type = val.type;
           let accum = 0, n = 0;
@@ -728,7 +722,7 @@
             } else {
               if (val.type !== type) {
                 if (accum !== 0)
-                  throw this.sym + "(): parameter types incompatible";
+                  throw `${this.sym}(): parameter types incompatible`;
                 type = val.type;
               }
               accum += val.val;
@@ -801,8 +795,7 @@
             environment[symVal.params[i]] = params[i];
           let val = parseExpr();
           skipSpaces();
-          if (peekc())
-             throw "Invalid function";
+          if (peekc()) throw "Invalid function";
           return val;
         }
         finally {
@@ -840,8 +833,7 @@
         if (take('-')) {
           let val = parseTerm();
           if (val !== null) {
-            if (val.type === 'fn')
-              throw "Can't negate functions";
+            if (val.type === 'fn') throw "Can't negate functions";
             if (val.type === 'parse')
               return { type: 'parse', op: 'neg', expr: val };
             return { type: val.type, val: -val.val };
@@ -954,7 +946,7 @@
               return null;
             }
             if (val.type === 'fn' || val2.type === 'fn')
-              throw "Can't add functions";
+              throw new ChattyError("Can't add functions");
             if (val.type === 'parse' || val2.type === 'parse')
               return { type: 'parse', op: '+', expr1: val, expr2: val2 };
             if (val.type === 'num' && val2.type === 'num')
