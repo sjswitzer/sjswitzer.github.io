@@ -14,7 +14,7 @@
     <title>Feet & Inch Calculator</title>
     <base target="_blank"> <!-- all links open in a new tab/page -->
   </head>
-  <body onload="updateResult()">
+  <body onload="onLoad()">
     <style type="text/css">
       body {
         margin: 4px 12px;
@@ -79,12 +79,9 @@
         height: 100%;
       }
       /* styling for help content */
-      .help td {
+      .help td, .help th {
         padding: 0px 10px;
         vertical-align: top;
-      }
-      .help th {
-        padding: 0px 10px;
         text-align: left;
       }
       .help ul {
@@ -108,7 +105,6 @@
         cursor: pointer;
         padding: 2px 8px;
         background: #4444ff;
-        font-size: 14pt;
         border-radius: 4px;
         color: white;
         transition: 0.3s;
@@ -182,7 +178,7 @@
         <td> <input style="width: 100%" type="text" spellcheck="false" id="expr" value=""
           oninput="updateParse()" onchange="updateParse(true)">
         <td style="width: 1px">
-          <span class="button" style="margin-left: 4px" onclick="return showHelp('help-expr')"> ? </span>
+          <span class="button" style="margin-left: 4px; font-size: 18px" onclick="showHelp('help-expr')"> ? </span>
       </table>
       <div class="results">
         <p id="results">
@@ -199,9 +195,20 @@
         </p>
         <p id="error" style="color: red"></p>
       </div>
-      <span class="button" style="float: right" onclick="return showHelp('help-tips')">
+      <span class="button" style="float: right" onclick="showHelp('help-tips')">
         Help
       </span>
+<!-- Debugging aids
+      <span class="button" style="float: right" onclick="saveUserSymbols()">
+        Save
+      </span>
+      <span class="button" style="float: right" onclick="loadUserSymbols()">
+        Load
+      </span>
+      <span class="button" style="float: right" onclick="clearUserSymbols()">
+        Clear
+      </span>
+-->
       <div id="symdefs"></div>
     </div>
     <div class="help" id="help-tips">
@@ -218,9 +225,9 @@
                a foot is taken to be exactly 30cm instead of 30.48cm.
                It's an <a href="https://en.wikipedia.org/wiki/ISO_2848#Metric_foot">international standard!</a>.
           <li> You can type a fairly general expression into the text box. Click the
-               <span class="button" onclick="return showHelp('help-expr')" style="font-size: 12">
+               <span class="button" onclick="showHelp('help-expr')">
                  ? </span> button for
-               <span class="linklike" onclick="return showHelp('help-expr')">more information</span>.
+               <span class="linklike" onclick="showHelp('help-expr')">more information</span>.
         </ul>
       </div>
     </div>
@@ -357,7 +364,7 @@
             <td> the hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
         </table>
         <h3> Odds And Ends </h3>
-        <p> <span class="linklike" onclick="return showHelp('help-boring')">Boring details</span>
+        <p> <span class="linklike" onclick="showHelp('help-boring')">Boring details</span>
             if you're interested.
       </div>
     </div>
@@ -429,12 +436,12 @@
         return val;
       }
 
-      const digits = 10, epsilon = Math.pow(10, -digits);
+      const DIGITS_PRECISION = 10, EPSILON = Math.pow(10, -DIGITS_PRECISION);
 
       function num2str(val) {
         // Avoids display of nonsense like 2.5000...001 while
-        // maintaining accuracy to "digits" decimal digits.
-        val = val.toFixed(digits);
+        // maintaining accuracy to "DIGITS_PRECISION" decimal digits.
+        val = val.toFixed(DIGITS_PRECISION);
         while (val.endsWith("0"))
           val = val.substr(0, val.length-1);
         if (val.endsWith("."))
@@ -506,7 +513,7 @@
       function take(match, noskip) {
         if (!noskip)
           skipSpaces();
-        if (peekc() === match) { // make the single character case faster
+        if (parsestr.charAt(parsepos) === match) { // make the single character case faster
           parsepos += 1;
           return true;
         }
@@ -762,7 +769,7 @@
         }
       };
 
-      const userSymbols = {}; 
+      const userSymbols = {};
       let environment = {};
 
       function getSymbol(name) {
@@ -1118,14 +1125,20 @@
       function showUserSymbols() {
         document.getElementById('symdefs');
         let str = "";
-        let keys = Object.keys(userSymbols).sort();
-        for (const sym of keys) {
+        // Kinda seems like sorting is a good idea, but
+        // JavaScript keeps entries in definition order and
+        // that's actually better
+        for (const sym in userSymbols) {
           let symStr = symString(userSymbols[sym]);
           if (symStr)
             str += `<p class="defn"><span onclick="deleteDef('${sym}')">&times;</span>
               ${escapeHTML(symStr)}</p>`;
         }
         document.getElementById('symdefs').innerHTML = str;
+
+        // Can't seem to save to local storage on unload in Safari,
+        // so just do it here, I guess.
+        saveUserSymbols();
       }
 
       function deleteDef(sym) {
@@ -1217,7 +1230,7 @@
         if (inches !== 0 || num !== 0)
            ftStr += '"';
         let delta = totalInches - (ft*12 + inches + num/denom);
-        if (Math.abs(delta) < epsilon) {
+        if (Math.abs(delta) < EPSILON) {
           delta = "";
         } else {
           if (delta < 0)
@@ -1237,7 +1250,7 @@
         if (num !== 0)
           inStr += `${sp}${num}/${denom}`;
         inStr += '"';
-	  return [ftStr, inStr, delta];
+        return [ftStr, inStr, delta];
       }
 
       function showHelp(id) {
@@ -1255,11 +1268,94 @@
           e.style.display = ''; // back to inherited 'none'
       }
 
+      const GUID = "ad1f9c32-ed69-457d-89a0-f966c81424bd";
+      const LOCAL_STORAGE_KEY = "FeetInchCalculator-" + GUID;
+      const MAJOR = 1, MINOR = 0, PATCH = 0;
+
+      function clearUserSymbols() {  // for debugging, mostly
+        const localStorage = window.localStorage;
+        if (!localStorage)
+          return;
+        localStorage.setItem(LOCAL_STORAGE_KEY, "");
+        localStorage.clear();
+      }
+
+      function loadUserSymbols() {
+        const localStorage = window.localStorage;
+        if (!localStorage)
+          return false;
+        try {
+          let json = localStorage.getItem(LOCAL_STORAGE_KEY);
+          if (!json)
+            return false;
+          let wad = JSON.parse(json);
+          if (!wad || !wad.major || wad.major > MAJOR)
+            return false;
+          if (!wad.defs)
+            return false;
+          for (const def of wad.defs) {
+            try {
+              // XXX refactor this?
+              parsestr = initialParseStr = def;
+              parsepos = 0;
+              parseFurthest = 0;
+              environment = {};
+              let val = parseStatement();
+              skipSpaces();
+              if (val !== null && !peekc()) { // nothing left over at the end
+                let sym = val.sym;
+                if (symbols[sym])
+                  next;
+                delete val.defined;
+                userSymbols[sym] = val;
+              }
+            }
+            catch (e) {
+            }
+          }
+          showUserSymbols();
+          return true;
+        }
+        catch (e) {
+        }
+        return false;    
+      }
+
+      function saveUserSymbols() {
+        const localStorage = window.localStorage;
+        if (!localStorage)
+          return false;
+        const wad = {
+          major: MAJOR, minor: MINOR, patch: PATCH, defs: []
+        };
+        // We rely on the fact that objects are enumerated in the order
+        // items were added. Otherwise, function definitions might fail
+        // due to their variable references being unsatisfied.
+        for (const sym in userSymbols) {
+          let symStr = symString(userSymbols[sym]);
+          if (symStr)
+            wad.defs.push(symStr);
+        }
+        let json = JSON.stringify(wad);
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, json);
+          return true;
+        }
+        catch (e) {
+        }
+        return false;
+      }
+
       document.addEventListener("keydown", function(evt) {
         evt = evt || window.event;
         if (evt.key === "Escape" || evt.key === "Esc" || evt.keyCode === 27)
           hideHelp();
       });
+
+      function onLoad() {
+        loadUserSymbols();
+        updateResult();
+      }
 
     </script>
   </body>
