@@ -180,7 +180,7 @@
         <td> <input style="width: 100%" type="text" spellcheck="false" id="expr" value=""
           oninput="updateParse()" onchange="updateParse(true)">
         <td style="width: 1px">
-          <span class="button" style="margin-left: 4px; font-size: 18px" onclick="showHelp('help-expr')"> ? </span>
+          <span class="button" style="margin-left: 4px; font-size: 18px" onclick="showHelp('help-expr')">?</span>
       </table>
       <div class="results">
         <p id="results">
@@ -197,20 +197,7 @@
         </p>
         <p id="error" style="color: red"></p>
       </div>
-      <span class="button right" onclick="showHelp('help-tips')">
-        Help
-      </span>
-<!-- Debugging aids
-      <span class="button right" onclick="saveUserSymbols()">
-        Save
-      </span>
-      <span class="button right" onclick="loadUserSymbols()">
-        Load
-      </span>
-      <span class="button right" onclick="clearUserSymbols()">
-        Clear
-      </span>
--->
+      <span class="button right" onclick="showHelp('help-tips')">Help</span>
       <div id="symdefs"></div>
     </div>
     <div class="help" id="help-tips">
@@ -226,7 +213,7 @@
           <li> A "metric foot" is a convention used in the construction industry where
                a foot is taken to be exactly 30cm instead of 30.48cm. It's an
                <a href="https://en.wikipedia.org/wiki/ISO_2848#Metric_foot">
-                 international standard!</a>.
+                 international standard</a>!
           <li> You can type a fairly general expression into the text box. Click the
                <span class="button" onclick="showHelp('help-expr')">?</span> button
                for more information.
@@ -365,6 +352,11 @@
             <td> hyp(x,y,&hellip;) 
             <td> the hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
         </table>
+        <h3> Saved State </h3>
+        <p> User-defined variables and functions are saved between sessions in local
+            storage. In case you run into a problem with that, you can
+            <span class="linklike" onclick="clearLocalStorage()">clear</span>
+            local storage.
         <h3> Odds And Ends </h3>
         <p> <span class="linklike" onclick="showHelp('help-boring')">Boring details</span>
             if you're interested.
@@ -402,7 +394,7 @@
             Google will do that for you too</a>.
         <p> Oh well, it was a good excuse to spiff up my HTML, CSS, and JavaScript skills.
             Not a bad weekend project.
-        <p>Copyright 2021, Stan Switzer</p>
+        <p> Copyright &copy; 2021, Stan Switzer
         <div style="float: left; margin: 0px 8px 70px 0px">
           <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
             <img alt="Creative Commons License" style="border-width:0"
@@ -1276,7 +1268,7 @@
       const LOCAL_STORAGE_KEY = "FeetInchCalculator-" + GUID;
       const MAJOR = 1, MINOR = 0, PATCH = 0;
 
-      function clearUserSymbols() {  // for debugging, mostly
+      function clearLocalStorage() {
         const localStorage = window.localStorage;
         if (!localStorage)
           return;
