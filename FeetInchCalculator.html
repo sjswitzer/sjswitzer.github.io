@@ -1048,6 +1048,12 @@
               param = parseWord();
             }
             if (take(')') && take('=')) {
+              // make sure the parameters all have different names
+              const paramNames = {};
+              for (const p of params) {
+                if (paramNames[p]) throw `duplicate parameter ${p} in function ${word}`;
+                paramNames[p] = true;
+              }
               const saveEnv = environment;
               try {
                 environment = {};
