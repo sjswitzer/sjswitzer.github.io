@@ -281,6 +281,9 @@
             <td> 1 + 2 * 3
             <td> Ordinary math (note order of operations; result is 7)
           <tr>
+            <td> (1 + 2) * 3
+            <td> Result is 9
+          <tr>
             <td> 1m - 2cm
             <td> One meter minus two centimeters
          <tr>
@@ -787,8 +790,8 @@
           if (val !== null)
              return val;
         }
-        if (params.length != symVal.params.length)
-           throw `incorrect number of params for ${symVal.sym}(${symVal.params.join(',')})`;
+        if (params.length !== symVal.params.length)
+           throw new ChattyError(`incorrect number of params for ${symVal.sym}(${symVal.params.join(',')})`);
         const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
         try {
           environment = {};
@@ -808,35 +811,89 @@
         }
       }
 
-      // Parse a term, which is either a parenthesized expression
-      // or a + or - sign followed by a term:
+      // Parse a term, which is either a parenthesized expression, a
+      // function call, or a value
       //    ( expr )
-      //    + term
-      //    - term
-      //    fn ( expr, expr, ... )
-      //    const
+      //    term ( expr, expr, ... )
+      //    val
+      //    word
 
       function parseTerm() {
         const backtrack = parsepos;
+        let val;
         if (take('(')) {
-          let val = parseExpr();
-          if (val !== null && take(')')) {
-            return val;
+          val = parseExpr();
+          if (val === null || !take(')')) {
+            parsepos = backtrack;
+            return null;
           }
-          parsepos = backtrack;
-          return null;
+        } else {
+          let word = parseWord();
+          if (word !== null) {
+            let val1 = getSymbol(word);
+            skipSpaces();
+            // As a special case, a function of no arguments can be used as a constant
+            if (peekc() !== '('
+                && val1 instanceof Object && val1.type === 'fn' && val1.params.length === 0)
+              val = invokeFunction(val1, []);
+            else if (!(val1 instanceof Object && val1.type))
+              throw new ChattyError(`Unknown variable: "${word}"`);
+            else
+              val = val1;
+          } else {
+             val = parseVal();
+             if (val === null) {
+               parsepos = backtrack;
+               return null;
+             }
+          }
         }
+        if (!val) throw "should't happen"; // basically an assert
+        while (take('(')) {
+          const params = [];
+          var arg = parseExpr();
+          while (arg !== null) {
+            params.push(arg);
+            if (!take(','))
+              break;
+            arg = parseExpr();
+          }
+          if (!take(')')) {
+            parsepos = backtrack;
+            return null;
+          }
+          let paramsParse = false;
+          for (const p of params)
+            if (p.type === 'parse')
+               paramsParse = true;
+          if (paramsParse || val.type === 'parse')
+            val = { type: 'parse', params: params };
+          else
+            val = invokeFunction(val, params);
+        }
+        return val;
+      }
+
+      // Parse a unary operator
+      // or a + or - sign followed by a term:
+      //    ( expr )
+      //    + unary
+      //    - unary
+      //    term
+
+      function parseUnary() {
+        const backtrack = parsepos;
         if (take('+')) {
-          let val = parseTerm();
+          let val = parseUnary();
           if (val !== null)
             return val;
           parsepos = backtrack;
           return null;
         }
         if (take('-')) {
-          let val = parseTerm();
+          let val = parseUnary();
           if (val !== null) {
-            if (val.type === 'fn') throw "Can't negate functions";
+            if (val.type === 'fn') throw new ChattyError("Can't negate functions");
             if (val.type === 'parse')
               return { type: 'parse', op: 'neg', expr: val };
             return { type: val.type, val: -val.val };
@@ -844,53 +901,21 @@
           parsepos = backtrack;
           return null;
         }
-        let word = parseWord();
-        if (word !== null) {
-          const symVal = getSymbol(word);
-          if (symVal && take('(')) {
-            let params = [];
-            let val = parseExpr();
-            while (val !== null) {
-              params.push(val);
-              if (!take(','))
-                break;
-              val = parseExpr();
-            }
-            if (take(')')) {
-              let paramsParse = false;
-              for (const p of params)
-                if (p.type === 'parse')
-                  paramsParse = true;
-              if (paramsParse || symVal.type === 'parse')
-                return { type: 'parse', name: word, params: params };
-              return invokeFunction(symVal, params);
-            }
-            parsepos = backtrack;
-            return null;
-          }
-          let val = symVal;
-          // As a special case, a function of no arguments can be used as a constant
-          if (val instanceof Object && val.type === 'fn' && symVal.params.length == 0)
-            return invokeFunction(symVal, []);
-          if (val instanceof Object && val.type)
-            return val;
-          throw new ChattyError(`Unknown variable: "${word}"`);
-        }
-        return parseVal();
+        return parseTerm();
       }
 
       // Parse a multiplicitive expression:
-      //    primitive * primitive
-      //    primitive / primitive
+      //    unary * mulexpr
+      //    unary / mulexpr
 
       function parseMulExpr() {
         const backtrack = parsepos;
-        let val = parseTerm();
+        let val = parseUnary();
         if (val === null)
           return null;
         while (true) {
           if (take("*")) {
-            let val2 = parseTerm();
+            let val2 = parseUnary();
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -906,7 +931,7 @@
             else
               throw "Cannot multiply lengths";
           } else if (take("/")) {
-            let val2 = parseTerm();
+            let val2 = parseUnary();
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -932,8 +957,8 @@
       }
 
       // Parse an (additive) expression:
-      //    mulexpr + mulexpr
-      //    mulexpr - mulexpr
+      //    mulexpr + expr
+      //    mulexpr - expr
 
       function parseExpr() {
         const backtrack = parsepos;
@@ -1021,7 +1046,7 @@
               try {
                 environment = {};
                 for (const p of params)
-                  environment[p] = { type: 'parse', sym: p };
+                  environment[p] = { type: 'parse', sym: p, defined: true };
                 skipSpaces();
                 const exprStart = parsepos;
                 let expr = parseExpr();
