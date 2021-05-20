@@ -1367,6 +1367,16 @@
         return false;
       }
 
+      function addExampleStuffs() {
+        let elements = document.querySelectorAll(".help table.example td:first-child, .help code");
+        for (let e of elements) {
+          e.addEventListener("click", function() {
+            document.getElementById('expr').value = this.textContent;
+            updateParse(true);
+          });
+        }
+      }
+
       document.addEventListener("keydown", function(evt) {
         evt = evt || window.event;
         if (evt.key === "Escape" || evt.key === "Esc" || evt.keyCode === 27)
@@ -1374,15 +1384,9 @@
       });
 
       function onLoad() {
-        let x = document.querySelectorAll(".help table.example td:first-child, .help code");
-        for (let e of x) {
-          e.addEventListener("click", function() {
-            document.getElementById('expr').value = this.textContent;
-            updateParse(true);
-          });
-        }
         loadUserSymbols();
         updateResult();
+        addExampleStuffs();
       }
 
     </script>
