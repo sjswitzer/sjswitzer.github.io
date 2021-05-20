@@ -165,6 +165,12 @@
         padding: 0px 10px;
         border-radius: 4px;
       }
+
+      /* Testing affordance; example text can be stuffed into the expr box */
+      .help table.example td:first-child, .help code {
+        cursor: pointer;
+        /* text-decoration: underline; */
+      }
     </style>
     <div class="shrink-container">
       <div class="spread-container">
@@ -245,7 +251,7 @@
             It would be too noisy to alert each of these errors, but if you don't 
             know why it's grayed out, you can hit enter to see an error message.
         </p>
-        <table>
+        <table class="example">
           <colgroup>
             <col style="width: 8em">
             <col style="width: auto">
@@ -302,7 +308,7 @@
         <h3> Terms </h3>
         <p> Expressions are built up out of <i>terms</i> which are either
           <ul>
-            <li> A plain number such as <code>12</code>, <code>3.14</code>, <code>.15,</code> etc.
+            <li> A plain number such as <code>12</code>, <code>3.14</code>, <code>.15</code>, etc.
             <li> A variable name, such as <code>pi</code>
             <li> A <i>length</i> which can be a number, a fraction, or a number
                  and a fraction followed buy a <i>unit</i>
@@ -1368,6 +1374,13 @@
       });
 
       function onLoad() {
+        let x = document.querySelectorAll(".help table.example td:first-child, .help code");
+        for (let e of x) {
+          e.addEventListener("click", function() {
+            document.getElementById('expr').value = this.textContent;
+            updateParse(true);
+          });
+        }
         loadUserSymbols();
         updateResult();
       }
