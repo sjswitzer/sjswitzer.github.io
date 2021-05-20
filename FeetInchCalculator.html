@@ -485,17 +485,21 @@
           showResult(totalInches, true);
         }
         catch (e) {
-          if (!(e instanceof ChattyError))
-            showError(e);
+          showError(e);
         }
       }
 
-      function showError(e) {
+      function showError(e, allErrors) {
+        // always update the text, in case the error box is already showing
+        if (e instanceof ChattyError)
+          e = e.message;
+        document.getElementById('error').textContent = String(e);
+        if (!allErrors && e instanceof ChattyError)
+          return;
         // we had an error so hide the results block and show the error block
         document.getElementById('results').style.display = 'none';
         document.getElementById('numberResults').style.display = 'none';
         document.getElementById('error').style.display = '';
-        document.getElementById('error').textContent = String(e);
       }
 
       //
@@ -1112,13 +1116,7 @@
           }
         }
         catch (e) {
-          if (e instanceof ChattyError) {
-            // if the user hit "enter" it's ok to show chatty errors
-            if (userHitEnter)
-              showError(e.message);
-          } else {
-            showError(e);
-          }
+          showError(e, userHitEnter);
         }
 
         // Gray out the result since we can't parse correctly right now
