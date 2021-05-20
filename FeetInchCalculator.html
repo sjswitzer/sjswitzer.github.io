@@ -491,9 +491,10 @@
 
       function showError(e, allErrors) {
         // always update the text, in case the error box is already showing
+        let msg = e;
         if (e instanceof ChattyError)
-          e = e.message;
-        document.getElementById('error').textContent = String(e);
+          msg = e.message;
+        document.getElementById('error').textContent = String(msg);
         if (!allErrors && e instanceof ChattyError)
           return;
         // we had an error so hide the results block and show the error block
