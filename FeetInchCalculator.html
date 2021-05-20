@@ -308,7 +308,8 @@
         <h3> Terms </h3>
         <p> Expressions are built up out of <i>terms</i> which are either
           <ul>
-            <li> A plain number such as <code>12</code>, <code>3.14</code>, <code>.15</code>, etc.
+            <li> A plain number such as <code>12</code>, <code>7.</code>,
+                 <code>3.14</code>, <code>.15</code>, etc.
             <li> A variable name, such as <code>pi</code>
             <li> A <i>length</i> which can be a number, a fraction, or a number
                  and a fraction followed buy a <i>unit</i>
@@ -385,7 +386,7 @@
         <h3> Boring Details </h3>
         <p> This program started out as a quick and dirty tool to easily divide
             lengths given in feet and inches into equal parts, a common task
-            in the construction industry, and quite tedious to work out by hand.
+            in the construction industry and quite tedious to work out by hand.
             The vestiges of that are seen in the top line of the current
             user interface.
         <p> But I started to think of it as a <i>calculator</i> and wondered
@@ -558,6 +559,7 @@
 
       // Numbers of form:
       //    ddd
+      //    ddd.
       //    ddd.dd
       //    .ddd
 
@@ -628,7 +630,7 @@
       // number-fractions (nf) each followed by a unit:
       //    n
       //    nf unit
-      //    nf unit nf unit ...
+      //    nf unit [ nf unit ]*
           
       function parseVal() {
         let backtrack1 = parsepos;
@@ -824,8 +826,8 @@
 
       // Parse a term, which is either a parenthesized expression, a
       // function call, or a value
-      //    ( expr )
-      //    term ( expr, expr, ... )
+      //    '(' expr ')'
+      //    term [ '(' [ expr [ ',' expr ]* ]opt ')' ]+
       //    val
       //    word
 
@@ -860,6 +862,7 @@
           }
         }
         if (!val) throw "should't happen"; // basically an assert
+        // This loops because a function can return a function
         while (take('(')) {
           const params = [];
           var arg = parseExpr();
@@ -887,9 +890,9 @@
 
       // Parse a unary operator
       // or a + or - sign followed by a term:
-      //    ( expr )
-      //    + unary
-      //    - unary
+      //    '(' expr ')'
+      //    '+' unary
+      //    '-' unary
       //    term
 
       function parseUnary() {
@@ -916,8 +919,8 @@
       }
 
       // Parse a multiplicitive expression:
-      //    unary * mulexpr
-      //    unary / mulexpr
+      //    unary [ '*' unary ]*
+      //    unary [ '/' unary ]*
 
       function parseMulExpr() {
         const backtrack = parsepos;
@@ -968,8 +971,8 @@
       }
 
       // Parse an (additive) expression:
-      //    mulexpr + expr
-      //    mulexpr - expr
+      //    mulexpr [ '+' mulexpr ]*
+      //    mulexpr [ '-' mulexpr ]*
 
       function parseExpr() {
         const backtrack = parsepos;
@@ -1030,8 +1033,8 @@
 
       // Parse a statement:
       //    expr
-      //    word = expr
-      //    word(p, p, ...) = expr
+      //    word '=' expr
+      //    word '(' [ word [ ',' word ]* ]opt ')' '=' expr
 
       function parseStatement() {
         const backtrack = parsepos;
