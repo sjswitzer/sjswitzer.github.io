@@ -1371,7 +1371,7 @@
         let elements = document.querySelectorAll(".help table.example td:first-child, .help code");
         for (let e of elements) {
           e.addEventListener("click", function() {
-            document.getElementById('expr').value = this.textContent;
+            document.getElementById('expr').value = this.textContent.trim();
             updateParse(true);
           });
         }
