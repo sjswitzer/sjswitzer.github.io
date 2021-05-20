@@ -438,7 +438,7 @@
       class ChattyError extends Error {
         constructor(msg) {
           super();
-          this.msg = msg;
+          this.message = msg;
         }
       }
 
@@ -1109,7 +1109,7 @@
           if (e instanceof ChattyError) {
             // if the user hit "enter" it's ok to show chatty errors
             if (userHitEnter)
-              showError(e.msg);
+              showError(e.message);
           } else {
             showError(e);
           }
