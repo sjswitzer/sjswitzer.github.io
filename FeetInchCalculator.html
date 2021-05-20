@@ -433,6 +433,15 @@
       // fractional inches. So doing all arithmetic in units of inches means that
       // calculations can be exact when exact results are possible.
 
+      // Errors that are too chatty to show while typing.
+      // Error will be shown if the user hits "enter."
+      class ChattyError extends Error {
+        constructor(msg) {
+          super();
+          this.msg = msg;
+        }
+      }
+
       //
       // Simple interface for common operations
       //
@@ -540,15 +549,6 @@
           foundSpace = true;
         }
         return foundSpace;
-      }
-
-      // Errors that are too chatty to show while typing.
-      // Error will be shown if the user hits "enter."
-      class ChattyError extends Error {
-        constructor(msg) {
-          super();
-          this.msg = msg;
-        }
       }
 
       // Numbers of form:
@@ -1100,9 +1100,9 @@
           } else if (userHitEnter) {
             let rest = parsestr.substr(parseFurthest);
             if (rest.length > 0)
-              showError(`Cannot parse beyond "${rest}"`);
+              throw `Cannot parse beyond "${rest}"`;
             else if (parsestr.trim() !== "")
-              showError(`Incomplete input`);
+              throw `Incomplete input`;
           }
         }
         catch (e) {
