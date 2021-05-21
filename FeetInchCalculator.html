@@ -37,15 +37,22 @@
        * A container that shrinks to its largest-width content
        */
       div.shrink-container {
+        display: table;
+        width: 1px;
+      }
+      span.shrink-container {
         display: inline-table;
         width: 1px;
       }
       .spread-container {  /* an element who's width forces a shrink-container's width */
         width: max-content
       }
-      table.layout td { /* makes the expression input field fill the full width available */
-        padding: 0px 0px;
-        table-layout: auto;
+
+      div.layout {
+        display:table;
+      }
+      div.layout > div {
+        display:table-cell;
         width: 100%
       }
 
@@ -199,12 +206,15 @@
         &nbsp; divided by
         <input type="text" oninput="updateResult()" size="3" id="div" value="">
       </div>
-      <table class="layout">
-        <td> <input style="width: 100%" type="text" spellcheck="false" id="expr" value=""
-          oninput="updateParse()" onchange="updateParse(true)">
-        <td style="width: 1px">
+      <div class="layout">
+        <div>
+          <input style="width: 100%" type="text" spellcheck="false" id="expr" value=""
+            oninput="updateParse()" onchange="updateParse(true)">
+        </div>
+        <div>
           <span class="button" style="margin-left: 4px; font-size: 18px" onclick="showHelp('help-expr')">?</span>
-      </table>
+        </div>
+      </div>
       <div class="results">
         <p id="results">
           <span id="resultFt"></span> feet = <span id="resultFtDetail"></span>
