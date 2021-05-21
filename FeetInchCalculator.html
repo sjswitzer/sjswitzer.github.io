@@ -34,26 +34,23 @@
       .right { float: right; }
 
       /*
-       * A container that shrinks to its largest-width content
+       * Layout containers
        */
-      div.shrink-container {
+      div.layout-container {
         display: table;
-        width: 1px;
       }
-      span.shrink-container {
+      span.layout-container {
         display: inline-table;
-        width: 1px;
       }
-      .spread-container {  /* an element who's width forces a shrink-container's width */
-        width: max-content
-      }
-
-      div.layout {
-        display:table;
-      }
-      div.layout > div {
+      div.layout-container.flex > div {
         display:table-cell;
         width: 100%
+      }
+      div.shrink {
+        width: 1px;
+      }
+      div.spread {
+        width: max-content;
       }
 
       /*
@@ -189,8 +186,8 @@
         text-decoration: underline;
       }
     </style>
-    <div class="shrink-container">
-      <div class="spread-container">
+    <div class="layout-container shrink">
+      <div class="spread">
         <input type="text" style="text-align: right;"
           oninput="updateResult()" size="4" id="ft" value="5"> feet &nbsp;
         <input type="text" style="text-align: right;"
@@ -206,7 +203,7 @@
         &nbsp; divided by
         <input type="text" oninput="updateResult()" size="3" id="div" value="">
       </div>
-      <div class="layout">
+      <div class="layout-container flex">
         <div>
           <input style="width: 100%" type="text" spellcheck="false" id="expr" value=""
             oninput="updateParse()" onchange="updateParse(true)">
