@@ -107,6 +107,12 @@
       .help code.abstract {
         font-style: oblique;
       }
+      /* Testing affordance; example text can be stuffed into the expr box */
+      .help table.stuff-example tr td:first-child:hover, .help code:hover {
+        cursor: pointer;
+        color: #0000dd;
+        text-decoration: underline;
+      }
 
       /*
        * Makes a <span> into a button
@@ -174,16 +180,6 @@
         margin: 10px 0px;
         padding: 0px 10px;
         border-radius: 4px;
-      }
-
-      /* Testing affordance; example text can be stuffed into the expr box */
-      .help table.example td:first-child, .help code {
-        cursor: pointer;
-        /* text-decoration: underline; */
-      }
-      .help table.example td:first-child:hover, .help code:hover {
-        color: #0000dd;
-        text-decoration: underline;
       }
     </style>
     <div class="layout-container shrink">
@@ -268,8 +264,7 @@
             It would be too noisy to alert each of these errors, but if you don't 
             know why it's grayed out, you can hit enter to see an error message.
         </p>
-        <table class="example">
-          <col style="width: 8em">
+        <table class="stuff-example">
           <tr>
             <th> Example
             <th> Description
@@ -370,7 +365,6 @@
             and in either case gives you the current value of <code>a + b</code>.
         <h4> Built-In Functions </h4>
         <table>
-          <col style="width: 8em">
           <tr>
             <th> Function
             <th> Description
@@ -1389,7 +1383,7 @@
       }
 
       function addExampleStuffs() {
-        let elements = document.querySelectorAll(".help table.example td:first-child, .help code");
+        let elements = document.querySelectorAll(".help table.stuff-example tr td:first-child, .help code");
         for (let e of elements) {
           e.addEventListener("click", function() {
             document.getElementById('expr').value = this.textContent.trim();
