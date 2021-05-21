@@ -57,7 +57,7 @@
        * Initially-hidden help content.
        * Help contains a <span> for a close button and a <div> which is made scrollable.
        */
-      .help {
+      div.help {
         padding: 0px 5px 0px 20px;
         background-color: #e8e8e8;
         position: fixed;
@@ -68,7 +68,7 @@
         height: 85%;
         border: 2px solid black;
       }
-      .help > span {  /* the close buton */
+      div.help > span {  /* the close buton */
         color: #888888;
         font-weight: bold;
         float: right;
@@ -77,38 +77,41 @@
         cursor: pointer;
         transition: 0.3s;
       }
-      .help > span:hover {
+      div.help > span:hover {
         transform: scale(1.25);
         color: black;
       }
-      .help > span:active {
+      div.help > span:active {
         transform: scale(1.5);
       }
-      .help > div {
+      div.help > div {
         overflow-y: scroll;
         height: 100%;
       }
       /* styling for help content */
-      .help td, .help th {
+      div.help td, div.help th {
         padding: 0px 10px;
         vertical-align: top;
         text-align: left;
       }
-      .help ul {
+      div.help ul {
         padding-left: 20px;
       }
-      .help ul > li {
+      div.help ul > li {
         margin: 6px;
       }
-      .help code {
+      div.help code {
         font-size: 130%;
         font-weight: bold;
       } 
-      .help code.abstract {
+      div.help code.abstract {
         font-style: oblique;
       }
+      div.help table.example tr td:first-child {
+        width: 6em;
+      }
       /* Testing affordance; example text can be stuffed into the expr box */
-      .help table.stuff-example tr td:first-child:hover, .help code:hover {
+      div.help table.stuff.example tr td:first-child:hover, div.help code:hover {
         cursor: pointer;
         color: #0000dd;
         text-decoration: underline;
@@ -145,19 +148,19 @@
       /*
        * Animates the delete button for variable and function definitions
        */
-      p.defn {
+      p.user-def {
         margin: 5px 0px;
         font-size: 12pt;
       }
-      p.defn > span:hover {
+      p.user-def > span:hover {
         background: #ee9999;
         transform: scale(1.15);
       }
-      p.defn > span:active {
+      p.user-def > span:active {
         background: #ff0000;
         transform: scale(1.3);
       }
-      p.defn > span {
+      p.user-def > span {
         display: inline-block; /* so that transform works */
         cursor: pointer;
         padding: 0px 5px;
@@ -170,7 +173,7 @@
         transition: 0.1s;     
         visibility: hidden;
       }
-      p.defn:hover > span {
+      p.user-def:hover > span {
         visibility: visible;
       }
 
@@ -264,7 +267,7 @@
             It would be too noisy to alert each of these errors, but if you don't 
             know why it's grayed out, you can hit enter to see an error message.
         </p>
-        <table class="stuff-example">
+        <table class="stuff example">
           <tr>
             <th> Example
             <th> Description
@@ -364,7 +367,7 @@
             <code>c() = a + b</code> can be invoked as <code>c()</code> or <code>c</code>,
             and in either case gives you the current value of <code>a + b</code>.
         <h4> Built-In Functions </h4>
-        <table>
+        <table class="example">
           <tr>
             <th> Function
             <th> Description
@@ -1167,7 +1170,7 @@
         for (const sym in userSymbols) {
           let symStr = symString(userSymbols[sym]);
           if (symStr)
-            str += `<p class="defn"><span onclick="deleteDef('${sym}')">&times;</span>
+            str += `<p class="user-def"><span onclick="deleteDef('${sym}')">&times;</span>
               ${escapeHTML(symStr)}</p>`;
         }
         document.getElementById('symdefs').innerHTML = str;
@@ -1299,7 +1302,7 @@
       }
 
       function hideHelp() {
-        let elts = document.querySelectorAll('.help');
+        let elts = document.querySelectorAll('div.help');
         for (let e of elts)
           e.style.display = ''; // back to inherited 'none'
       }
@@ -1383,7 +1386,7 @@
       }
 
       function addExampleStuffs() {
-        let elements = document.querySelectorAll(".help table.stuff-example tr td:first-child, .help code");
+        let elements = document.querySelectorAll("div.help table.stuff.example tr td:first-child, div.help code");
         for (let e of elements) {
           e.addEventListener("click", function() {
             document.getElementById('expr').value = this.textContent.trim();
