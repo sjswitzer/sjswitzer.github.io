@@ -1128,12 +1128,12 @@
               showAssignResult(val);
             }
             return;
-          } else if (userHitEnter) {
+          } else {
             let rest = parsestr.substr(parseFurthest);
             if (rest.length > 0)
-              throw `Cannot parse beyond "${rest}"`;
+              throw new ChattyError(`Cannot parse beyond "${rest}"`);
             else if (parsestr.trim() !== "")
-              throw `Incomplete input`;
+              throw new ChattyError(`Incomplete input`);
           }
         }
         catch (e) {
