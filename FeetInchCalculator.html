@@ -61,12 +61,12 @@
       div.help {
         padding: 0px 5px 0px 20px;
         background-color: #e8e8e8;
-        position: fixed;
+        position: absolute;
         display: none;
         top: 10%;
         left: 30%;
-        right: 5%;
-        bottom: 5%;
+        right: 1em;
+        bottom: 1em;
         border: 2px solid black;
       }
       div.help > span.close-button {
@@ -78,11 +78,14 @@
         cursor: pointer;
         transition: 0.3s;
       }
-      div.help > span:hover {
+      div.help > span.close-button:before {
+        content: "\d7"; /* Unicode times character */
+      }
+      div.help > span.close-button:hover {
         transform: scale(1.25);
         color: black;
       }
-      div.help > span:active {
+      div.help > span.close-button:active {
         transform: scale(1.5);
       }
       div.help > div {
@@ -231,7 +234,7 @@
       <div id="symdefs"></div>
     </div>
     <div class="help" id="help-tips">
-      <span class="close-button" onclick="hideHelp()">&times;</span>
+      <span class="close-button" onclick="hideHelp()"></span>
       <div>
         <h3> Help </h3>
         <p> Some quick tips to get you started:
@@ -251,7 +254,7 @@
       </div>
     </div>
     <div class="help" id="help-expr">
-      <span class="close-button" onclick="hideHelp()">&times;</span> 
+      <span class="close-button" onclick="hideHelp()"></span> 
       <div>
         <h3> Expressions </h3>
         <p> Expressions can contain numbers, units and the operators
@@ -390,7 +393,7 @@
       </div>
     </div>
     <div class="help" id="help-boring">
-      <span class="close-button" onclick="hideHelp()">&times;</span>
+      <span class="close-button" onclick="hideHelp()"></span>
       <div>
         <h3> Boring Details </h3>
         <p> This program started out as a quick and dirty tool to easily divide
