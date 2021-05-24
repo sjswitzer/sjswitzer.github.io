@@ -36,23 +36,24 @@
       /*
        * Layout containers
        */
-      div.layout-container {
-        display: table;
+      div.layout-column {
+        display: flex;
+        flex-direction: column;
       }
-      div.layout-container > div {
+      div.layout-column > div {
         margin: .25em 0em;
       }
-      span.layout-container {
-        display: inline-table;
+      div.layout-row {
+        display: flex;
+        flex-direction: row;
       }
-      .layout-container.flex > div {
-        display:table-cell;
-        width: 100%
+      .full-width {
+        width: 100%;
       }
-      .layout-container.shrink { /* container shrinks to largest object it contains */
-        width: 1px;
+      .shrink-width {
+        width: min-content;
       }
-      .layout-container > div.spread { /* object forces container width */
+      .force-width {
         width: max-content;
       }
 
@@ -157,7 +158,6 @@
        */
       p.user-def {
         margin: .25em 0em;
-        overflow-y: scroll;
       }
       p.user-def > span.delete-button:hover {
         background: #ff3333;
@@ -171,8 +171,8 @@
         display: inline-block; /* so that transform works */
         cursor: pointer;
         padding: 0em .25em;
-        background: #ff6666;
-         font-weight: bold;
+        background: #ff7777;
+        font-weight: bold;
         border-radius: .25em;
         color: white;
         transition: 0.1s;     
@@ -199,46 +199,48 @@
         border-radius: .25em;
       }
     </style>
-    <div class="layout-container shrink">
-      <div class="spread">
-        <input type="text" style="text-align: right;"
-          oninput="updateResult()" size="4" id="ft" value="5"> feet &nbsp;
-        <input type="text" style="text-align: right;"
-          oninput="updateResult()" size="2" id="inch" value="">
-        <sup>
+    <div class="shrink-width">
+      <div class="layout-column shrink-width">
+        <div class="force-width">
           <input type="text" style="text-align: right;"
-            oninput="updateResult()" size="2" align="right" id="num" value="">
-        </sup>/<sub>
-          <input type="text" oninput="updateResult()" size="2" id="denom" value="8">
-        </sub> inches
-        &nbsp;&nbsp; times
-        <input type="text" oninput="updateResult()" size="3" id="times" value="">
-        &nbsp; divided by
-        <input type="text" oninput="updateResult()" size="3" id="div" value="">
-      </div>
-      <div class="layout-container flex">
-        <div>
-          <input style="width: 100%" type="text" spellcheck="false" id="expr" value=""
-            oninput="updateParse()" onchange="updateParse(true)">
+            oninput="updateResult()" size="4" id="ft" value="5"> feet &nbsp;
+          <input type="text" style="text-align: right;"
+            oninput="updateResult()" size="2" id="inch" value="">
+          <sup>
+            <input type="text" style="text-align: right;"
+              oninput="updateResult()" size="2" align="right" id="num" value="">
+          </sup>/<sub>
+            <input type="text" oninput="updateResult()" size="2" id="denom" value="8">
+          </sub> inches
+          &nbsp;&nbsp; times
+          <input type="text" oninput="updateResult()" size="3" id="times" value="">
+          &nbsp; divided by
+          <input type="text" oninput="updateResult()" size="3" id="div" value="">
         </div>
-        <div>
-          <span class="button" style="margin-left: .25em; font-size: 1.125em" onclick="showHelp('help-expr')">?</span>
+        <div class="layout-row full-width">
+          <div style="flex-grow: 1">
+            <input class="full-width" type="text" spellcheck="false" id="expr" value=""
+              oninput="updateParse()" onchange="updateParse(true)">
+          </div>
+          <div>
+            <span class="button" style="margin-left: .25em; font-size: 1.125em" onclick="showHelp('help-expr')">?</span>
+          </div>
         </div>
-      </div>
-      <div class="results">
-        <p id="results">
-          <span id="resultFt"></span> feet = <span id="resultFtDetail"></span>
-          <br>
-          <span id="resultIn"></span> inches = <span id="resultInDetail"></span>
-          <br>
-          <span id="resultMeters"></span> meters
-          <br>
-          <span id="resultMetersMetricFeet"></span> meters (assuming "metric feet")
-        </p>
-        <p id="numberResults">
-          <span id="numberResultsDetail"></span>
-        </p>
-        <p id="error" style="color: red"></p>
+        <div class="results">
+          <p id="results">
+            <span id="resultFt"></span> feet = <span id="resultFtDetail"></span>
+            <br>
+            <span id="resultIn"></span> inches = <span id="resultInDetail"></span>
+            <br>
+            <span id="resultMeters"></span> meters
+            <br>
+            <span id="resultMetersMetricFeet"></span> meters (assuming "metric feet")
+          </p>
+          <p id="numberResults">
+            <span id="numberResultsDetail"></span>
+          </p>
+          <p id="error" style="color: red"></p>
+        </div>
       </div>
       <span class="button right" onclick="showHelp('help-tips')">Help</span>
       <div id="symdefs"></div>
@@ -246,7 +248,7 @@
     <div class="help" id="help-tips">
       <span class="close-button" onclick="hideHelp()"></span>
       <div>
-        <h3> Help </h3>
+        <h2> Help </h2>
         <p> Some quick tips to get you started:
         <ul>
           <li> Fields may be left empty when not relevent.
@@ -266,7 +268,7 @@
     <div class="help" id="help-expr">
       <span class="close-button" onclick="hideHelp()"></span> 
       <div>
-        <h3> Expressions </h3>
+        <h2> Expressions </h2>
         <p> Expressions can contain numbers, units and the operators
             <code>+</code> <code>-</code> <code>*</code> and <code>/</code>.
             Multiplication and division are performed before addition and subtraction, and
@@ -331,7 +333,7 @@
             <td> hyp(3', 4')
             <td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
         </table>
-        <h3> Terms </h3>
+        <h2> Terms </h2>
         <p> Expressions are built up out of <i>terms</i> which are either
           <ul>
             <li> A plain number such as <code>12</code>, <code>7.</code>,
@@ -358,7 +360,7 @@
             meant <code>12'3"</code>.
             You can type nonsense like <code>3 1/2m 3.5"</code> if you want, but you won't
             do it by accident.
-        <h3> Variables </h3>
+        <h2> Variables </h2>
         <p> Define variables by typing <code class="abstract">name = expression</code>
             then hitting "enter."
             For instance, <code>frontage = 45'4 3/4"</code>. You can then use those values
@@ -368,7 +370,7 @@
         <p> The variables <code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code>
             are predefined for use as values or as units. The variable <code>pi</code> is
             predefined in case you care about circles. Predefined variables cannot be changed.
-        <h3> Functions </h3>
+        <h2> Functions </h2>
         <p> Define functions by typing
             <code class="abstract">name(param,param,&hellip;) = expression</code>
             then hitting "enter." For instance, you can define a function to average to numbers
@@ -380,7 +382,7 @@
             and <code>b</code> are already defined, the function
             <code>c() = a + b</code> can be invoked as <code>c()</code> or <code>c</code>,
             and in either case gives you the current value of <code>a + b</code>.
-        <h4> Built-In Functions </h4>
+        <h3> Built-In Functions </h3>
         <table class="example">
           <tr>
             <th> Function
@@ -392,12 +394,12 @@
             <td> hyp(x,y,&hellip;) 
             <td> the hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
         </table>
-        <h3> Saved State </h3>
+        <h2> Saved State </h2>
         <p> User-defined variables and functions are saved between sessions in local
             storage. In case you run into a problem with that, you can
             <span class="linklike" onclick="clearLocalStorage()">clear</span>
             local storage.
-        <h3> Odds And Ends </h3>
+        <h2> Odds And Ends </h2>
         <p> <span class="linklike" onclick="showHelp('help-boring')">Boring details</span>
             if you're interested.
       </div>
@@ -405,7 +407,7 @@
     <div class="help" id="help-boring">
       <span class="close-button" onclick="hideHelp()"></span>
       <div>
-        <h3> Boring Details </h3>
+        <h2> Boring Details </h2>
         <p> This program started out as a quick and dirty tool to easily divide
             lengths given in feet and inches into equal parts, a common task
             in the construction industry and quite tedious to work out by hand.
