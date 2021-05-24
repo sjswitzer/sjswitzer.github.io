@@ -120,6 +120,8 @@
         cursor: pointer;
         color: #0000dd;
         text-decoration: underline;
+        --stuff-text: 1;
+        --click-action: stuff-text
       }
 
       /*
@@ -155,6 +157,7 @@
        */
       p.user-def {
         margin: .25em 0em;
+        overflow-y: scroll;
       }
       p.user-def > span.delete-button:hover {
         background: #ff3333;
@@ -1397,11 +1400,15 @@
       }
 
       function addExampleStuffs() {
-        let elements = document.querySelectorAll("div.help table.stuff.example tr td:first-child, div.help code");
-        for (let e of elements) {
-          e.addEventListener("click", function() {
-            document.getElementById('expr').value = this.textContent.trim();
-            updateParse(true);
+        for (const help of document.querySelectorAll("div.help")) {
+          help.addEventListener("click", function(event) {
+            let styles = window.getComputedStyle(event.target);
+            let action = styles.getPropertyValue("--click-action");
+            if (action.trim() === "stuff-text") {
+              let text = event.target.textContent.trim();
+              document.getElementById('expr').value = text.trim();
+              updateParse(true);
+            }
           });
         }
       }
