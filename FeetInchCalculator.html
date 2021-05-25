@@ -22,6 +22,7 @@
         font-family: caption, sans-serif;
         font-size: 12pt;
         background-color: #f8f8f8;
+        height: 100%;
       }
 
       /* Spiff up input fields */
@@ -38,21 +39,22 @@
        */
       div.layout-column {
         display: flex;
-        flex-direction: column;
+        flex-flow: column nowrap;
       }
       div.layout-column > div {
         margin: .25em 0em;
         height: max-content;
       }
       body > div.layout-column {
-        height: 100%;
+        xxxheight: 100%;
       }
       div.layout-row {
         display: flex;
-        flex-direction: row;
+        flex-flow: row nowrap;
+        flex: 0 1 auto;
       }
-      .full-width { /* xxx is this really needed everywhere */
-        width: 100%;
+      div.expands {
+        flex: 1 0 auto;
       }
       .shrink-width {
         width: min-content;
@@ -199,15 +201,7 @@
        * User symbol defs take the remaining space and scroll
        */
       div.sym-defs {
-        flex-grow: 1;
-        position: relative;
-      }
-      div.sym-defs > div {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        left: 0;
-        right: 0;
+        flex: 1 0 auto;
         overflow-y: auto;
       }
 
@@ -237,8 +231,8 @@
         <input type="text" oninput="updateResult()" size="3" id="div" value="">
       </div>
       <div class="layout-row">
-        <div style="flex-grow: 1">
-          <input class="full-width" type="text" spellcheck="false" id="expr" value=""
+        <div style="flex: 1 0 auto">
+          <input style="width: 100%;" type="text" spellcheck="false" id="expr" value=""
             oninput="updateParse()" onchange="updateParse(true)">
         </div>
         <span class="button" style="margin-left: .25em; font-size: 1.125em" onclick="showHelp('help-expr')">?</span>
@@ -258,13 +252,13 @@
         </p>
         <p id="error" style="color: red"></p>
       </div>
-      <div class="sym-defs">
-        <span class="button right" onclick="showHelp('help-tips')">Help</span>
-        <div id="symdefs"></div>
+      <div class="layout-row expands">
+        <div class="sym-defs" id="symdefs"></div>
+        <div><span class="button" onclick="showHelp('help-tips')">Help</span></div>
       </div>
     </div>
     <div class="help" id="help-tips">
-      <span class="close-button" onclick="hideHelp()"></span>
+      <span class="close-button" onclick="showHelp()"></span>
       <div>
         <h2> Help </h2>
         <p> Some quick tips to get you started:
@@ -284,7 +278,7 @@
       </div>
     </div>
     <div class="help" id="help-expr">
-      <span class="close-button" onclick="hideHelp()"></span> 
+      <span class="close-button" onclick="showHelp()"></span> 
       <div>
         <h2> Expressions </h2>
         <p> Expressions can contain numbers, units and the operators
@@ -423,7 +417,7 @@
       </div>
     </div>
     <div class="help" id="help-boring">
-      <span class="close-button" onclick="hideHelp()"></span>
+      <span class="close-button" onclick="showHelp()"></span>
       <div>
         <h2> Boring Details </h2>
         <p> This program started out as a quick and dirty tool to easily divide
@@ -1327,18 +1321,17 @@
       }
 
       function showHelp(id) {
-        hideHelp();  // in case other help is already showing
-        let helpElement = document.getElementById(id);
-        helpElement.style.display = "block"; // inherits 'none' from "help" class
-        for (let child of helpElement.children)
-          if (child.tagName === 'DIV')
-            child.scroll(0, 0);
-      }
-
-      function hideHelp() {
+        // hide all help
         let elts = document.querySelectorAll('div.help');
         for (let e of elts)
           e.style.display = ''; // back to inherited 'none'
+        let helpElement = document.getElementById(id);
+        if (helpElement) {
+          helpElement.style.display = "block"; // inherits 'none' from "help" class
+          for (let child of helpElement.children)
+            if (child.tagName === 'DIV')
+              child.scroll(0, 0);
+        }
       }
 
       const GUID = "ad1f9c32-ed69-457d-89a0-f966c81424bd";
@@ -1436,7 +1429,7 @@
       document.addEventListener("keydown", function(evt) {
         evt = evt || window.event;
         if (evt.key === "Escape" || evt.key === "Esc" || evt.keyCode === 27)
-          hideHelp();
+          showHelp();
       });
 
       function onLoad() {
