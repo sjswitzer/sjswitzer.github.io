@@ -43,23 +43,22 @@
       }
       div.layout-column > div {
         margin: .25em 0em;
-        height: max-content;
       }
       body > div.layout-column {
-        xxxheight: 100%;
+        height: 100%;
       }
       div.layout-row {
         display: flex;
         flex-flow: row nowrap;
-        flex: 0 1 auto;
+        flex: 0 0 auto;
       }
       div.expands {
         flex: 1 0 auto;
       }
-      .shrink-width {
+      div.shrink-wrap {
         width: min-content;
       }
-      .force-width {
+      div.force-width {
         width: max-content;
       }
 
@@ -99,7 +98,7 @@
       }
       div.help > div {
         overflow-y: auto;
-        height: 100%; /* xxx really necessary? */
+        height: 100%;
       }
       /* styling for help content */
       div.help td, div.help th {
@@ -203,6 +202,7 @@
       div.sym-defs {
         flex: 1 0 auto;
         overflow-y: auto;
+        max-height:100%;
       }
 
       /* The results box */
@@ -213,7 +213,7 @@
         border-radius: 5px;
       }
     </style>
-    <div class="layout-column shrink-width">
+    <div class="layout-column shrink-wrap">
       <div class="force-width">
         <input type="text" style="text-align: right;"
           oninput="updateResult()" size="4" id="ft" value="5"> feet &nbsp;
@@ -235,7 +235,8 @@
           <input style="width: 100%;" type="text" spellcheck="false" id="expr" value=""
             oninput="updateParse()" onchange="updateParse(true)">
         </div>
-        <span class="button" style="margin-left: .25em; font-size: 1.125em" onclick="showHelp('help-expr')">?</span>
+        <span class="button" style="margin-left: .25em; font-size: 1.125em"
+          onclick="showHelp('help-expr')">?</span>
       </div>
       <div class="results">
         <p id="results">
