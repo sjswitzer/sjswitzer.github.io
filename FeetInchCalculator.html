@@ -19,7 +19,7 @@
       body {
         padding: .25em .75em;
         box-sizing: border-box;
-        font-family: system-ui, sans-serif;
+        font-family: caption, sans-serif;
         font-size: 12pt;
         background-color: #f8f8f8;
       }
@@ -27,7 +27,7 @@
       /* Spiff up input fields */
       input[type="text"] {
         font-size: 13pt;
-        border-radius: .25em;
+        border-radius: 5px;
         padding: .0625em .25em;
       }
 
@@ -42,12 +42,16 @@
       }
       div.layout-column > div {
         margin: .25em 0em;
+        height: max-content;
+      }
+      body > div.layout-column {
+        height: 100%;
       }
       div.layout-row {
         display: flex;
         flex-direction: row;
       }
-      .full-width {
+      .full-width { /* xxx is this really needed everywhere */
         width: 100%;
       }
       .shrink-width {
@@ -92,8 +96,8 @@
         transform: scale(1.5);
       }
       div.help > div {
-        overflow-y: scroll;
-        height: 100%;
+        overflow-y: auto;
+        height: 100%; /* xxx really necessary? */
       }
       /* styling for help content */
       div.help td, div.help th {
@@ -111,7 +115,7 @@
         font-weight: bold;
       } 
       div.help code.abstract {
-        font-style: oblique;
+        font-style: italic;
       }
       div.help table.example tr td:first-child {
         width: 7em;
@@ -133,7 +137,7 @@
         cursor: pointer;
         padding: .125em .5em;
         background: #4444ff;
-        border-radius: .25em;
+        border-radius: 5px;
         color: white;
         transition: 0.3s;
       }
@@ -173,7 +177,7 @@
         padding: 0em .25em;
         background: #ff7777;
         font-weight: bold;
-        border-radius: .25em;
+        border-radius: 5px;
         color: white;
         transition: 0.1s;     
         visibility: hidden;
@@ -191,59 +195,73 @@
         visibility: visible;
       }
 
+      /*
+       * User symbol defs take the remaining space and scroll
+       */
+      div.sym-defs {
+        flex-grow: 1;
+        position: relative;
+      }
+      div.sym-defs > div {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        overflow-y: auto;
+      }
+
       /* The results box */
       div.results {
         border: .125em solid;
         margin: .75em 0em;
         padding: 0em .75em;
-        border-radius: .25em;
+        border-radius: 5px;
       }
     </style>
-    <div class="shrink-width">
-      <div class="layout-column shrink-width">
-        <div class="force-width">
+    <div class="layout-column shrink-width">
+      <div class="force-width">
+        <input type="text" style="text-align: right;"
+          oninput="updateResult()" size="4" id="ft" value="5"> feet &nbsp;
+        <input type="text" style="text-align: right;"
+          oninput="updateResult()" size="2" id="inch" value="">
+        <sup>
           <input type="text" style="text-align: right;"
-            oninput="updateResult()" size="4" id="ft" value="5"> feet &nbsp;
-          <input type="text" style="text-align: right;"
-            oninput="updateResult()" size="2" id="inch" value="">
-          <sup>
-            <input type="text" style="text-align: right;"
-              oninput="updateResult()" size="2" align="right" id="num" value="">
-          </sup>/<sub>
-            <input type="text" oninput="updateResult()" size="2" id="denom" value="8">
-          </sub> inches
-          &nbsp;&nbsp; times
-          <input type="text" oninput="updateResult()" size="3" id="times" value="">
-          &nbsp; divided by
-          <input type="text" oninput="updateResult()" size="3" id="div" value="">
-        </div>
-        <div class="layout-row full-width">
-          <div style="flex-grow: 1">
-            <input class="full-width" type="text" spellcheck="false" id="expr" value=""
-              oninput="updateParse()" onchange="updateParse(true)">
-          </div>
-          <div>
-            <span class="button" style="margin-left: .25em; font-size: 1.125em" onclick="showHelp('help-expr')">?</span>
-          </div>
-        </div>
-        <div class="results">
-          <p id="results">
-            <span id="resultFt"></span> feet = <span id="resultFtDetail"></span>
-            <br>
-            <span id="resultIn"></span> inches = <span id="resultInDetail"></span>
-            <br>
-            <span id="resultMeters"></span> meters
-            <br>
-            <span id="resultMetersMetricFeet"></span> meters (assuming "metric feet")
-          </p>
-          <p id="numberResults">
-            <span id="numberResultsDetail"></span>
-          </p>
-          <p id="error" style="color: red"></p>
-        </div>
+            oninput="updateResult()" size="2" align="right" id="num" value="">
+        </sup>/<sub>
+          <input type="text" oninput="updateResult()" size="2" id="denom" value="8">
+        </sub> inches
+        &nbsp;&nbsp; times
+        <input type="text" oninput="updateResult()" size="3" id="times" value="">
+        &nbsp; divided by
+        <input type="text" oninput="updateResult()" size="3" id="div" value="">
       </div>
-      <span class="button right" onclick="showHelp('help-tips')">Help</span>
-      <div id="symdefs"></div>
+      <div class="layout-row">
+        <div style="flex-grow: 1">
+          <input class="full-width" type="text" spellcheck="false" id="expr" value=""
+            oninput="updateParse()" onchange="updateParse(true)">
+        </div>
+        <span class="button" style="margin-left: .25em; font-size: 1.125em" onclick="showHelp('help-expr')">?</span>
+      </div>
+      <div class="results">
+        <p id="results">
+          <span id="resultFt"></span> feet = <span id="resultFtDetail"></span>
+          <br>
+          <span id="resultIn"></span> inches = <span id="resultInDetail"></span>
+          <br>
+          <span id="resultMeters"></span> meters
+          <br>
+          <span id="resultMetersMetricFeet"></span> meters (assuming "metric feet")
+        </p>
+        <p id="numberResults">
+          <span id="numberResultsDetail"></span>
+        </p>
+        <p id="error" style="color: red"></p>
+      </div>
+      <div class="sym-defs">
+        <span class="button right" onclick="showHelp('help-tips')">Help</span>
+        <div id="symdefs"></div>
+      </div>
     </div>
     <div class="help" id="help-tips">
       <span class="close-button" onclick="hideHelp()"></span>
