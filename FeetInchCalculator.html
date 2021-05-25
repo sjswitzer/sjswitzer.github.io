@@ -1125,16 +1125,32 @@
         return parseExpr();
       }
 
+      //
+      // Set up the initial parser state and parse a statement,
+      // making sure all the input is consumed.
+      //
+      function parseInputStatement(stmt, env) {
+        parsestr = initialParseStr = stmt;
+        parsepos = 0;
+        parseFurthest = 0;
+        environment = env || {};
+        let val = parseStatement();
+        skipSpaces();
+        if (val === null || peekc()) {
+          let rest = parsestr.substr(parseFurthest);
+          if (rest.length > 0)
+            throw new ChattyError(`Cannot parse beyond "${rest}"`);
+          else if (parsestr.trim() !== "")
+            throw new ChattyError(`Incomplete input`);
+        }
+        return val;
+      }
+
       function updateParse(userHitEnter) {
         clearFields();
         try {
-          parsestr = initialParseStr = document.getElementById('expr').value;
-          parsepos = 0;
-          parseFurthest = 0;
-          environment = {};
-          let val = parseStatement();
-          skipSpaces();
-          if (val !== null && !peekc()) { // nothing left over at the end
+          let val = parseInputStatement(document.getElementById('expr').value);
+          if (val !== null) {
             if (userHitEnter && val.defined) {
               let sym = val.sym;
               if (symbols[sym]) throw "Cannot redefine system symbols";
@@ -1362,12 +1378,7 @@
             return false;
           for (const def of wad.defs) {
             try {
-              // XXX refactor this repetitive code?
-              parsestr = initialParseStr = def;
-              parsepos = 0;
-              parseFurthest = 0;
-              environment = {};
-              let val = parseStatement();
+              let val = parseInputStatement(def);
               skipSpaces();
               if (val !== null && !peekc()) { // nothing left over at the end
                 let sym = val.sym;
