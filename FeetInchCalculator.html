@@ -52,7 +52,9 @@
         flex: 0 0 auto;
       }
       div.expands {
-        flex: 1 0 auto;
+        /* http://geon.github.io/programming/2016/02/24/flexbox-full-page-web-app-layout */
+        flex: 1 1 auto;
+        overflow: hidden;
       }
       div.shrink-wrap {
         width: min-content;
@@ -230,7 +232,7 @@
         <input type="text" oninput="updateResult()" size="3" id="div" value="">
       </div>
       <div class="layout-row">
-        <div style="flex: 1 0 auto">
+        <div class="expands">
           <input style="width: 100%;" type="text" spellcheck="false" id="expr" value=""
             oninput="updateParse()" onchange="updateParse(true)">
         </div>
@@ -253,7 +255,7 @@
         <p id="error" style="color: red"></p>
       </div>
       <div class="layout-row expands">
-        <div class="sym-defs" id="symdefs"></div>
+        <div class="sym-defs expands" id="symdefs"></div>
         <div><span class="button" onclick="showHelp('help-tips')">Help</span></div>
       </div>
     </div>
