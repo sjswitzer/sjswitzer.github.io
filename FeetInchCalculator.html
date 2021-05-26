@@ -13,8 +13,6 @@
   <head>
     <title>Feet & Inch Calculator</title>
     <base target="_blank"> <!-- all links open in a new tab/page -->
-  </head>
-  <body onload="onLoad()">
     <style type="text/css">
       body {
         padding: .25em .75em;
@@ -23,7 +21,6 @@
         font-family: caption, sans-serif;
         font-size: 12pt;
         background-color: #f8f8f8;
-        height: 100%;
       }
 
       /* Spiff up input fields */
@@ -213,6 +210,8 @@
         border-radius: 5px;
       }
     </style>
+  </head>
+  <body onload="onLoad()">
     <div class="layout-column shrink-wrap">
       <div class="force-width">
         <input type="text" style="text-align: right;"
@@ -264,9 +263,9 @@
         <h2> Help </h2>
         <p> Some quick tips to get you started:
         <ul>
-          <li> Fields may be left empty when not relevent.
-          <li> A value like five and a half feet may be entered as 5.5 feet or as 5 feet 6 inches.
-          <li> A value like six and a quarter inches may be entered as 6.25 inches or
+          <li> Input boxes can be left empty when not relevent.
+          <li> A value like five and a half feet can be entered as 5.5 feet or as 5 feet 6 inches.
+          <li> A value like six and a quarter inches can be entered as 6.25 inches or
                as 6 inches and 1/4.
           <li> A "metric foot" is a convention used by the construction industry in metric
                countries where a foot is taken to be exactly 30cm instead of 30.48cm. It's an
