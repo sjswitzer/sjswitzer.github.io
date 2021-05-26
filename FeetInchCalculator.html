@@ -127,7 +127,6 @@
         cursor: pointer;
         color: #0000dd;
         text-decoration: underline;
-        --stuff-text: 1;
         --click-action: stuff-text
       }
 
@@ -201,8 +200,8 @@
        * User symbol defs take the remaining space and scroll
        */
       div.sym-defs {
-        flex: 1 0 auto;
-        overflow-y: auto;
+        flex: 1 1 auto;
+        overflow: auto;
         max-height:100%;
       }
 
@@ -462,7 +461,7 @@
             Creative Commons Attribution-ShareAlike 4.0 International License
           </a>.
         <br> Find source on
-            <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">GitHub</a>
+          <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">GitHub</a>
       </div>
     </div>
     <script type="text/javascript">
@@ -475,7 +474,7 @@
       // calculations can be exact when exact results are possible.
 
       // Errors that are too chatty to show while typing.
-      // Error will be shown if the user hits "enter."
+      //   (Error will be shown if the user hits "enter.")
       class ChattyError extends Error {
         constructor(msg) {
           super();
@@ -523,7 +522,7 @@
           let totalInches = (ft*12 + inch + num/denom) * times / div;
           if (isNaN(totalInches)) throw "Bad input";
 
-          showResult(totalInches, true);
+          showResult(totalInches, /* updateExpr */ true);
         }
         catch (e) {
           showError(e);
@@ -574,16 +573,15 @@
       }
 
       function take(match, noskip) {
+        const backtrack = parsepos;
         if (!noskip)
           skipSpaces();
-        if (parsestr.charAt(parsepos) === match) { // make the single character case faster
+        if (parsestr.charAt(parsepos) === match) {
           parsepos += 1;
           return true;
         }
-        if (parsestr.substr(parsepos, match.length).toLowerCase() !== match)
-          return false;
-        parsepos += match.length;
-        return true;
+        parsepos = backtrack;
+        return false;
       }
 
       function skipSpaces() {
@@ -673,7 +671,7 @@
       //    nf unit [ nf unit ]*
           
       function parseVal() {
-        let backtrack1 = parsepos;
+        const backtrack1 = parsepos;
         let inches = 0, haveLength = false, lastUnit = Number.POSITIVE_INFINITY;
 
         // The idea of lastUnit is that units should get progressively smaller.
@@ -743,15 +741,16 @@
         pi: Math.PI,
         in: { type: 'in', val: 1 },
         ft: { type: 'in', val: 12 },
-        cm: { type: 'in', val: 1/2.54 },
         m:  { type: 'in', val: 1/0.0254 },
-        // Let the user define these if they want to
+        cm: { type: 'in', val: 1/2.54 },
+        mm: { type: 'in', val: 1/25.4 },
+        // Let the user define these if they want to, but see Egg()
         //   yd: { type: 'in', val: 36 },  
         //   mi: { type: 'in', val: 5280*12 },
         //   km: { type: 'in', val: 1000/0.0254 },
 
+        // General n-dimensional hypotenuse
         hyp: function(...params) {
-          // General n-dimensional hypotenuse
           if (params.length < 1)
             return { type: 'num', val: 0 };
           let val = params.pop();
@@ -773,7 +772,7 @@
         },
 
         mean: function(...params) {
-          if (params.length < 1) throw `${this.sym}()(): no parameters`;
+          if (params.length < 1) throw `${this.sym}(): no parameters`;
           let val = params.pop();
           let type = val.type;
           let accum = 0, n = 0;
@@ -795,8 +794,8 @@
           return { type: type, val: accum/n };
         },
 
+        // Easter egg function that defines a bunch of units
         Egg: function(p) {
-          // Easter egg function that defines a bunch of units
           const addUnit = (sym, inches) => {
             userSymbols[sym] = { sym: sym, type: 'in', val: inches };
           }
@@ -838,11 +837,8 @@
 
       function invokeFunction(symVal, params) {
         if (symVal.type !== 'fn') throw "Not a function";
-        if (symVal.native) {
-          let val = symVal.native(...params);
-          if (val !== null)
-             return val;
-        }
+        if (symVal.native)
+          return symVal.native(...params);
         if (params.length !== symVal.params.length)
            throw new ChattyError(`incorrect number of params for ${symVal.sym}(${symVal.params.join(',')})`);
         const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
@@ -905,7 +901,7 @@
         // This loops because a function can return a function
         while (take('(')) {
           const params = [];
-          var arg = parseExpr();
+          let arg = parseExpr();
           while (arg !== null) {
             params.push(arg);
             if (!take(','))
