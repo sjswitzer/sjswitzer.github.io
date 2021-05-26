@@ -46,10 +46,9 @@
       div.layout-row {
         display: flex;
         flex-flow: row nowrap;
-        flex: 0 0 auto;
       }
       div.expands {
-        /* http://geon.github.io/programming/2016/02/24/flexbox-full-page-web-app-layout */
+        /* https://geon.github.io/programming/2016/02/24/flexbox-full-page-web-app-layout */
         flex: 1 1 auto;
         overflow: hidden;
       }
@@ -141,11 +140,11 @@
       }
       span.button:hover {
         background: #0000dd;
-        transform: scale(1.15);
+        /* transform: scale(1.15); */
       }
       span.button:active {
         background: #0000cc;
-        transform: scale(1.3);
+        /* transform: scale(1.3); */
       }
 
       /* Looks like a link but is actually a "button" */
@@ -163,11 +162,11 @@
       }
       p.user-def > span.delete-button:hover {
         background: #ff3333;
-        transform: scale(1.15);
+        /* transform: scale(1.15); */
       }
       p.user-def > span.delete-button:active {
         background: #ff0000;
-        transform: scale(1.3);
+        /* transform: scale(1.3); */
       }
       p.user-def > span.delete-button {
         display: inline-block; /* so that transform works */
@@ -253,7 +252,7 @@
         <p id="error" style="color: red"></p>
       </div>
       <div class="layout-row expands">
-        <div class="sym-defs expands" id="symdefs"></div>
+        <div class="sym-defs" id="symdefs"></div>
         <div><span class="button" onclick="showHelp('help-tips')">Help</span></div>
       </div>
     </div>
