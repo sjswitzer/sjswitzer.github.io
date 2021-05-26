@@ -921,7 +921,7 @@
             if (p.type === 'parse')
                paramsParse = true;
           if (paramsParse || val.type === 'parse')
-            val = { type: 'parse', params: params };
+            val = { type: 'parse', expr: val, params: params };
           else
             val = invokeFunction(val, params);
         }
@@ -977,7 +977,7 @@
             if (val.type === 'fn' || val2.type === 'fn')
               throw "Can't multiply functions";
             if (val.type === 'parse' || val2.type === 'parse')
-              return { type: 'parse', op: '*', expr1: val, expr2: val2 };
+              val = { type: 'parse', op: '*', expr1: val, expr2: val2 };
             if (val.type === 'num' && val2.type === 'num')
               val = { type: 'num', val: val.val * val2.val };
             else if (!(val.type === 'in' && val2.type === 'in'))
@@ -993,7 +993,7 @@
             if (val.type === 'fn' || val2.type === 'fn')
               throw "Can't divide functions";
             if (val.type === 'parse' || val2.type === 'parse')
-              return { type: 'parse', op: '/', expr1: val, expr2: val2 };
+              val = { type: 'parse', op: '/', expr1: val, expr2: val2 };
             if (val2.val === 0) throw "Divide by zero";
             if (val.type === 'num' && val2.type === 'num')
               val =  { type: 'num', val: val.val / val2.val };
@@ -1029,7 +1029,7 @@
             if (val.type === 'fn' || val2.type === 'fn')
               throw new ChattyError("Can't add functions");
             if (val.type === 'parse' || val2.type === 'parse')
-              return { type: 'parse', op: '+', expr1: val, expr2: val2 };
+              val = { type: 'parse', op: '+', expr1: val, expr2: val2 };
             if (val.type === 'num' && val2.type === 'num')
               val = { type: 'num', val: val.val + val2.val };
             else if (val.type === 'in' && val2.type === 'in')
@@ -1051,7 +1051,7 @@
             if (val.type === 'fn' || val2.type === 'fn')
               throw "Can't subtract functions";
             if (val.type === 'parse' || val2.type === 'parse')
-              return { type: 'parse', op: '-', expr1: val, expr2: val2 };
+              val = { type: 'parse', op: '-', expr1: val, expr2: val2 };
             if (val.type === 'num' && val2.type === 'num')
               val = { type: 'num', val: val.val - val2.val };
             else if (val.type === 'in' && val2.type === 'in')
