@@ -843,9 +843,9 @@
            throw new ChattyError(`incorrect number of params for ${symVal.sym}(${symVal.params.join(',')})`);
         const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
         try {
-          environment = {};
           parsestr = symVal.body;
           parsepos = 0;
+          environment = {};
           for (const i in params)
             environment[symVal.params[i]] = params[i];
           let val = parseExpr();
@@ -877,7 +877,7 @@
             return null;
           }
         } else {
-          let word = parseWord();
+          const word = parseWord();
           if (word !== null) {
             let val1 = getSymbol(word);
             skipSpaces();
