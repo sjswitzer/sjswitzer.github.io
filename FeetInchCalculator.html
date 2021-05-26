@@ -830,7 +830,7 @@
           val = symbols[name];
         if (typeof val === 'number')
           val = { type: 'num', val: val };
-        if (val instanceof Function)
+        else if (val instanceof Function)
           val = { type: 'fn', sym: name, params:["..."], native: val, body: `#builtin-${name}#` };
         return val;
       }
@@ -863,7 +863,7 @@
       // Parse a term, which is either a parenthesized expression, a
       // function call, or a value
       //    '(' expr ')'
-      //    term [ '(' [ expr [ ',' expr ]* ]opt ')' ]+
+      //    term [ '(' [ expr [ ',' expr ]* ]? ')' ]+
       //    val
       //    word
 
@@ -974,7 +974,7 @@
               throw "Can't multiply functions";
             if (val.type === 'parse' || val2.type === 'parse')
               val = { type: 'parse', op: '*', expr1: val, expr2: val2 };
-            if (val.type === 'num' && val2.type === 'num')
+            else if (val.type === 'num' && val2.type === 'num')
               val = { type: 'num', val: val.val * val2.val };
             else if (!(val.type === 'in' && val2.type === 'in'))
               val =  { type: 'in', val: val.val * val2.val };
@@ -990,8 +990,9 @@
               throw "Can't divide functions";
             if (val.type === 'parse' || val2.type === 'parse')
               val = { type: 'parse', op: '/', expr1: val, expr2: val2 };
-            if (val2.val === 0) throw "Divide by zero";
-            if (val.type === 'num' && val2.type === 'num')
+            else if (val2.val === 0)
+              throw "Divide by zero";
+            else if (val.type === 'num' && val2.type === 'num')
               val =  { type: 'num', val: val.val / val2.val };
             else if (val.type === 'in' && val2.type === 'num')
               val =  { type: 'in', val: val.val / val2.val };
@@ -1026,7 +1027,7 @@
               throw new ChattyError("Can't add functions");
             if (val.type === 'parse' || val2.type === 'parse')
               val = { type: 'parse', op: '+', expr1: val, expr2: val2 };
-            if (val.type === 'num' && val2.type === 'num')
+            else if (val.type === 'num' && val2.type === 'num')
               val = { type: 'num', val: val.val + val2.val };
             else if (val.type === 'in' && val2.type === 'in')
               val = { type: 'in', val: val.val + val2.val };
@@ -1046,9 +1047,9 @@
             }
             if (val.type === 'fn' || val2.type === 'fn')
               throw "Can't subtract functions";
-            if (val.type === 'parse' || val2.type === 'parse')
+            else if (val.type === 'parse' || val2.type === 'parse')
               val = { type: 'parse', op: '-', expr1: val, expr2: val2 };
-            if (val.type === 'num' && val2.type === 'num')
+            else if (val.type === 'num' && val2.type === 'num')
               val = { type: 'num', val: val.val - val2.val };
             else if (val.type === 'in' && val2.type === 'in')
               val = { type: 'in', val: val.val - val2.val };
@@ -1070,7 +1071,7 @@
       // Parse a statement:
       //    expr
       //    word '=' expr
-      //    word '(' [ word [ ',' word ]* ]opt ')' '=' expr
+      //    word '(' [ word [ ',' word ]* ]? ')' '=' expr
 
       function parseStatement() {
         const backtrack = parsepos;
