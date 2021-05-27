@@ -504,6 +504,7 @@
           let inExp = val.inExp;
           val = val.val;
           if (inExp !== undefined && inExp !== 0) {
+            unitsStr = " ";
             if (inExp < 0) {
               unitsStr = "/";
               inExp = -inExp;
@@ -691,7 +692,7 @@
       //    nf unit
       //    nf unit [ nf unit ['^' n]? ]*
           
-      function parseVal() {
+      function parseValue() {
         const backtrack1 = parsepos;
         let num = 0, inExp = 0, haveNum = false;
         let lastUnitVal = Number.POSITIVE_INFINITY;
@@ -727,10 +728,10 @@
               if (!symVal.inExp)
                 throw new ChattyError(`Not a unit: "${word}"`);
               let newExp = symVal.inExp;
-              if (take('^')) {
-                if (take('-'))
+              if (take('^', true)) {
+                if (take('-', true))
                   newExp = -newExp;
-                let exp = parseNum();
+                let exp = parseNum(true);
                 if (exp == null)
                   throw new ChattyError("Invalid exponent");
                 if (exp === 0 || exp !== exp|0)
@@ -914,16 +915,40 @@
         }
       }
 
-      // Parse a term, which is either a parenthesized expression, a
-      // function call, or a value
+      // Parse a term, which is either a unary expression, a
+      // parenthesized expression, a function call, or a value or a word (variable)
+      //    '+' term
+      //    '-' term
       //    '(' expr ')'
       //    term [ '(' [ expr [ ',' expr ]* ]? ')' ]+
-      //    val
+      //    value
       //    word
 
       function parseTerm() {
         const backtrack = parsepos;
         let val;
+
+        // Deal with unary first
+        if (take('+')) {
+          let val = parseTerm();
+          if (val !== null)
+            return val;
+          parsepos = backtrack;
+          return null;
+        }
+        if (take('-')) {
+          let val = parseTerm();
+          if (val !== null) {
+            if (val.type === 'fn') throw new ChattyError("Can't negate functions");
+            if (val.type === 'parse')
+              return { type: 'parse', op: 'neg', expr: val };
+            return { type: val.type, inExp: val.inExp, val: -val.val };
+          }
+          parsepos = backtrack;
+          return null;
+        }
+
+        // Now deal with exprs that might or might not be followed by function invocation
         if (take('(')) {
           val = parseExpr();
           if (val === null || !take(')')) {
@@ -944,7 +969,7 @@
             else
               val = val1;
           } else {
-             val = parseVal();
+             val = parseValue();
              if (val === null) {
                parsepos = backtrack;
                return null;
@@ -978,48 +1003,18 @@
         return val;
       }
 
-      // Parse a unary operator
-      // or a + or - sign followed by a term:
-      //    '(' expr ')'
-      //    '+' unary
-      //    '-' unary
-      //    term
-
-      function parseUnary() {
-        const backtrack = parsepos;
-        if (take('+')) {
-          let val = parseUnary();
-          if (val !== null)
-            return val;
-          parsepos = backtrack;
-          return null;
-        }
-        if (take('-')) {
-          let val = parseUnary();
-          if (val !== null) {
-            if (val.type === 'fn') throw new ChattyError("Can't negate functions");
-            if (val.type === 'parse')
-              return { type: 'parse', op: 'neg', expr: val };
-            return { type: val.type, inExp: val.inExp, val: -val.val };
-          }
-          parsepos = backtrack;
-          return null;
-        }
-        return parseTerm();
-      }
-
       // Parse a multiplicitive expression:
       //    unary [ '*' unary ]*
       //    unary [ '/' unary ]*
 
       function parseMulExpr() {
         const backtrack = parsepos;
-        let val = parseUnary();
+        let val = parseTerm();
         if (val === null)
           return null;
         while (true) {
           if (take("*")) {
-            let val2 = parseUnary();
+            let val2 = parseTerm();
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -1033,7 +1028,7 @@
             else
               throw "Unknown value type";
           } else if (take("/")) {
-            let val2 = parseUnary();
+            let val2 = parseTerm();
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -1266,7 +1261,6 @@
         // It seems like sorting is a good idea, but
         // JavaScript keeps entries in definition order and
         // that's actually better.
-        // TODO: maybe reverse definition order is even better than that.
         for (const sym in userSymbols) {
           let symStr = symString(userSymbols[sym]);
           if (symStr)
