@@ -285,7 +285,8 @@
       <div>
         <h2> Expressions </h2>
         <p> Expressions can contain numbers, units and the operators
-            <code>+</code> <code>-</code> <code>*</code> and <code>/</code>.
+            <code>+</code> <code>-</code> <code>*</code> <code>/</code>
+            and <code>^</code> (exponentiation).
             Multiplication and division are performed before addition and subtraction, and
             parenthesis can be used for grouping. Spaces are generally optional.
         <p> Units include:
@@ -346,6 +347,9 @@
           <tr>
             <td> hyp(3', 4')
             <td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
+          <tr>
+            <td> 1/4 mi2 / acre
+            <td> The number of acres in a quarter of a square mile
         </table>
         <h2> Terms </h2>
         <p> Expressions are built up out of <i>terms</i> which are either
@@ -392,6 +396,11 @@
             a unit itself.
             For example, if you enter <code>yd = 3'</code>, you can then use
             expressions like <code>3yd 5 1/2"</code>.
+        <p> A unit can be immediately followed (without spaces) by a number which is
+            the power of that unit. For instance, <code>3 yd2</code> is three square yards
+            and <code>2 ft3<code> is two cubic feet. if a unit specifier is immediately
+            preceded by a <code>/</code> (without spaces), it is an inverse unit.
+            For instance, <code>60 /ft2</code> means 60 per square foot.
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
             This is to prevent accidentally typing <code>12'3'</code> when you really
