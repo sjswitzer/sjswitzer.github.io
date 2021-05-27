@@ -398,7 +398,7 @@
             expressions like <code>3yd 5 1/2"</code>.
         <p> A unit can be immediately followed (without spaces) by a number which is
             the power of that unit. For instance, <code>3 yd2</code> is three square yards
-            and <code>2 ft3<code> is two cubic feet. if a unit specifier is immediately
+            and <code>2 ft3</code> is two cubic feet. if a unit specifier is immediately
             preceded by a <code>/</code> (without spaces), it is an inverse unit.
             For instance, <code>60 /ft2</code> means 60 per square foot.
         <p> Units must be specified in descending order.
@@ -418,7 +418,7 @@
             are predefined for use as values or as units. The variable <code>pi</code> is
             predefined in case you care about circles. Predefined variables cannot be changed.
         <h2> Functions </h2>
-        <p> Define functions by typing
+        <p> Define functions to automate routine calculations by typing
             <code class="abstract">name(param,param,&hellip;) = expression</code>
             then hitting "enter." For instance, you can define a function to average to numbers
             or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
@@ -719,13 +719,13 @@
       //    n n/n
       //    n/n
 
-      function parseNumFrac() {
-        let val = parseNum();
+      function parseNumFrac(opts) {
+        let val = parseNum(opts);
         if (val === null)
           return null;
         const backtrack = parsepos;
         if (take('/', NOSKIP)) {
-          let denom = parseNum(NOSKIP);
+          let denom = parseNum({ ...opts, noSkip: true });
           if (denom === null) {
             parsepos = backtrack;
             return val;
@@ -737,7 +737,7 @@
         if (num === null)
           return val;
         if (take('/'), NOSKIP) {
-          let denom = parseNum(NOSKIP);
+          let denom = parseNum({ ...opts, noSkip: true });
           if (denom !== null) {
             if (denom === 0) throw "Divide by zero";
             return val + num/denom;
@@ -753,7 +753,7 @@
       //    nf unit
       //    nf unit [ nf unit ['^' n]? ]*
           
-      function parseValue() {
+      function parseValue(opts) {
         const backtrack1 = parsepos;
         let num = 0, inExp = 0;
         let lastUnitVal = Number.POSITIVE_INFINITY;
@@ -763,7 +763,7 @@
 
         while (true) {
           const backtrack2 = parsepos;
-          let val = parseNumFrac();
+          let val = parseNumFrac(opts);
           if (val === null)
             break;
           const backtrack3 = parsepos;
@@ -780,7 +780,7 @@
           } else {
             // system and user-defined units
             let hasSlash = take('/');
-            let word = parseWord({ noSkip: hasSlash, alphaOnly: true });
+            let word = parseWord({ ...opts, noSkip: hasSlash, alphaOnly: true });
             if (word) {
               const symVal = getSymbol(word);
               if (!symVal)
@@ -788,7 +788,7 @@
               if (!symVal.inExp)
                 throw new ChattyError(`Not a unit: "${word}"`);
               let newExp = symVal.inExp;
-              let exp = parseNum(NOSKIP);
+              let exp = parseNum({ ...opts, noSkip: true });
               if (exp !== null) {
                 if (exp !== (exp|0) || exp < 2)
                   throw "Invalid exponent";
@@ -815,7 +815,7 @@
         if (inExp !== 0)
           return { type: 'num', inExp: inExp, val: num };
         parsepos = backtrack1;
-        num = parseNum();
+        num = parseNum(opts);
         if (num !== null)
           return  {type: 'num', inExp: 0, val: num };
         return null;
@@ -1012,13 +1012,13 @@
 
         // Now deal with exprs that might or might not be followed by function invocation
         if (take('(')) {
-          val = parseExpr();
+          val = parseExpr(opts);
           if (val === null || !take(')')) {
             parsepos = backtrack;
             return null;
           }
         } else {
-          const word = parseWord();
+          const word = parseWord(opts);
           if (word !== null) {
             let val1 = getSymbol(word);
             skipSpaces();
@@ -1032,11 +1032,11 @@
               val = val1;
           } else {
              if (opts?.noUnits) {
-               val = parseNum();
+               val = parseNum(opts);
                if (val !== null)
                  val = { type: 'num', inExp: 0, val: val };
              } else {
-               val = parseValue();
+               val = parseValue(opts);
              }
              if (val === null) {
                parsepos = backtrack;
@@ -1048,12 +1048,12 @@
         // This loops because a function can return a function
         while (take('(')) {
           const params = [];
-          let arg = parseExpr();
+          let arg = parseExpr(opts);
           while (arg !== null) {
             params.push(arg);
             if (!take(','))
               break;
-            arg = parseExpr();
+            arg = parseExpr(opts);
           }
           if (!take(')')) {
             parsepos = backtrack;
@@ -1104,14 +1104,14 @@
       //    exponentiation [ '*' exponentiation ]*
       //    exponentiation [ '/' exponentiation ]*
 
-      function parseMulExpr() {
+      function parseMulExpr(opts) {
         const backtrack = parsepos;
-        let val = parseExponentiation();
+        let val = parseExponentiation(opts);
         if (val === null)
           return null;
         while (true) {
           if (take("*")) {
-            let val2 = parseExponentiation();
+            let val2 = parseExponentiation(opts);
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -1125,7 +1125,7 @@
             else
               throw "Unknown value type";
           } else if (take("/")) {
-            let val2 = parseExponentiation();
+            let val2 = parseExponentiation(opts);
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -1151,14 +1151,14 @@
       //    mulexpr [ '+' mulexpr ]*
       //    mulexpr [ '-' mulexpr ]*
 
-      function parseExpr() {
+      function parseExpr(opts) {
         const backtrack = parsepos;
-        let val = parseMulExpr();
+        let val = parseMulExpr(opts);
         if (val === null)
           return null;
         while (true) {
           if (take("+")) {
-            let val2 = parseMulExpr();
+            let val2 = parseMulExpr(opts);
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -1180,7 +1180,7 @@
               throw "Unknown value type";
             }
           } else if (take("-")) {
-            let val2 = parseMulExpr();
+            let val2 = parseMulExpr(opts);
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -1212,24 +1212,24 @@
       //    word '=' expr
       //    word '(' [ word [ ',' word ]* ]? ')' '=' expr
 
-      function parseStatement() {
+      function parseStatement(opts) {
         const backtrack = parsepos;
-        let word = parseWord();
+        let word = parseWord(opts);
         if (word !== null) {
           if (take('=')) {
-            let val = parseExpr();
+            let val = parseExpr(opts);
             if (val) {
               return { ...val, sym: word, defined: true };
             }
           }
           if (take('(')) {
             let params = [];
-            let param = parseWord();
+            let param = parseWord(opts);
             while (param !== null) {
               params.push(param);
               if (!take(','))
                 break;
-              param = parseWord();
+              param = parseWord(opts);
             }
             if (take(')') && take('=')) {
               // make sure the parameters all have different names
@@ -1245,7 +1245,7 @@
                   environment[p] = { type: 'parse', sym: p, defined: true };
                 skipSpaces();
                 const exprStart = parsepos;
-                let expr = parseExpr();
+                let expr = parseExpr(opts);
                 environment = saveEnv;
                 if (expr !== null)
                   return { type: 'fn', expr: expr, sym: word, defined: true,
@@ -1266,12 +1266,12 @@
       // Set up the initial parser state and parse a statement,
       // making sure all the input is consumed.
       //
-      function parseInputStatement(stmt, env) {
+      function parseInputStatement(stmt, env, opts) {
         parsestr = initialParseStr = stmt;
         parsepos = 0;
         parseFurthest = 0;
         environment = env || {};
-        let val = parseStatement();
+        let val = parseStatement(opts);
         skipSpaces();
         if (val === null || peekc()) {
           let rest = parsestr.substr(parseFurthest);
