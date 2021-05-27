@@ -357,15 +357,14 @@
                  the units are of descending size
           </ul>
         <p> A <i>unit</i> is either <code>'</code> (feet), <code>ft</code> (feet),
-            <code>"</code> (inches), <code>in</code> (inches), <code>m</code> (meters),
-            or <code>cm</code> (centimeters).
+            <code>"</code> (inches), <code>in</code> (inches),
+            <code>mi</code> (miles), <code>acre</code> (acres),
+            <code>m</code> (meters), or <code>cm</code> (centimeters).
             In fact, any <i>variable</i> you define as a length can be used as a unit
             (<code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code> are simply
             predefined immutable variables).
         <p> For example, if you enter
             <code>yd = 3'</code>, you can then use expressions like <code>3yd 5 1/2"</code>.
-            Potentially useful definitions besides <code>yd</code> are <code>mi = 5280'</code>
-            and <code>km = 1000m</code>.
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
             This is to prevent accidentally typing <code>12'3'</code> when you really
@@ -719,8 +718,8 @@
             num += val;
           } else {
             // system and user-defined units
-            let hasSlash = take('/');
-            let word = parseWord();
+            let hasSlash = backtrack3 === parsepos && take('/', true);
+            let word = parseWord(true);
             if (word) {
               const symVal = getSymbol(word);
               if (!symVal)
@@ -766,9 +765,10 @@
 
       // Parse a word
 
-      function parseWord() {
+      function parseWord(noskip) {
         const backtrack = parsepos;
-        skipSpaces();
+        if (!noskip)
+          skipSpaces();
         if (ALPHA.includes(peekc())) {
            let word = getc();
            while (ALPHANUM.includes(peekc()))
@@ -786,6 +786,9 @@
         m:  { type: 'num', inExp: 1, val: 1/0.0254, name: "meter" },
         cm: { type: 'num', inExp: 1, val: 1/2.54, name: "centimeter" },
         mm: { type: 'num', inExp: 1, val: 1/25.4, name: "milimeter" },
+        mi: { type: 'num', inExp: 1, val: 5280*12, name: "mile" },
+        acre: { type: 'num', inExp: 2, val:  66*12 * 660*12 }, // 66' x 660'
+
         // Let the user define these if they want to, but see Egg()
         //   yd: { type: 'num', inExp: 1, val: 36, name: "yard" },  
         //   mi: { type: 'num', inExp: 1, val: 5280*12, name: "mile" },
@@ -854,20 +857,18 @@
             userSymbols[sym] = { sym: sym, type: 'num', inExp: exp, val: inches };
           }
           // if there's no parameter (of any type or value) just add the useful ones
-          addUnit('yd', 3*12);          // 3'
-          addUnit('mi', 5280*12);       // 5280'
-          addUnit('km', 1000/0.0254);   // 1000m
+          addUnit('yd', 3*12);                // 3'
+          addUnit('km', 1000/0.0254);         // 1000m
           if (p) {
             // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
-            addUnit('fathom', 6*12);               // 6'
-            addUnit('league', 5280*12*3);          // 3 mi
-            addUnit('chain', 66*12);               // 66'
-            addUnit('furlong', 66*12*10);          // 10 chains
-            addUnit('rod', 66*12/4);               // chain/4
-            addUnit('link', 66*12/100);            // chain/100
-            addUnit('acre', 66*12 * 660*12, 2);    // 66' x 660'
-            // addUnit('point', 1/72);             // 1/72"
-            // addUnit('pica', 1/6);               // 1/6", 12 points
+            addUnit('fathom', 6*12);          // 6'
+            addUnit('league', 5280*12*3);     // 3 mi
+            addUnit('chain', 66*12);          // 66'
+            addUnit('furlong', 66*12*10);     // 10 chains
+            addUnit('rod', 66*12/4);          // chain/4
+            addUnit('link', 66*12/100);       // chain/100
+            // addUnit('point', 1/72);        // 1/72"
+            // addUnit('pica', 1/6);          // 1/6", 12 points
           }
           showUserSymbols();
           throw "Surprise!";
@@ -996,25 +997,54 @@
             if (p.type === 'parse')
                paramsParse = true;
           if (paramsParse || val.type === 'parse')
-            val = { type: 'parse', expr: val, params: params };
+            val = { type: 'parse', op: 'call', expr: val, params: params };
           else
             val = invokeFunction(val, params);
         }
         return val;
       }
 
+      // Parse an exponentiation expression
+      //    term '^' expn
+      //    term
+
+      function parseExpn() {
+        let val = parseTerm();
+        if (val === null)
+          return null;
+        const backtrack = parsepos;
+        if (take('^')) {
+          let exp = parseExpn();
+          if (!exp) {
+            parsepos = backtrack;
+            return val;
+          }
+          if (val.type === 'fn' || exp.type === 'fn')
+            throw "Cannot exponentiate functions";
+          if (val.type === 'parse' || exp.type === 'parse')
+            return { type: 'parse', op: 'exp', expr1: val, expr2: exp };
+          if (exp.inExp != 0)
+            throw "Must exponentiate with a scalar";
+          if (val.inExp != 0 && exp.val !== (exp.val|0))
+            throw "Cannot exponentiate non-scalars by non-integers";
+          return { type: 'num', inExp: val.inExp * exp.val,
+            val: Math.pow(val.val, exp.val) };
+        }
+        return val;
+      }
+
       // Parse a multiplicitive expression:
-      //    unary [ '*' unary ]*
-      //    unary [ '/' unary ]*
+      //    expn [ '*' expn ]*
+      //    expn [ '/' expn ]*
 
       function parseMulExpr() {
         const backtrack = parsepos;
-        let val = parseTerm();
+        let val = parseExpn();
         if (val === null)
           return null;
         while (true) {
           if (take("*")) {
-            let val2 = parseTerm();
+            let val2 = parseExpn();
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -1028,7 +1058,7 @@
             else
               throw "Unknown value type";
           } else if (take("/")) {
-            let val2 = parseTerm();
+            let val2 = parseExpn();
             if (val2 === null) {
               parsepos = backtrack;
               return null;
