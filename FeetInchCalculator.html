@@ -337,7 +337,7 @@
             <td> A foot
           <tr>
             <td> ft * 8
-            <td> 8 feet; notice that such units are simply length-valued variables
+            <td> 8 feet; notice that named units are simply variables that have units
           <tr>
             <td> 5' 6" * pi
             <td> Circumference of a 5' 6" diameter circle
@@ -574,6 +574,7 @@
         "abcdefghijklmnopqrstuvwxyz" +
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       const ALPHANUM = ALPHA + DIGITS;
+      const NOSKIP = { noSkip: true };
 
       function peekc() {
         if (parsepos < parsestr.length)
@@ -592,9 +593,9 @@
         return null;
       }
 
-      function take(match, noskip) {
+      function take(match, opts) {
         const backtrack = parsepos;
-        if (!noskip)
+        if (!opts?.noSkip)
           skipSpaces();
         if (parsestr.charAt(parsepos) === match) {
           parsepos += 1;
@@ -621,10 +622,10 @@
       //    ddd.dd
       //    .ddd
 
-      function parseNum(noskip) {
+      function parseNum(opts) {
         const backtrack = parsepos;
         let nDigits = 0;
-        if (! noskip)
+        if (!opts?.noSkip)
           skipSpaces();
         let ch = peekc();
         if (DIGITS.includes(ch) || ch === ".") {
@@ -635,7 +636,7 @@
             ch = peekc();
             nDigits += 1;
           }
-          if (take('.', true)) {
+          if (take('.', NOSKIP)) {
             ch = peekc();
             while (DIGITS.includes(ch)) {
               val = val*10 + parseInt(ch);
@@ -662,8 +663,8 @@
         if (val === null)
           return null;
         const backtrack = parsepos;
-        if (take('/', true)) {
-          let denom = parseNum(true);
+        if (take('/', NOSKIP)) {
+          let denom = parseNum(NOSKIP);
           if (denom === null) {
             parsepos = backtrack;
             return val;
@@ -674,8 +675,8 @@
         let num = parseNum();
         if (num === null)
           return val;
-        if (take('/'), true) {
-          let denom = parseNum(true);
+        if (take('/'), NOSKIP) {
+          let denom = parseNum(NOSKIP);
           if (denom !== null) {
             if (denom === 0) throw "Divide by zero";
             return val + num/denom;
@@ -693,7 +694,7 @@
           
       function parseValue() {
         const backtrack1 = parsepos;
-        let num = 0, inExp = 0, haveNum = false;
+        let num = 0, inExp = 0;
         let lastUnitVal = Number.POSITIVE_INFINITY;
 
         // The idea of lastUnitVal is that units should get progressively smaller.
@@ -705,7 +706,6 @@
           if (val === null)
             break;
           const backtrack3 = parsepos;
-          haveNum = true;
           if (take("'")) {
             if (12 >= lastUnitVal || (inExp !== 0 && inExp != 1)) throw "Implausible units";
             lastUnitVal = 12;
@@ -718,8 +718,8 @@
             num += val;
           } else {
             // system and user-defined units
-            let hasSlash = backtrack3 === parsepos && take('/', true);
-            let word = parseWord(true);
+            let hasSlash = backtrack3 === parsepos && take('/', NOSKIP);
+            let word = parseWord(hasSlash ? NOSKIP : undefined);
             if (word) {
               const symVal = getSymbol(word);
               if (!symVal)
@@ -727,10 +727,10 @@
               if (!symVal.inExp)
                 throw new ChattyError(`Not a unit: "${word}"`);
               let newExp = symVal.inExp;
-              if (take('^', true)) {
-                if (take('-', true))
+              if (take('^', NOSKIP)) {
+                if (take('-', NOSKIP))
                   newExp = -newExp;
-                let exp = parseNum(true);
+                let exp = parseNum(NOSKIP);
                 if (exp == null)
                   throw new ChattyError("Invalid exponent");
                 if (exp === 0 || exp !== exp|0)
@@ -745,7 +745,6 @@
               inExp = newExp;
               num += val * Math.pow(symVal.val, inExp);
             } else {
-              parsepos = backtrack3;
               if (!inExp) {
                 parsepos = backtrack3;
                 num = val;
@@ -756,18 +755,20 @@
             }
           }
         }
-        if (!haveNum) {
-          parsepos = backtrack1;
-          return null;
-        }
-        return { type: 'num', inExp: inExp, val: num };
+        if (inExp !== 0)
+          return { type: 'num', inExp: inExp, val: num };
+        parsepos = backtrack1;
+        num = parseNum();
+        if (num !== null)
+          return  {type: 'num', inExp: 0, val: num };
+        return null;
       }
 
       // Parse a word
 
-      function parseWord(noskip) {
+      function parseWord(opts) {
         const backtrack = parsepos;
-        if (!noskip)
+        if (!opts?.noSkip)
           skipSpaces();
         if (ALPHA.includes(peekc())) {
            let word = getc();
@@ -925,20 +926,20 @@
       //    value
       //    word
 
-      function parseTerm() {
+      function parseTerm(opts) {
         const backtrack = parsepos;
         let val;
 
         // Deal with unary first
         if (take('+')) {
-          let val = parseTerm();
+          let val = parseTerm(opts);
           if (val !== null)
             return val;
           parsepos = backtrack;
           return null;
         }
         if (take('-')) {
-          let val = parseTerm();
+          let val = parseTerm(opts);
           if (val !== null) {
             if (val.type === 'fn') throw new ChattyError("Can't negate functions");
             if (val.type === 'parse')
@@ -970,7 +971,13 @@
             else
               val = val1;
           } else {
-             val = parseValue();
+             if (opts?.noUnits) {
+               val = parseNum();
+               if (val !== null)
+                 val = { type: 'num', inExp: 0, val: val };
+             } else {
+               val = parseValue();
+             }
              if (val === null) {
                parsepos = backtrack;
                return null;
@@ -1004,17 +1011,17 @@
         return val;
       }
 
-      // Parse an exponentiation expression
-      //    term '^' expn
+      // Parse an exponentiation expression (right-associative)
+      //    term '^' exponentiation
       //    term
 
-      function parseExpn() {
-        let val = parseTerm();
+      function parseExponentiation(opts) {
+        let val = parseTerm(opts);
         if (val === null)
           return null;
         const backtrack = parsepos;
         if (take('^')) {
-          let exp = parseExpn();
+          let exp = parseExponentiation({ ...opts, noUnits: true });
           if (!exp) {
             parsepos = backtrack;
             return val;
@@ -1034,17 +1041,17 @@
       }
 
       // Parse a multiplicitive expression:
-      //    expn [ '*' expn ]*
-      //    expn [ '/' expn ]*
+      //    exponentiation [ '*' exponentiation ]*
+      //    exponentiation [ '/' exponentiation ]*
 
       function parseMulExpr() {
         const backtrack = parsepos;
-        let val = parseExpn();
+        let val = parseExponentiation();
         if (val === null)
           return null;
         while (true) {
           if (take("*")) {
-            let val2 = parseExpn();
+            let val2 = parseExponentiation();
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -1058,7 +1065,7 @@
             else
               throw "Unknown value type";
           } else if (take("/")) {
-            let val2 = parseExpn();
+            let val2 = parseExponentiation();
             if (val2 === null) {
               parsepos = backtrack;
               return null;
@@ -1107,10 +1114,8 @@
             } else if (val.type === 'num' && val2.type === 'num') {
               if (val.inExp == val2.inExp) 
                 val = { type: 'num', inExp: val.inExp, val: val.val + val2.val };
-              else if (val2.inExp == 0)
-                throw new ChattyError("Cannot add different unit types")
               else
-                throw "Cannot add different unit types";
+                throw new ChattyError("Cannot add different unit types")
             } else {
               throw "Unknown value type";
             }
@@ -1129,10 +1134,8 @@
             } else if (val.type === 'num' && val2.type === 'num') {
               if (val.inExp === val2.inExp)
                 val = { type: 'num', inExp: val.inExp, val: val.val - val2.val };
-              else if (val2.inExp == 0)
-                throw new ChattyError("Cannot subtract different unit types")
               else
-                throw "Cannot subtract different unit types";
+                throw new ChattyError("Cannot subtract different unit types")
             }
             else {
               throw "Unknown value type";
