@@ -119,6 +119,9 @@
       div.help table.example tr td:first-child {
         width: 7em;
       }
+      div.help table.example {
+        margin-left: 1em;
+      }
       /* Testing affordance; example text can be stuffed into the expr box */
       div.help table.stuff.example tr td:first-child:hover, div.help code:hover {
         cursor: pointer;
@@ -288,9 +291,8 @@
         <p> Units include:
             <code>ft</code> <code>'</code> <code>in</code> <code>"</code> 
             <code>m</code> and <code>cm</code>.
-            The unit names can be used as constants as well.
         <p> As you type, the expression might be momentarily unparsable, e.g.,
-            <code>3'+</code>, until you finish typing. 
+            "<code>3'+</code>", until you finish typing. 
             The results box will be grayed out while that happens.
             It would be too noisy to alert each of these errors, but if you don't 
             know why it's grayed out, you can hit enter to see an error message.
@@ -356,15 +358,40 @@
             <li> Any sequence of the the previous length-unit combinations as long as
                  the units are of descending size
           </ul>
-        <p> A <i>unit</i> is either <code>'</code> (feet), <code>ft</code> (feet),
-            <code>"</code> (inches), <code>in</code> (inches),
-            <code>mi</code> (miles), <code>acre</code> (acres),
-            <code>m</code> (meters), or <code>cm</code> (centimeters).
-            In fact, any <i>variable</i> you define as a length can be used as a unit
-            (<code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code> are simply
-            predefined immutable variables).
-        <p> For example, if you enter
-            <code>yd = 3'</code>, you can then use expressions like <code>3yd 5 1/2"</code>.
+        <h3> Units </h3>
+        <p> Units are either the notations <code>'</code> and <code>"</code> for
+            feet and inches or these named units:
+        </p>
+        <table class="stuff example">
+          <tr>
+            <th> Unit
+            <th> Description
+          <tr>
+            <td> in
+            <td> Inchs
+          <tr>
+            <td> ft
+            <td> Feet
+          <tr>
+            <td> mi
+            <td> Miles
+          <tr>
+            <td> acre
+            <td> Acres
+          <tr>
+            <td> m
+            <td> Meters
+          <tr>
+            <td> cm
+            <td> Centimeters
+          <tr>
+            <td> mm
+            <td> Millimeters
+        </table>
+        <p> In fact, any <i>variable</i> you define with a unit can be used as
+            a unit itself.
+            For example, if you enter <code>yd = 3'</code>, you can then use
+            expressions like <code>3yd 5 1/2"</code>.
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
             This is to prevent accidentally typing <code>12'3'</code> when you really
@@ -400,10 +427,13 @@
             <th> Description
           <tr>
             <td> mean(x,y,&hellip;) 
-            <td> the average of a set of numbers or lengths
+            <td> The average of a set of numbers or lengths
           <tr>
             <td> hyp(x,y,&hellip;) 
-            <td> the hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
+            <td> The hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
+          <tr>
+            <td> sqrt(x) 
+            <td> Square root
         </table>
         <h2> Saved State </h2>
         <p> User-defined variables and functions are saved between sessions in local
