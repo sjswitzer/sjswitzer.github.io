@@ -527,36 +527,40 @@
 
       const DIGITS_PRECISION = 10, EPSILON = Math.pow(10, -DIGITS_PRECISION);
 
-      function val2str(val) {
+      function val2str(val, opts) {
         let unitsStr = "";
         if (val.val !== undefined) {
           let inExp = val.inExp;
           val = val.val;
           if (inExp !== undefined && inExp !== 0) {
             unitsStr = " ";
+            let ftQuotient = Math.pow(12, inExp);
             if (inExp < 0) {
-              unitsStr = "/";
+              unitsStr = " /";
               inExp = -inExp;
             }
-            let ftQuotient = Math.pow(12, inExp);
-            if (val > ftQuotient * 1.5) {
+            if (val >= ftQuotient) {
               val = val / ftQuotient;
               unitsStr += "ft";
             } else {
               unitsStr += "in";
             }
             if (inExp != 1)
-              unitsStr += "^" + String(inExp);
+              unitsStr += String(inExp);
           }
         }
-        // Avoids display of nonsense like 2.5000...001 while
-        // maintaining accuracy to "DIGITS_PRECISION" decimal digits.
-        val = val.toFixed(DIGITS_PRECISION);
-        while (val.endsWith("0"))
-          val = val.substr(0, val.length-1);
-        if (val.endsWith("."))
-          val = val.substr(0, val.length-1);
-        return val + unitsStr;
+        if (opts?.saveMode) {
+          return String(val) + unitsStr;
+        } else {
+          // Avoids display of nonsense like 2.5000...001 while
+          // maintaining accuracy to "DIGITS_PRECISION" decimal digits.
+          val = val.toFixed(DIGITS_PRECISION);
+          while (val.endsWith("0"))
+            val = val.substr(0, val.length-1);
+          if (val.endsWith("."))
+            val = val.substr(0, val.length-1);
+          return val + unitsStr;
+        }
       }
 
       function updateResult() {
@@ -676,6 +680,24 @@
               nDigits += 1;
             }
           }
+          const backtrack2 = parsepos;
+          if (take('e', NOSKIP)) {
+            take('+', NOSKIP);
+            take('-', NOSKIP);
+            if (DIGITS.includes(peekc())) {
+              // let JavaScript parse the number
+              while (DIGITS.includes(peekc()))
+                getc();
+              let str = parsestr.substring(backtrack, parsepos);
+              let val = Number.parseFloat(str);
+              if (isNaN(val)) {
+                parsepos = backtrack;
+                throw `Bad number: ${str}`;
+              }
+              return val;
+            }
+          }
+          parsepos = backtrack2;
           if (nDigits > 0)
             return val/div; 
           parsepos = backtrack;    
@@ -748,8 +770,8 @@
             num += val;
           } else {
             // system and user-defined units
-            let hasSlash = backtrack3 === parsepos && take('/', NOSKIP);
-            let word = parseWord(hasSlash ? NOSKIP : undefined);
+            let hasSlash = take('/');
+            let word = parseWord({ noSkip: hasSlash, alphaOnly: true });
             if (word) {
               const symVal = getSymbol(word);
               if (!symVal)
@@ -757,13 +779,9 @@
               if (!symVal.inExp)
                 throw new ChattyError(`Not a unit: "${word}"`);
               let newExp = symVal.inExp;
-              if (take('^', NOSKIP)) {
-                if (take('-', NOSKIP))
-                  newExp = -newExp;
-                let exp = parseNum(NOSKIP);
-                if (exp == null)
-                  throw new ChattyError("Invalid exponent");
-                if (exp === 0 || exp !== exp|0)
+              let exp = parseNum(NOSKIP);
+              if (exp !== null) {
+                if (exp !== (exp|0) || exp < 2)
                   throw "Invalid exponent";
                 newExp *= exp;
               }
@@ -801,10 +819,13 @@
         if (!opts?.noSkip)
           skipSpaces();
         if (ALPHA.includes(peekc())) {
-           let word = getc();
-           while (ALPHANUM.includes(peekc()))
-             word += getc();
-           return word;
+          let word = getc();
+          let chars = ALPHANUM;
+          if (opts?.alphaOnly)
+            chars = ALPHA;
+          while (chars.includes(peekc()))
+            word += getc();
+          return word;
         }
         parsepos = backtrack;
         return null;
@@ -1267,7 +1288,8 @@
                 throw `Cannot redefine system symbol ${name}`;
               }
               showAssignResult(val);
-              delete val.defined;
+              delete val.defined;     // removes the flag that forces the definition
+              delete userSymbols[sym];  // to put the redefined symbol at the end
               userSymbols[sym] = val;
               showUserSymbols();
             } else if (val.type === 'num' && val.inExp == 1) {
@@ -1323,8 +1345,9 @@
         let str = "";
         // It seems like sorting is a good idea, but
         // JavaScript keeps entries in definition order and
-        // that's actually better.
-        for (const sym in userSymbols) {
+        // it's nice to list them in the reverse order of definition
+        let keys = Object.keys(userSymbols).reverse();
+        for (const sym of keys) {
           let symStr = symString(userSymbols[sym]);
           if (symStr)
             str += `<p class="user-def"><span class="delete-button" onclick="deleteDef('${sym}')"></span>
@@ -1342,13 +1365,13 @@
         showUserSymbols()
       }
 
-      function symString(val) {
-        if (val.inExp === 1) {
+      function symString(val, opts) {
+        if (val.inExp === 1 && !opts?.saveMode) {
           let [ftStr, inStr, delta] = inchesToStringReps(val.val);
           return `${val.sym} = ${ftStr}${delta}`;
         }
         if (val.type === 'num') {
-          return `${val.sym} = ${val2str(val)}`;
+          return `${val.sym} = ${val2str(val, opts)}`;
         }
         if (val.type === 'fn') {
           return `${val.sym}(${val.params.join(", ")}) = ${val.body}`;
@@ -1522,9 +1545,11 @@
         // items were added. Otherwise, function definitions might fail
         // due to their variable references being unsatisfied.
         for (const sym in userSymbols) {
-          let symStr = symString(userSymbols[sym]);
-          if (symStr)
+          let symStr = symString(userSymbols[sym], { saveMode: true });
+          if (symStr) {
             wad.defs.push(symStr);
+            // console.log(`Saving: ${symStr}`);
+          }
         }
         let json = JSON.stringify(wad);
         try {
