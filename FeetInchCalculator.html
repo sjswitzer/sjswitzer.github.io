@@ -429,20 +429,21 @@
             if it could be generalized to do arbitrary math with lengths. The result
             is what you see here. It's not clear how useful any of that functionality
             is but it was a good excuse to tinker.
-        <p> One could easily imagine extending it further. For example, it currently
-            deals only in lengths and numbers. So it's possible to add two lengths,
+        <p> One could easily imagine extending it further.
+            It's possible to add two lengths,
             resulting in another length, or to multiply or divide a length by a number.
-            You can divide a length by a length to get a number (the ratio of lenghts),
-            but you can't multiply two numbers. Why? Because that would be an <i>area</i>
-            and this program doesn't know about areas. But nothing says it couldn't!
+            But you can't add a length and a number.
+            You can divide a length by a length to get a number (the ratio of lenghts).
+            Can you multiply two lengths? Yes, but the result is an <i>area</i>.
         <p> This line of thinking leads to
             <a href="https://en.wikipedia.org/wiki/Dimensional_analysis">dimensional analysis</a>,
             and there are already some very good programs out there for that including the
             legendary
             <a href="https://linux.die.net/man/1/units">Unix "units" command</a>.
             Hell, <a href="https://www.google.com/search?q=12+acres+%2F+100+feet">
-            Google will do it for you</a> if you ask it nicely.
-        <p> The main distinction this tool has is that it deals naturally with notations
+            Google will do it for you</a> if you ask it nicely. This program
+            does a limited amount of dimensional analysis in lenghts, areas, volumes, etc.
+        <p> The main distinction of this tool is that it deals naturally with notations
             typically used with feet and inches. But, <i>sigh</i>,
             <a href="https://www.google.com/search?q=5%27+6+3%2F8%22+%2F+3">
             Google will do that for you too</a>.
@@ -497,7 +498,27 @@
 
       const DIGITS_PRECISION = 10, EPSILON = Math.pow(10, -DIGITS_PRECISION);
 
-      function num2str(val) {
+      function val2str(val) {
+        let unitsStr = "";
+        if (val.val !== undefined) {
+          let inExp = val.inExp;
+          val = val.val;
+          if (inExp !== undefined && inExp !== 0) {
+            if (inExp < 0) {
+              unitsStr = "/";
+              inExp = -inExp;
+            }
+            let ftQuotient = Math.pow(12, inExp);
+            if (val > ftQuotient * 1.5) {
+              val = val / ftQuotient;
+              unitsStr += "ft";
+            } else {
+              unitsStr += "in";
+            }
+            if (inExp != 1)
+              unitsStr += "^" + String(inExp);
+          }
+        }
         // Avoids display of nonsense like 2.5000...001 while
         // maintaining accuracy to "DIGITS_PRECISION" decimal digits.
         val = val.toFixed(DIGITS_PRECISION);
@@ -505,7 +526,7 @@
           val = val.substr(0, val.length-1);
         if (val.endsWith("."))
           val = val.substr(0, val.length-1);
-        return val;
+        return val + unitsStr;
       }
 
       function updateResult() {
@@ -521,7 +542,7 @@
           let totalInches = (ft*12 + inch + num/denom) * times / div;
           if (isNaN(totalInches)) throw "Bad input";
 
-          showResult(totalInches, /* updateExpr */ true);
+          showFeetInchesResult(totalInches, /* updateExpr */ true);
         }
         catch (e) {
           showError(e);
@@ -600,10 +621,11 @@
       //    ddd.dd
       //    .ddd
 
-      function parseNum() {
+      function parseNum(noskip) {
         const backtrack = parsepos;
-        let nDigits = 0
-        skipSpaces();
+        let nDigits = 0;
+        if (! noskip)
+          skipSpaces();
         let ch = peekc();
         if (DIGITS.includes(ch) || ch === ".") {
           let val = 0, div = 1;
@@ -640,8 +662,8 @@
         if (val === null)
           return null;
         const backtrack = parsepos;
-        if (take('/')) {
-          let denom = parseNum();
+        if (take('/', true)) {
+          let denom = parseNum(true);
           if (denom === null) {
             parsepos = backtrack;
             return val;
@@ -652,8 +674,8 @@
         let num = parseNum();
         if (num === null)
           return val;
-        if (take('/')) {
-          let denom = parseNum();
+        if (take('/'), true) {
+          let denom = parseNum(true);
           if (denom !== null) {
             if (denom === 0) throw "Divide by zero";
             return val + num/denom;
@@ -667,13 +689,14 @@
       // number-fractions (nf) each followed by a unit:
       //    n
       //    nf unit
-      //    nf unit [ nf unit ]*
+      //    nf unit [ nf unit ['^' n]? ]*
           
       function parseVal() {
         const backtrack1 = parsepos;
-        let inches = 0, haveLength = false, lastUnit = Number.POSITIVE_INFINITY;
+        let num = 0, inExp = 0, haveNum = false;
+        let lastUnitVal = Number.POSITIVE_INFINITY;
 
-        // The idea of lastUnit is that units should get progressively smaller.
+        // The idea of lastUnitVal is that units should get progressively smaller.
         // Otherwise, someone could enter 2'3' when they meant 2'3"
 
         while (true) {
@@ -681,44 +704,63 @@
           let val = parseNumFrac();
           if (val === null)
             break;
+          const backtrack3 = parsepos;
+          haveNum = true;
           if (take("'")) {
-            if (12 >= lastUnit) throw "Implausible units";
-            lastUnit = 12;
-            inches += val*12;
+            if (12 >= lastUnitVal || (inExp !== 0 && inExp != 1)) throw "Implausible units";
+            lastUnitVal = 12;
+            inExp = 1;
+            num += val*12;
           } else if (take('"')) {
-            if (1 >= lastUnit) throw "Implausible units";
-            lastUnit = 1;
-            inches += val;
+            if (1 >= lastUnitVal || (inExp !== 0 && inExp != 1)) throw "Implausible units";
+            lastUnitVal = 1;
+            inExp = 1;
+            num += val;
           } else {
             // system and user-defined units
-            let word = parseWord(), ok = false;
+            let hasSlash = take('/');
+            let word = parseWord();
             if (word) {
               const symVal = getSymbol(word);
               if (!symVal)
                 throw new ChattyError(`Unknown unit: "${word}"`);
-              if (symVal.type !== 'in')
+              if (!symVal.inExp)
                 throw new ChattyError(`Not a unit: "${word}"`);
-              if (symVal.val >= lastUnit) throw "Implausible units";
-              lastUnit = symVal.val;
-              inches += val * symVal.val;
-              ok = true;
-            }
-            if (!ok) {
-              parsepos = backtrack2;
+              let newExp = symVal.inExp;
+              if (take('^')) {
+                if (take('-'))
+                  newExp = -newExp;
+                let exp = parseNum();
+                if (exp == null)
+                  throw new ChattyError("Invalid exponent");
+                if (exp === 0 || exp !== exp|0)
+                  throw "Invalid exponent";
+                newExp *= exp;
+              }
+              if (hasSlash)
+                newExp = -newExp;
+              if (symVal.val >= lastUnitVal || (inExp !== 0 && inExp !== newExp))
+                throw "Implausible units";
+              lastUnitVal = symVal.val;
+              inExp = newExp;
+              num += val * Math.pow(symVal.val, inExp);
+            } else {
+              parsepos = backtrack3;
+              if (!inExp) {
+                parsepos = backtrack3;
+                num = val;
+              } else {
+                parsepos = backtrack2;
+              }
               break;
             }
           }
-          haveLength = true;
         }
-        if (haveLength)
-          return { type: 'in', val: inches };
-
-        // if there are no units, we can only use the plain number
-        parsepos = backtrack1;
-        let val = parseNum();
-        if (val !== null)
-          return { type: 'num', val: val };
-        return null;
+        if (!haveNum) {
+          parsepos = backtrack1;
+          return null;
+        }
+        return { type: 'num', inExp: inExp, val: num };
       }
 
       // Parse a word
@@ -738,26 +780,27 @@
 
       const symbols = {
         pi: Math.PI,
-        in: { type: 'in', val: 1 },
-        ft: { type: 'in', val: 12 },
-        m:  { type: 'in', val: 1/0.0254 },
-        cm: { type: 'in', val: 1/2.54 },
-        mm: { type: 'in', val: 1/25.4 },
+        in: { type: 'num', inExp: 1, val: 1, name: "inch" },
+        ft: { type: 'num', inExp: 1, val: 12, name: "foot" },
+        m:  { type: 'num', inExp: 1, val: 1/0.0254, name: "meter" },
+        cm: { type: 'num', inExp: 1, val: 1/2.54, name: "centimeter" },
+        mm: { type: 'num', inExp: 1, val: 1/25.4, name: "milimeter" },
         // Let the user define these if they want to, but see Egg()
-        //   yd: { type: 'in', val: 36 },  
-        //   mi: { type: 'in', val: 5280*12 },
-        //   km: { type: 'in', val: 1000/0.0254 },
+        //   yd: { type: 'num', inExp: 1, val: 36, name: "yard" },  
+        //   mi: { type: 'num', inExp: 1, val: 5280*12, name: "mile" },
+        //   km: { type: 'num', inExp: 1, val: 1000/0.0254, name: "kilometer" },
 
         // General n-dimensional hypotenuse
         hyp: function(...params) {
           if (params.length < 1)
-            return { type: 'num', val: 0 };
+            return { type: 'num', inExp: 0, val: 0 };
           let val = params.pop();
-          let type = val.type;
+          let inExp = val.inExp;
           let accum = 0;
           while (true) {
             if (val.val !== 0) {
-              if (val.type !== type) {
+              if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+              if (val.inExp != inExp) {
                 if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
                 type = val.type;
               }
@@ -767,21 +810,31 @@
             if (!val)
               break;
           }
-          return { type: type, val: Math.sqrt(accum) };
+          return { type: 'num', inExp: inExp, val: Math.sqrt(accum) };
+        },
+
+        // Square root
+        sqrt: function(...params) {
+          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
+          let val = params.pop();
+          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+          let inExp = val.inExp/2;
+          if (inExp !== (inExp|0)) throw `${this.sym}(x): parameter must have even units`;
+          return { type: 'num', inExp: inExp, val: Math.sqrt(val.val) };
         },
 
         mean: function(...params) {
           if (params.length < 1) throw `${this.sym}(): no parameters`;
           let val = params.pop();
-          let type = val.type;
+          let inExp = val.inExp;
           let accum = 0, n = 0;
           while (true) {
+            if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
             if (val.val === 0) {
               n += 1;
             } else {
-              if (val.type !== type) {
+              if (val.inExp != inExp) {
                 if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
-                type = val.type;
               }
               accum += val.val;
               n += 1;
@@ -790,13 +843,14 @@
             if (!val)
               break;
           }
-          return { type: type, val: accum/n };
+          return { type: 'num', inExp: inExp, val: accum/n };
         },
 
         // Easter egg function that defines a bunch of units
         Egg: function(p) {
-          const addUnit = (sym, inches) => {
-            userSymbols[sym] = { sym: sym, type: 'in', val: inches };
+          const addUnit = (sym, inches, exp) => {
+            exp = exp ?? 1;
+            userSymbols[sym] = { sym: sym, type: 'num', inExp: exp, val: inches };
           }
           // if there's no parameter (of any type or value) just add the useful ones
           addUnit('yd', 3*12);          // 3'
@@ -804,14 +858,15 @@
           addUnit('km', 1000/0.0254);   // 1000m
           if (p) {
             // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
-            addUnit('fathom', 6*12);      // 6'
-            addUnit('league', 5280*12*3); // 3 mi
-            addUnit('chain', 66*12);      // 66'
-            addUnit('furlong', 66*12*10); // 10 chains
-            addUnit('rod', 66*12/4);      // chain/4
-            addUnit('link', 66*12/100);   // chain/100
-            // addUnit('point', 1/72);    // 1/72"
-            // addUnit('pica', 1/6);      // 1/6", 12 points
+            addUnit('fathom', 6*12);               // 6'
+            addUnit('league', 5280*12*3);          // 3 mi
+            addUnit('chain', 66*12);               // 66'
+            addUnit('furlong', 66*12*10);          // 10 chains
+            addUnit('rod', 66*12/4);               // chain/4
+            addUnit('link', 66*12/100);            // chain/100
+            addUnit('acre', 66*12 * 660*12, 2);    // 66' x 660'
+            // addUnit('point', 1/72);             // 1/72"
+            // addUnit('pica', 1/6);               // 1/6", 12 points
           }
           showUserSymbols();
           throw "Surprise!";
@@ -828,7 +883,7 @@
         if (val === undefined)
           val = symbols[name];
         if (typeof val === 'number')
-          val = { type: 'num', val: val };
+          val = { type: 'num', inExp: 0, val: val };
         else if (val instanceof Function)
           val = { type: 'fn', sym: name, params:["..."], native: val, body: `#builtin-${name}#` };
         return val;
@@ -945,7 +1000,7 @@
             if (val.type === 'fn') throw new ChattyError("Can't negate functions");
             if (val.type === 'parse')
               return { type: 'parse', op: 'neg', expr: val };
-            return { type: val.type, val: -val.val };
+            return { type: val.type, inExp: val.inExp, val: -val.val };
           }
           parsepos = backtrack;
           return null;
@@ -974,11 +1029,9 @@
             if (val.type === 'parse' || val2.type === 'parse')
               val = { type: 'parse', op: '*', expr1: val, expr2: val2 };
             else if (val.type === 'num' && val2.type === 'num')
-              val = { type: 'num', val: val.val * val2.val };
-            else if (!(val.type === 'in' && val2.type === 'in'))
-              val =  { type: 'in', val: val.val * val2.val };
+              val = { type: 'num', inExp: val.inExp + val2.inExp, val: val.val * val2.val };
             else
-              throw "Cannot multiply lengths";
+              throw "Unknown value type";
           } else if (take("/")) {
             let val2 = parseUnary();
             if (val2 === null) {
@@ -992,13 +1045,9 @@
             else if (val2.val === 0)
               throw "Divide by zero";
             else if (val.type === 'num' && val2.type === 'num')
-              val =  { type: 'num', val: val.val / val2.val };
-            else if (val.type === 'in' && val2.type === 'num')
-              val =  { type: 'in', val: val.val / val2.val };
-            else if (val.type === 'in' && val2.type === 'in')
-              val =  { type: 'num', val: val.val / val2.val };
+              val = { type: 'num', inExp: val.inExp - val2.inExp, val: val.val / val2.val };
             else
-              throw "Cannot divide numbers by lengths";
+              throw "Unknown value type";
           } else {
             break;
           }
@@ -1024,20 +1073,22 @@
             }
             if (val.type === 'fn' || val2.type === 'fn')
               throw new ChattyError("Can't add functions");
-            if (val.type === 'parse' || val2.type === 'parse')
+            if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '+', expr1: val, expr2: val2 };
-            else if (val.type === 'num' && val2.type === 'num')
-              val = { type: 'num', val: val.val + val2.val };
-            else if (val.type === 'in' && val2.type === 'in')
-              val = { type: 'in', val: val.val + val2.val };
-            else if (val.type === 'in' && val2.type === 'num' && val2.val === 0)
-              {}   // special case for adding 0; take first val
-            else if (val2.type === 'in' && val.type === 'num' && val.val === 0)
+            } else if (val2.val === 0) {
+              // special case for adding 0; keep first val
+            } else if (val.val === 0) {
               val = val2;  // special case for adding 0; take second val
-            else if (val.type === 'num')
-              throw "Cannot add numbers and lengths";
-            else if (val.type === 'in')
-              throw new ChattyError("Cannot add numbers and lengths");
+            } else if (val.type === 'num' && val2.type === 'num') {
+              if (val.inExp == val2.inExp) 
+                val = { type: 'num', inExp: val.inExp, val: val.val + val2.val };
+              else if (val2.inExp == 0)
+                throw new ChattyError("Cannot add different unit types")
+              else
+                throw "Cannot add different unit types";
+            } else {
+              throw "Unknown value type";
+            }
           } else if (take("-")) {
             let val2 = parseMulExpr();
             if (val2 === null) {
@@ -1046,20 +1097,21 @@
             }
             if (val.type === 'fn' || val2.type === 'fn')
               throw "Can't subtract functions";
-            else if (val.type === 'parse' || val2.type === 'parse')
+            if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '-', expr1: val, expr2: val2 };
-            else if (val.type === 'num' && val2.type === 'num')
-              val = { type: 'num', val: val.val - val2.val };
-            else if (val.type === 'in' && val2.type === 'in')
-              val = { type: 'in', val: val.val - val2.val };
-            else if (val.type === 'in' && val2.type === 'num' && val2.val === 0)
-              {}   // special case for subtracting 0; take first val
-            else if (val2.type === 'in' && val.type === 'num' && val.val === 0)
-              val = { type: 'in', val: -val2.val };  // special case for subtracting 0;
-            else if (val.type === 'num')
-              throw "Cannot subtract numbers and lengths";
-            else if (val.type === 'in')
-              throw new ChattyError("Cannot subtract numbers and lengths");
+            } else if (val2.val === 0) {
+              // special case for subtracting 0; take first val
+            } else if (val.type === 'num' && val2.type === 'num') {
+              if (val.inExp === val2.inExp)
+                val = { type: 'num', inExp: val.inExp, val: val.val - val2.val };
+              else if (val2.inExp == 0)
+                throw new ChattyError("Cannot subtract different unit types")
+              else
+                throw "Cannot subtract different unit types";
+            }
+            else {
+              throw "Unknown value type";
+            }
           } else {
             break;
           }
@@ -1150,15 +1202,20 @@
           if (val !== null) {
             if (userHitEnter && val.defined) {
               let sym = val.sym;
-              if (symbols[sym]) throw "Cannot redefine system symbols";
+              if (symbols[sym]) {
+                let name = `"${sym}"`;
+                if (symbols[sym].name)
+                  name = `${name} (${symbols[sym].name})`;
+                throw `Cannot redefine system symbol ${name}`;
+              }
               showAssignResult(val);
               delete val.defined;
               userSymbols[sym] = val;
               showUserSymbols();
-            } else if (val.type === 'in') {
-              showResult(val.val);
+            } else if (val.type === 'num' && val.inExp == 1) {
+              showFeetInchesResult(val.val);
             } else if (val.type === 'num') {
-              showNumberResult(val.val);
+              showResult(val);
             } else if (val.type === 'fn' && !val.defined) {
               showAssignResult(val);
             }
@@ -1185,13 +1242,13 @@
           document.getElementById(field).value = "";
       }
 
-      function showNumberResult(num) {
+      function showResult(val) {
         document.getElementById('results').style.display = 'none';
         document.getElementById('numberResults').style.display = '';
         document.getElementById('error').style.display = 'none';
         document.getElementById('numberResults').style.color = '';
 
-        document.getElementById('numberResultsDetail').textContent = num2str(num);
+        document.getElementById('numberResultsDetail').textContent = val2str(val);
       }
 
       function escapeHTML(str) {
@@ -1206,9 +1263,10 @@
       function showUserSymbols() {
         document.getElementById('symdefs');
         let str = "";
-        // Kinda seems like sorting is a good idea, but
+        // It seems like sorting is a good idea, but
         // JavaScript keeps entries in definition order and
-        // that's actually better
+        // that's actually better.
+        // TODO: maybe reverse definition order is even better than that.
         for (const sym in userSymbols) {
           let symStr = symString(userSymbols[sym]);
           if (symStr)
@@ -1228,12 +1286,12 @@
       }
 
       function symString(val) {
-        if (val.type === 'in') {
+        if (val.inExp === 1) {
           let [ftStr, inStr, delta] = inchesToStringReps(val.val);
           return `${val.sym} = ${ftStr}${delta}`;
         }
         if (val.type === 'num') {
-          return `${val.sym} = ${val.val}`;
+          return `${val.sym} = ${val2str(val)}`;
         }
         if (val.type === 'fn') {
           return `${val.sym}(${val.params.join(", ")}) = ${val.body}`;
@@ -1252,14 +1310,14 @@
         document.getElementById('numberResultsDetail').textContent = str;
       }
 
-      function showResult(totalInches, updateExpr) {
+      function showFeetInchesResult(totalInches, updateExpr) {
         document.getElementById('results').style.display = '';
         document.getElementById('numberResults').style.display = 'none';
         document.getElementById('error').style.display = 'none';
         document.getElementById('results').style.color = '';
 
-        document.getElementById('resultIn').textContent = num2str(totalInches);
-        document.getElementById('resultFt').textContent = num2str(totalInches/12);
+        document.getElementById('resultIn').textContent = val2str(totalInches);
+        document.getElementById('resultFt').textContent = val2str(totalInches/12);
 
         let [ftStr, inStr, delta] = inchesToStringReps(totalInches);
         document.getElementById('resultFtDetail').textContent = ftStr + delta;
@@ -1270,9 +1328,9 @@
 
         // show metric for good measure
         document.getElementById('resultMeters').textContent =
-          num2str(totalInches * 0.0254);
+          val2str(totalInches * 0.0254);
         document.getElementById('resultMetersMetricFeet').textContent =
-          num2str(totalInches * 0.025);
+          val2str(totalInches * 0.025);
       }
 
       function inchesToStringReps(totalInches) {
@@ -1315,9 +1373,9 @@
           delta = "";
         } else {
           if (delta < 0)
-            delta = ` - ${num2str(-delta)}"`;
+            delta = ` - ${val2str(-delta)}"`;
           else
-            delta = ` + ${num2str(delta)}"`;
+            delta = ` + ${val2str(delta)}"`;
         }
  
         // format inches
