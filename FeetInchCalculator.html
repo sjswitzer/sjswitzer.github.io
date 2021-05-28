@@ -798,27 +798,21 @@
           } else {
             // system and user-defined units
             let hasSlash = take('/');
-            let word = parseWord({ ...opts, noSkip: hasSlash, alphaOnly: true });
+            let word = parseWord({ ...opts, noSkip: hasSlash });
             if (word) {
               const symVal = getSymbol(word);
               if (!symVal)
                 throw new ChattyError(`Unknown unit: "${word}"`);
               if (!symVal.inExp || !symVal.val)
                 throw new ChattyError(`Not a unit: "${word}"`);
-              let newExp = symVal.inExp;
-              let exp = parseNum({ ...opts, noSkip: true });
-              if (exp !== null) {
-                if (exp !== (exp|0) || exp < 2)
-                  throw "Invalid exponent";
-                newExp *= exp;
-              }
+              let exp = symVal.inExp;
               if (hasSlash)
-                newExp = -newExp;
-              if (symVal.val >= lastUnitVal || (inExp !== 0 && inExp !== newExp))
+                exp = -exp;
+              if (symVal.val >= lastUnitVal || (inExp !== 0 && inExp !== exp))
                 throw "Implausible units";
               lastUnitVal = symVal.val;
-              inExp = newExp;
-              num += val * Math.pow(symVal.val, inExp);
+              inExp = exp;
+              num += val * symVal.val;
             } else {
               if (!inExp) {
                 parsepos = backtrack3;
@@ -847,10 +841,7 @@
           skipSpaces();
         if (ALPHA.includes(peekc())) {
           let word = getc();
-          let chars = ALPHANUM;
-          if (opts?.alphaOnly)
-            chars = ALPHA;
-          while (chars.includes(peekc()))
+          while (ALPHANUM.includes(peekc()))
             word += getc();
           return word;
         }
@@ -964,6 +955,14 @@
           val = { type: 'num', inExp: 0, val: val };
         else if (val instanceof Function)
           val = { type: 'fn', sym: name, params:["..."], native: val, body: `#builtin-${name}#` };
+        // special case to create pseudo-variables for powered units
+        const match = /^([a-z]+)([0-9]+)$/i.exec(name);
+        if (match) {
+          let val2 = getSymbol(match[1]);
+          let exp = Number(match[2]);
+          if (val2 && val2.type === 'num' && val2.inExp && val2.val && exp > 1)
+            return { type: 'num', inExp: val2.inExp * exp, val: Math.pow(val2.val, exp) };
+        }
         return val;
       }
 
@@ -996,6 +995,7 @@
       // parenthesized expression, a function call, or a value or a word (variable)
       //    '+' term
       //    '-' term
+      //    '/' term     -- reciprocal
       //    '(' expr ')'
       //    term [ '(' [ expr [ ',' expr ]* ]? ')' ]+
       //    value
@@ -1020,6 +1020,18 @@
             if (val.type === 'parse')
               return { type: 'parse', op: 'neg', expr: val };
             return { type: val.type, inExp: val.inExp, val: -val.val };
+          }
+          parsepos = backtrack;
+          return null;
+        }
+        if (take('/')) {
+          let val = parseTerm(opts);
+          if (val !== null) {
+            if (val.type === 'fn') throw new ChattyError("can't divide functions");
+            if (val.type === 'parse')
+              return { type: 'parse', op: 'recip', expr: val };
+            if (!val.val) throw "divide by zero";
+            return { type: val.type, inExp: -val.inExp, val: 1/val.val };
           }
           parsepos = backtrack;
           return null;
