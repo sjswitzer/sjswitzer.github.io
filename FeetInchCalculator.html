@@ -543,11 +543,14 @@
           val = val.val;
           if (inExp !== undefined && inExp !== 0) {
             // Find best unit to express the value in
-            let sign = Math.sign(inExp);
             let bestUnit = 'in';
-            for (const symName of ['in', 'ft', 'mi']) {
+            let displayExp = inExp;
+            for (const symName of ['in', 'ft', 'acre', 'mi']) {
               const sym = symbols[symName];
-              const quotient = Math.pow(sym.val, sym.inExp * inExp);
+              const unitsRatio = inExp / sym.inExp;
+              if (unitsRatio !== (unitsRatio |0))
+                continue;
+              const quotient = Math.pow(sym.val, unitsRatio);
               const valAdjusted = val/quotient;
               // number should be closer to 1 and >= 1
               if (inExp > 0 && valAdjusted < 1) {
@@ -555,24 +558,27 @@
                 break;
               } else {
                 bestUnit = symName;
+                displayExp = unitsRatio;
               }
               if (inExp <= 0 && valAdjusted >= 1) {
                 // first unit with val >= 1
                 bestUnit = symName;
+                displayExp = unitsRatio;
                 break;
               }
             }
             const sym = symbols[bestUnit];
             unitsStr = " ";
-            const quotient = Math.pow(sym.val, sym.inExp * inExp);
-            if (inExp < 0) {
+            const unitsRatio = inExp / sym.inExp;
+            const quotient = Math.pow(sym.val, unitsRatio);
+            if (displayExp < 0) {
               unitsStr = " /";
-              inExp = -inExp;
+              displayExp = -displayExp;
             }
             val = val / quotient;
             unitsStr += bestUnit;
-            if (inExp != 1)
-              unitsStr += String(inExp);
+            if (displayExp != 1)
+              unitsStr += String(displayExp);
           }
         }
         if (opts?.saveMode || Math.abs(val) < 10000 * EPSILON) {
