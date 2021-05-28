@@ -602,6 +602,7 @@
 
           let totalInches = (ft*12 + inch + num/denom) * times / div;
           if (isNaN(totalInches)) throw "Bad input";
+          if (!isFinite(totalInches)) throw "Divide by zero"
 
           showFeetInchesResult(totalInches, /* updateExpr */ true);
         }
@@ -748,8 +749,9 @@
             parsepos = backtrack;
             return val;
           }
-          if (denom === 0) throw "Divide by zero";
-          return val/denom;
+          const q = val/denom;
+          if (!isFinite(q)) throw "Divide by zero";
+          return q;
         }
         let num = parseNum();
         if (num === null)
@@ -757,8 +759,9 @@
         if (take('/'), NOSKIP) {
           let denom = parseNum({ ...opts, noSkip: true });
           if (denom !== null) {
-            if (denom === 0) throw "Divide by zero";
-            return val + num/denom;
+            const q = num/denom;
+            if (!isFinite(q)) throw "Divide by zero";
+            return val + q;
           }
         }
         parsepos = backtrack;
@@ -805,14 +808,16 @@
                 throw new ChattyError(`Unknown unit: "${word}"`);
               if (!symVal.inExp || !symVal.val)
                 throw new ChattyError(`Not a unit: "${word}"`);
-              let exp = symVal.inExp;
-              if (hasSlash)
+              let exp = symVal.inExp, val1 = symVal.val;
+              if (hasSlash) {
                 exp = -exp;
+                val1 = 1/val1;
+              }
               if (symVal.val >= lastUnitVal || (inExp !== 0 && inExp !== exp))
                 throw "Implausible units";
               lastUnitVal = symVal.val;
               inExp = exp;
-              num += val * symVal.val;
+              num += val * val1;
             } else {
               if (!inExp) {
                 parsepos = backtrack3;
@@ -1030,8 +1035,9 @@
             if (val.type === 'fn') throw new ChattyError("can't divide functions");
             if (val.type === 'parse')
               return { type: 'parse', op: 'recip', expr: val };
-            if (!val.val) throw "divide by zero";
-            return { type: val.type, inExp: -val.inExp, val: 1/val.val };
+            const q = 1/val.val;
+            if (!isFinite(q)) throw "Divide by zero";
+            return { type: val.type, inExp: -val.inExp, val: q };
           }
           parsepos = backtrack;
           return null;
@@ -1159,14 +1165,15 @@
             }
             if (val.type === 'fn' || val2.type === 'fn')
               throw "Can't divide functions";
-            if (val.type === 'parse' || val2.type === 'parse')
+            if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '/', expr1: val, expr2: val2 };
-            else if (val2.val === 0)
-              throw "Divide by zero";
-            else if (val.type === 'num' && val2.type === 'num')
-              val = { type: 'num', inExp: val.inExp - val2.inExp, val: val.val / val2.val };
-            else
+            } else if (val.type === 'num' && val2.type === 'num') {
+              const q = val.val / val2.val;
+              if (!isFinite(q)) throw "Divide by zero";
+              val = { type: 'num', inExp: val.inExp - val2.inExp, val: q };
+            } else {
               throw "Unknown value type";
+            }
           } else {
             break;
           }
