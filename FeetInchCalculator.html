@@ -870,12 +870,7 @@
         cm: { type: 'num', inExp: 1, val: 1/2.54, name: "centimeter" },
         m:  { type: 'num', inExp: 1, val: 1/0.0254, name: "meter" },
         km: { type: 'num', inExp: 1, val: 1000/0.0254, name: "kilometer" },
-        hectare: { type: 'num', inExp: 2, val: (1000/0.0254)^2, name: "hectare" },
-
-        // Let the user define these if they want to, but see Egg()
-        //   yd: { type: 'num', inExp: 1, val: 36, name: "yard" },  
-        //   mi: { type: 'num', inExp: 1, val: 5280*12, name: "mile" },
-        //   km: { type: 'num', inExp: 1, val: 1000/0.0254, name: "kilometer" },
+        hectare: { type: 'num', inExp: 2, val: (100/0.0254)**2, name: "hectare" },
 
         // General n-dimensional hypotenuse
         hyp: function(...params) {
