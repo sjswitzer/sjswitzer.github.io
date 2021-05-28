@@ -391,6 +391,9 @@
           <tr>
             <td> mm
             <td> Millimeters
+          <tr>
+            <td> hectare
+            <td> A hectare, or 100m x 100m
         </table>
         <p> In fact, any <i>variable</i> you define with a unit can be used as
             a unit itself.
@@ -401,12 +404,20 @@
             and <code>2 ft3</code> is two cubic feet. if a unit specifier is immediately
             preceded by a <code>/</code> (without spaces), it is an inverse unit.
             For instance, <code>60 /ft2</code> means 60 per square foot.
+            <code>144/ft2</code> means 144 per square foot or, equivalently, 1 per square inch
+            (which is how it will display). What per square foot? Anything. Think "ducks" and
+            you'll be on the right track.
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
             This is to prevent accidentally typing <code>12'3'</code> when you really
             meant <code>12'3"</code>.
             You can type nonsense like <code>3 1/2m 3.5"</code> if you want, but you won't
             do it by accident.
+        <p> Beware that spaces can occasionally make a big difference.
+            <code>1/2 in</code> or <code>1/2in</code> means half an inch,
+            but <code>1 / 2 in</code> or even
+            <code>1/ 2 in</code> means one over 2 inches. Just avoid putting spaces around
+            the slash in a fractional unit and you'll be fine.
         <h2> Variables </h2>
         <p> Define variables by typing <code class="abstract">name = expression</code>
             then hitting "enter."
