@@ -715,7 +715,7 @@
             ch = peekc();
             nDigits += 1;
           }
-          if (take('.', NOSKIP)) {
+          if (!opts?.intOnly && take('.', NOSKIP)) {
             ch = peekc();
             while (DIGITS.includes(ch)) {
               val = val*10 + parseInt(ch);
@@ -726,7 +726,7 @@
             }
           }
           const backtrack2 = parsepos;
-          if (take('e', NOSKIP)) {
+          if (!opts?.intOnly && take('e', NOSKIP)) {
             take('+', NOSKIP);
             take('-', NOSKIP);
             if (DIGITS.includes(peekc())) {
@@ -761,7 +761,7 @@
           return null;
         const backtrack = parsepos;
         if (take('/', NOSKIP)) {
-          let denom = parseNum({ ...opts, noSkip: true });
+          let denom = parseNum({ noSkip: true, intOnly: true });
           if (denom === null) {
             parsepos = backtrack;
             return val;
@@ -770,11 +770,11 @@
           if (!isFinite(q)) throw "Divide by zero";
           return q;
         }
-        let num = parseNum();
+        let num = parseNum({ intOnly: true });
         if (num === null)
           return val;
         if (take('/'), NOSKIP) {
-          let denom = parseNum({ ...opts, noSkip: true });
+          let denom = parseNum({ noSkip: true, intOnly: true });
           if (denom !== null) {
             const q = num/denom;
             if (!isFinite(q)) throw "Divide by zero";
