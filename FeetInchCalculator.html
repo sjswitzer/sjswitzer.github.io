@@ -542,23 +542,41 @@
           let inExp = val.inExp;
           val = val.val;
           if (inExp !== undefined && inExp !== 0) {
+            // Find best unit to express the value in
+            let sign = Math.sign(inExp);
+            let bestUnit = 'in';
+            for (const symName of ['in', 'ft', 'mi']) {
+              const sym = symbols[symName];
+              const quotient = Math.pow(sym.val, sym.inExp * inExp);
+              const valAdjusted = val/quotient;
+              // number should be closer to 1 and >= 1
+              if (inExp > 0 && valAdjusted < 1) {
+                // last unit with val >= 1
+                break;
+              } else {
+                bestUnit = symName;
+              }
+              if (inExp <= 0 && valAdjusted >= 1) {
+                // first unit with val >= 1
+                bestUnit = symName;
+                break;
+              }
+            }
+            const sym = symbols[bestUnit];
             unitsStr = " ";
-            let ftQuotient = Math.pow(12, inExp);
+            const quotient = Math.pow(sym.val, sym.inExp * inExp);
             if (inExp < 0) {
               unitsStr = " /";
               inExp = -inExp;
             }
-            if (val >= ftQuotient) {
-              val = val / ftQuotient;
-              unitsStr += "ft";
-            } else {
-              unitsStr += "in";
-            }
+            val = val / quotient;
+            unitsStr += bestUnit;
             if (inExp != 1)
               unitsStr += String(inExp);
           }
         }
-        if (opts?.saveMode) {
+        if (opts?.saveMode || Math.abs(val) < 10000 * EPSILON) {
+          // full precision value
           return String(val) + unitsStr;
         } else {
           // Avoids display of nonsense like 2.5000...001 while
@@ -785,7 +803,7 @@
               const symVal = getSymbol(word);
               if (!symVal)
                 throw new ChattyError(`Unknown unit: "${word}"`);
-              if (!symVal.inExp)
+              if (!symVal.inExp || !symVal.val)
                 throw new ChattyError(`Not a unit: "${word}"`);
               let newExp = symVal.inExp;
               let exp = parseNum({ ...opts, noSkip: true });
@@ -844,11 +862,13 @@
         pi: Math.PI,
         in: { type: 'num', inExp: 1, val: 1, name: "inch" },
         ft: { type: 'num', inExp: 1, val: 12, name: "foot" },
-        m:  { type: 'num', inExp: 1, val: 1/0.0254, name: "meter" },
-        cm: { type: 'num', inExp: 1, val: 1/2.54, name: "centimeter" },
-        mm: { type: 'num', inExp: 1, val: 1/25.4, name: "milimeter" },
         mi: { type: 'num', inExp: 1, val: 5280*12, name: "mile" },
         acre: { type: 'num', inExp: 2, val:  66*12 * 660*12 }, // 66' x 660'
+        mm: { type: 'num', inExp: 1, val: 1/25.4, name: "milimeter" },
+        cm: { type: 'num', inExp: 1, val: 1/2.54, name: "centimeter" },
+        m:  { type: 'num', inExp: 1, val: 1/0.0254, name: "meter" },
+        km: { type: 'num', inExp: 1, val: 1000/0.0254, name: "kilometer" },
+        hectare: { type: 'num', inExp: 2, val: (1000/0.0254)^2, name: "hectare" },
 
         // Let the user define these if they want to, but see Egg()
         //   yd: { type: 'num', inExp: 1, val: 36, name: "yard" },  
@@ -917,20 +937,15 @@
             exp = exp ?? 1;
             userSymbols[sym] = { sym: sym, type: 'num', inExp: exp, val: inches };
           }
-          // if there's no parameter (of any type or value) just add the useful ones
-          addUnit('yd', 3*12);                // 3'
-          addUnit('km', 1000/0.0254);         // 1000m
-          if (p) {
-            // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
-            addUnit('fathom', 6*12);          // 6'
-            addUnit('league', 5280*12*3);     // 3 mi
-            addUnit('chain', 66*12);          // 66'
-            addUnit('furlong', 66*12*10);     // 10 chains
-            addUnit('rod', 66*12/4);          // chain/4
-            addUnit('link', 66*12/100);       // chain/100
-            // addUnit('point', 1/72);        // 1/72"
-            // addUnit('pica', 1/6);          // 1/6", 12 points
-          }
+          // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
+          addUnit('fathom', 6*12);          // 6'
+          addUnit('league', 5280*12*3);     // 3 mi
+          addUnit('chain', 66*12);          // 66'
+          addUnit('furlong', 66*12*10);     // 10 chains
+          addUnit('rod', 66*12/4);          // chain/4
+          addUnit('link', 66*12/100);       // chain/100
+          addUnit('point', 1/72);           // 1/72"
+          addUnit('pica', 1/6);             // 1/6", 12 points
           showUserSymbols();
           throw "Surprise!";
         }
@@ -1110,7 +1125,7 @@
         if (val === null)
           return null;
         while (true) {
-          if (take("*")) {
+          if (take('*')) {
             let val2 = parseExponentiation(opts);
             if (val2 === null) {
               parsepos = backtrack;
@@ -1124,7 +1139,7 @@
               val = { type: 'num', inExp: val.inExp + val2.inExp, val: val.val * val2.val };
             else
               throw "Unknown value type";
-          } else if (take("/")) {
+          } else if (take('/')) {
             let val2 = parseExponentiation(opts);
             if (val2 === null) {
               parsepos = backtrack;
@@ -1157,7 +1172,7 @@
         if (val === null)
           return null;
         while (true) {
-          if (take("+")) {
+          if (take('+')) {
             let val2 = parseMulExpr(opts);
             if (val2 === null) {
               parsepos = backtrack;
@@ -1179,7 +1194,7 @@
             } else {
               throw "Unknown value type";
             }
-          } else if (take("-")) {
+          } else if (take('-')) {
             let val2 = parseMulExpr(opts);
             if (val2 === null) {
               parsepos = backtrack;
