@@ -574,7 +574,9 @@
             let units = ['in', 'ft', 'acre', 'mi'];
             if (metric)
               units = ['cm', 'm', 'hectare', 'km' ];
-            let bestUnit = units.shift();
+            let bestUnit = units[0];
+            if (umExp < 0)
+              bestUnit = units[units.length-1];
             for (const symName of units) {
               const sym = symbols[symName];
               const unitsRatio = umExp / sym.umExp;
@@ -582,19 +584,17 @@
                 continue;
               const quotient = Math.pow(sym.val, unitsRatio);
               const valAdjusted = val/quotient;
-              // number should be closer to 1 and >= 1
-              if (umExp > 0 && valAdjusted < 1) {
-                // last unit with val >= 1
-                break;
+              if (umExp > 0) {
+                if (valAdjusted < 1) // last unit with val >= 1 (if possible)
+                  break;
+                bestUnit = symName;
+                displayExp = unitsRatio;
               } else {
-                bestUnit = symName;
-                displayExp = unitsRatio;
-              }
-              if (umExp <= 0 && valAdjusted >= 1) {
-                // first unit with val >= 1
-                bestUnit = symName;
-                displayExp = unitsRatio;
-                break;
+                if (valAdjusted >= 1) { // first unit with val >= 1
+                  bestUnit = symName;
+                  displayExp = unitsRatio;
+                  break;
+                }
               }
             }
             const sym = symbols[bestUnit];
