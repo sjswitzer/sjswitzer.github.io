@@ -463,9 +463,7 @@
         </table>
         <h2> Saved State </h2>
         <p> User-defined variables and functions are saved between sessions in local
-            storage. In case you run into a problem with that, you can
-            <span class="linklike" onclick="clearLocalStorage()">clear</span>
-            local storage.
+            storage.
         <h2> Odds And Ends </h2>
         <p> <span class="linklike" onclick="showHelp('help-boring')">Boring details</span>
             if you're interested.
@@ -484,8 +482,7 @@
             if it could be generalized to do arbitrary math with lengths. The result
             is what you see here. It's not clear how useful any of that functionality
             is but it was a good excuse to tinker.
-        <p> One could easily imagine extending it further.
-            It's possible to add two lengths,
+        <p> It's possible to add two lengths,
             resulting in another length, or to multiply or divide a length by a number.
             But you can't add a length and a number.
             You can divide a length by a length to get a number (the ratio of lenghts).
@@ -542,6 +539,10 @@
       // most often. The largest SI unit that would serve is the micrometer, μm or,
       // in ASCII, um. So currently, the basic unit of length is the "um", and in the
       // code the symbol "umExp" refers to the exponent of the micrometer unit.
+      //
+      // If an expression contains any US units, the results will be displayed in
+      // those units. If an expression contains only metric units, the results
+      // will be displayed in metric.
 
       const UM = 1;
       const MM = 1000*UM;
@@ -593,7 +594,7 @@
         },
 
         // Square root
-        sqrt: function(...params) {
+        sqrt: function SquareRoot(...params) {
           if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
@@ -1608,14 +1609,6 @@
       const GUID = "ad1f9c32-ed69-457d-89a0-f966c81424bd";
       const LOCAL_STORAGE_KEY = "FeetInchCalculator-" + GUID;
       const MAJOR = 1, MINOR = 0, PATCH = 0;
-
-      function clearLocalStorage() {
-        const localStorage = window.localStorage;
-        if (!localStorage)
-          return;
-        localStorage.setItem(LOCAL_STORAGE_KEY, "");
-        localStorage.clear();
-      }
 
       function loadUserSymbols() {
         const localStorage = window.localStorage;
