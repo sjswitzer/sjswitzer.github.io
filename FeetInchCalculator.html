@@ -214,7 +214,7 @@
       }
     </style>
   </head>
-  <body onload="onLoad()">
+  <body">
     <div class="layout-column shrink-wrap">
       <div class="force-width">
         <input type="text" style="text-align: right;"
@@ -1462,11 +1462,6 @@
               ${escapeHTML(symStr)}</p>`;
         }
         document.getElementById('symdefs').innerHTML = str;
-
-        // Can't seem to save to local storage on unload in Safari,
-        // so just do it here, I guess.
-        // XXX: You can save them on beforeunload; maybe fix?
-        saveUserSymbols();
       }
 
       function deleteDef(sym) {
@@ -1686,17 +1681,21 @@
         }
       }
 
+      window.addEventListener('load', function onLoad(evt) {
+        loadUserSymbols();
+        updateResult();
+        addExampleStuffs();
+      });
+
+      window.addEventListener("beforeunload", function(evt) {
+        saveUserSymbols();
+      });
+
       document.addEventListener("keydown", function(evt) {
         evt = evt || window.event;
         if (evt.key === "Escape" || evt.key === "Esc" || evt.keyCode === 27)
           showHelp();
       });
-
-      function onLoad() {
-        loadUserSymbols();
-        updateResult();
-        addExampleStuffs();
-      }
-    </script>
+   </script>
   </body>
 </html>
