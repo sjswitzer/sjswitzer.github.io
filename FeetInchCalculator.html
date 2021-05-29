@@ -401,6 +401,7 @@
             expressions like <code>3yd 5 1/2"</code>.
         <p> A unit can be immediately followed (without spaces) by a number which is
             the power of that unit. For instance, <code>3 yd2</code> is three square yards
+            (27 square feet)
             and <code>2 ft3</code> is two cubic feet. if a unit specifier is immediately
             preceded by a <code>/</code> (without spaces), it is an inverse unit.
             For instance, <code>60 /ft2</code> means 60 per square foot.
@@ -522,9 +523,19 @@
       // fractional inches. So doing all arithmetic in units of inches means that
       // calculations can be exact when exact results are possible.
       //
-      // Although later elaborations added some support for metric dimensional units,
-      // the essential idea is math with US customary units, so all units are represented
-      // in terms of inches internally.
+      // It later occurred to me that doing calculations in metric units of a
+      // hundredth of a centimeter or less would lead to exact results for both systems
+      // most often. The largest SI unit that would serve is the micrometer, μm or,
+      // in ASCII, um. So currently, the basic unit of length is the "um", and in the
+      // code the symbol "umExp" refers to the exponent of the micrometer unit.
+
+      const UM = 1;
+      const MM = 1000*UM;
+      const CM = 10*MM;
+      const M  = 1000*MM;
+      const KM = 1000*M;
+      const IN = 25400*UM;
+      const FT = 12*IN;
 
       // Errors that are too chatty to show while typing.
       //   (Error will be shown if the user hits "enter.")
@@ -554,32 +565,32 @@
       function val2str(val, opts) {
         let unitsStr = "";
         if (val.val !== undefined) {
-          let inchExp = val.inchExp;
+          let umExp = val.umExp;
           let metric = val.metric;
           val = val.val;
-          if (inchExp !== undefined && inchExp !== 0) {
+          if (umExp !== undefined && umExp !== 0) {
             // Find best unit to express the value in
-            let displayExp = inchExp;
+            let displayExp = umExp;
             let units = ['in', 'ft', 'acre', 'mi'];
             if (metric)
               units = ['cm', 'm', 'hectare', 'km' ];
             let bestUnit = units.shift();
             for (const symName of units) {
               const sym = symbols[symName];
-              const unitsRatio = inchExp / sym.inchExp;
+              const unitsRatio = umExp / sym.umExp;
               if (unitsRatio !== (unitsRatio |0))
                 continue;
               const quotient = Math.pow(sym.val, unitsRatio);
               const valAdjusted = val/quotient;
               // number should be closer to 1 and >= 1
-              if (inchExp > 0 && valAdjusted < 1) {
+              if (umExp > 0 && valAdjusted < 1) {
                 // last unit with val >= 1
                 break;
               } else {
                 bestUnit = symName;
                 displayExp = unitsRatio;
               }
-              if (inchExp <= 0 && valAdjusted >= 1) {
+              if (umExp <= 0 && valAdjusted >= 1) {
                 // first unit with val >= 1
                 bestUnit = symName;
                 displayExp = unitsRatio;
@@ -588,7 +599,7 @@
             }
             const sym = symbols[bestUnit];
             unitsStr = " ";
-            const unitsRatio = inchExp / sym.inchExp;
+            const unitsRatio = umExp / sym.umExp;
             const quotient = Math.pow(sym.val, unitsRatio);
             if (displayExp < 0) {
               unitsStr = " /";
@@ -629,7 +640,7 @@
           if (isNaN(totalInches)) throw "Bad input";
           if (!isFinite(totalInches)) throw "Divide by zero"
 
-          showFeetInchesResult(totalInches, /* updateExpr */ true);
+          showFeetInchesResult(totalInches*IN, /* updateExpr */ true);
         }
         catch (e) {
           showError(e);
@@ -801,7 +812,7 @@
           
       function parseValue(opts) {
         const backtrack1 = parsepos;
-        let num = 0, inchExp = 0;
+        let num = 0, umExp = 0;
         let lastUnitVal = Number.POSITIVE_INFINITY;
         let metric = true;   // consider it metric unless we encounter any non-metric unit
 
@@ -814,16 +825,16 @@
           if (val === null)
             break;
           if (take("'")) {
-            if (12 >= lastUnitVal || (inchExp !== 0 && inchExp != 1)) throw "Implausible units";
-            lastUnitVal = 12;
-            inchExp = 1;
-            num += val*12;
+            if (FT >= lastUnitVal || (umExp !== 0 && umExp != 1)) throw "Implausible units";
+            lastUnitVal = FT;
+            umExp = 1;
+            num += val*FT;
             metric = false;
           } else if (take('"')) {
-            if (1 >= lastUnitVal || (inchExp !== 0 && inchExp != 1)) throw "Implausible units";
+            if (IN >= lastUnitVal || (umExp !== 0 && umExp != 1)) throw "Implausible units";
             lastUnitVal = 1;
-            inchExp = 1;
-            num += val;
+            umExp = 1;
+            num += val*IN;
             metric = false;
           } else {
             // system and user-defined units
@@ -833,17 +844,17 @@
               const symVal = getSymbol(word);
               if (!symVal)
                 throw new ChattyError(`Unknown unit: "${word}"`);
-              if (!symVal.inchExp || !symVal.val)
+              if (!symVal.umExp || !symVal.val)
                 throw new ChattyError(`Not a unit: "${word}"`);
-              let exp = symVal.inchExp, val1 = symVal.val;
+              let exp = symVal.umExp, val1 = symVal.val;
               if (hasSlash) {
                 exp = -exp;
                 val1 = 1/val1;
               }
-              if (symVal.val >= lastUnitVal || (inchExp !== 0 && inchExp !== exp))
+              if (symVal.val >= lastUnitVal || (umExp !== 0 && umExp !== exp))
                 throw "Implausible units";
               lastUnitVal = symVal.val;
-              inchExp = exp;
+              umExp = exp;
               num += val * val1;
               if (!symVal.metric)
                 metric = false;
@@ -853,12 +864,12 @@
             }
           }
         }
-        if (inchExp !== 0)
-          return { type: 'num', inchExp: inchExp, val: num, metric: metric };
+        if (umExp !== 0)
+          return { type: 'num', umExp: umExp, val: num, metric: metric };
         parsepos = backtrack1;
         num = parseNum(opts);
         if (num !== null)
-          return  {type: 'num', inchExp: 0, val: num };
+          return  {type: 'num', umExp: 0, val: num };
         return null;
       }
 
@@ -880,38 +891,40 @@
 
       const symbols = {
         pi: Math.PI,
-        in: { type: 'num', inchExp: 1, val: 1, name: "inch" },
-        ft: { type: 'num', inchExp: 1, val: 12, name: "foot" },
-        mi: { type: 'num', inchExp: 1, val: 5280*12, name: "mile" },
-        acre: { type: 'num', inchExp: 2, val:  66*12 * 660*12 }, // 66' x 660'
-        mm: { type: 'num', inchExp: 1, val: 1/25.4, name: "milimeter", metric: true },
-        cm: { type: 'num', inchExp: 1, val: 1/2.54, name: "centimeter", metric: true },
-        m:  { type: 'num', inchExp: 1, val: 1/0.0254, name: "meter", metric: true },
-        km: { type: 'num', inchExp: 1, val: 1000/0.0254, name: "kilometer", metric: true },
-        hectare: { type: 'num', inchExp: 2, val: (100/0.0254)**2, name: "hectare", metric: true },
+        in: { type: 'num', umExp: 1, val: IN, name: "inch" },
+        ft: { type: 'num', umExp: 1, val: FT, name: "foot" },
+        mi: { type: 'num', umExp: 1, val: 5280*FT, name: "mile" },
+        acre: { type: 'num', umExp: 2, val:  66*FT * 660*FT },
+        mm: { type: 'num', umExp: 1, val: MM, name: "milimeter", metric: true },
+        cm: { type: 'num', umExp: 1, val: CM, name: "centimeter", metric: true },
+        m:  { type: 'num', umExp: 1, val: M, name: "meter", metric: true },
+        km: { type: 'num', umExp: 1, val: KM, name: "kilometer", metric: true },
+        hectare: { type: 'num', umExp: 2, val: (100*M)**2, name: "hectare", metric: true },
 
         // General n-dimensional hypotenuse
         hyp: function(...params) {
           if (params.length < 1)
-            return { type: 'num', inchExp: 0, val: 0 };
+            return { type: 'num', umExp: 0, val: 0 };
           let val = params.pop();
-          let inchExp = val.inchExp;
+          let umExp = val.umExp;
           let metric = val.metric;
           let accum = 0;
           while (true) {
             if (val.val !== 0) {
               if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-              if (val.inchExp != inchExp) {
+              if (val.umExp != umExp) {
                 if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
                 type = val.type;
               }
               accum += val.val * val.val;
+              if (!val.metric)
+                metric = false;
             }
             val = params.pop();
             if (!val)
               break;
           }
-          return { type: 'num', inchExp: inchExp, val: Math.sqrt(accum), metric:metric };
+          return { type: 'num', umExp: umExp, val: Math.sqrt(accum), metric:metric };
         },
 
         // Square root
@@ -919,15 +932,15 @@
           if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
           let val = params.pop();
           if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-          let inchExp = val.inchExp/2;
-          if (inchExp !== (inchExp|0)) throw `${this.sym}(x): parameter must have even units`;
-          return { type: 'num', inchExp: inchExp, val: Math.sqrt(val.val), metric: val.metric };
+          let umExp = val.umExp/2;
+          if (umExp !== (umExp|0)) throw `${this.sym}(x): parameter must have even units`;
+          return { type: 'num', umExp: umExp, val: Math.sqrt(val.val), metric: val.metric };
         },
 
         mean: function(...params) {
           if (params.length < 1) throw `${this.sym}(): no parameters`;
           let val = params.pop();
-          let inchExp = val.inchExp;
+          let umExp = val.umExp;
           let metric = val.metric;
           let accum = 0, n = 0;
           while (true) {
@@ -935,34 +948,36 @@
             if (val.val === 0) {
               n += 1;
             } else {
-              if (val.inchExp != inchExp) {
+              if (val.umExp != umExp) {
                 if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
               }
               accum += val.val;
               n += 1;
+              if (!val.metric)
+                metric = false;
             }
             val = params.pop();
             if (!val)
               break;
           }
-          return { type: 'num', inchExp: inchExp, val: accum/n, metric: metric };
+          return { type: 'num', umExp: umExp, val: accum/n, metric: metric };
         },
 
         // Easter egg function that defines a bunch of units
         Egg: function(p) {
           const addUnit = (sym, inches, exp) => {
             exp = exp ?? 1;
-            userSymbols[sym] = { sym: sym, type: 'num', inchExp: exp, val: inches };
+            userSymbols[sym] = { sym: sym, type: 'num', umExp: exp, val: inches };
           }
           // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
-          addUnit('fathom', 6*12);          // 6'
-          addUnit('league', 5280*12*3);     // 3 mi
-          addUnit('chain', 66*12);          // 66'
-          addUnit('furlong', 66*12*10);     // 10 chains
-          addUnit('rod', 66*12/4);          // chain/4
-          addUnit('link', 66*12/100);       // chain/100
-          addUnit('point', 1/72);           // 1/72"
-          addUnit('pica', 1/6);             // 1/6", 12 points
+          addUnit('fathom', 6*FT);
+          addUnit('league', 3*MI);
+          addUnit('chain', 66*FT);
+          addUnit('furlong', 66*FT*10); // 10 chains
+          addUnit('rod', 66*FT/4);      // chain/4
+          addUnit('link', 66*FT/100);   // chain/100
+          addUnit('point', IN/72);
+          addUnit('pica', IN/6);        // 1/6", 12 points
           showUserSymbols();
           throw "Surprise!";
         }
@@ -978,7 +993,7 @@
         if (val === undefined)
           val = symbols[name];
         if (typeof val === 'number')
-          val = { type: 'num', inchExp: 0, val: val };
+          val = { type: 'num', umExp: 0, val: val };
         else if (val instanceof Function)
           val = { type: 'fn', sym: name, params:["..."], native: val, body: `#builtin-${name}#` };
         // special case to create pseudo-variables for powered units
@@ -986,8 +1001,8 @@
         if (match) {
           let val2 = getSymbol(match[1]);
           let exp = Number(match[2]);
-          if (val2 && val2.type === 'num' && val2.inchExp && val2.val && exp > 1)
-            return { type: 'num', inchExp: val2.inchExp * exp, val: Math.pow(val2.val, exp), metric: val2.metric };
+          if (val2 && val2.type === 'num' && val2.umExp && val2.val && exp > 1)
+            return { type: 'num', umExp: val2.umExp * exp, val: Math.pow(val2.val, exp), metric: val2.metric };
         }
         return val;
       }
@@ -1044,7 +1059,7 @@
             if (val.type === 'fn') throw new ChattyError("Can't negate functions");
             if (val.type === 'parse')
               return { type: 'parse', op: 'neg', expr: val };
-            return { type: val.type, inchExp: val.inchExp, val: -val.val, metric: val.metric };
+            return { type: val.type, umExp: val.umExp, val: -val.val, metric: val.metric };
           }
           parsepos = backtrack;
           return null;
@@ -1057,7 +1072,7 @@
               return { type: 'parse', op: 'recip', expr: val };
             const q = 1/val.val;
             if (!isFinite(q)) throw "Divide by zero";
-            return { type: val.type, inchExp: -val.inchExp, val: q, metric: val.metric };
+            return { type: val.type, umExp: -val.umExp, val: q, metric: val.metric };
           }
           parsepos = backtrack;
           return null;
@@ -1087,7 +1102,7 @@
             if (opts?.noUnits) {
               val = parseNum(opts);
               if (val !== null)
-                val = { type: 'num', inchExp: 0, val: val };
+                val = { type: 'num', umExp: 0, val: val };
             } else {
               val = parseValue(opts);
             }
@@ -1143,11 +1158,11 @@
             throw "Cannot exponentiate functions";
           if (val.type === 'parse' || exp.type === 'parse')
             return { type: 'parse', op: 'exp', expr1: val, expr2: exp };
-          if (exp.inchExp != 0)
+          if (exp.umExp != 0)
             throw "Must exponentiate with a scalar";
-          if (val.inchExp != 0 && exp.val !== (exp.val|0))
+          if (val.umExp != 0 && exp.val !== (exp.val|0))
             throw "Cannot exponentiate non-scalars by non-integers";
-          return { type: 'num', inchExp: val.inchExp * exp.val,
+          return { type: 'num', umExp: val.umExp * exp.val,
             val: Math.pow(val.val, exp.val), metric: val.metric };
         }
         return val;
@@ -1160,8 +1175,8 @@
       function parseMulExpr(opts) {
         function isMetric(val1, val2) {
           return val1.metric && val2.metric
-              || val1.inchExp === 0 && val2.metric
-              || val2.inchExp === 0 && val1.metric;
+              || val1.umExp === 0 && val2.metric
+              || val2.umExp === 0 && val1.metric;
         }
         const backtrack = parsepos;
         let val = parseExponentiation(opts);
@@ -1179,7 +1194,7 @@
             if (val.type === 'parse' || val2.type === 'parse')
               val = { type: 'parse', op: '*', expr1: val, expr2: val2 };
             else if (val.type === 'num' && val2.type === 'num')
-              val = { type: 'num', inchExp: val.inchExp + val2.inchExp, val: val.val * val2.val,
+              val = { type: 'num', umExp: val.umExp + val2.umExp, val: val.val * val2.val,
                 metric: isMetric(val, val2) };
             else
               throw "Unknown value type";
@@ -1196,7 +1211,7 @@
             } else if (val.type === 'num' && val2.type === 'num') {
               const q = val.val / val2.val;
               if (!isFinite(q)) throw "Divide by zero";
-              val = { type: 'num', inchExp: val.inchExp - val2.inchExp, val: q,
+              val = { type: 'num', umExp: val.umExp - val2.umExp, val: q,
                 metric: isMetric(val, val2) };
             } else {
               throw "Unknown value type";
@@ -1215,8 +1230,8 @@
       function parseExpr(opts) {
         function isMetric(val1, val2) {
           return val1.metric && val2.metric
-              || val1.inchExp === 0 && val2.metric
-              || val2.inchExp === 0 && val1.metric;
+              || val1.umExp === 0 && val2.metric
+              || val2.umExp === 0 && val1.metric;
         }
         const backtrack = parsepos;
         let val = parseMulExpr(opts);
@@ -1238,8 +1253,8 @@
             } else if (val.val === 0) {
               val = val2;  // special case for adding 0; take second val
             } else if (val.type === 'num' && val2.type === 'num') {
-              if (val.inchExp == val2.inchExp) 
-                val = { type: 'num', inchExp: val.inchExp, val: val.val + val2.val,
+              if (val.umExp == val2.umExp) 
+                val = { type: 'num', umExp: val.umExp, val: val.val + val2.val,
                 metric: val.metric && val2.metric };
               else
                 throw new ChattyError("Cannot add different unit types")
@@ -1259,8 +1274,8 @@
             } else if (val2.val === 0) {
               // special case for subtracting 0; take first val
             } else if (val.type === 'num' && val2.type === 'num') {
-              if (val.inchExp === val2.inchExp)
-                val = { type: 'num', inchExp: val.inchExp, val: val.val - val2.val,
+              if (val.umExp === val2.umExp)
+                val = { type: 'num', umExp: val.umExp, val: val.val - val2.val,
                   metric: val.metric && val2.metric };
               else
                 throw new ChattyError("Cannot subtract different unit types")
@@ -1369,7 +1384,7 @@
               delete userSymbols[sym];  // to put the redefined symbol at the end
               userSymbols[sym] = val;
               showUserSymbols();
-            } else if (val.type === 'num' && val.inchExp == 1 && !val.metric) {
+            } else if (val.type === 'num' && val.umExp == 1 && !val.metric) {
               showFeetInchesResult(val.val);
             } else if (val.type === 'num') {
               showResult(val);
@@ -1434,6 +1449,7 @@
 
         // Can't seem to save to local storage on unload in Safari,
         // so just do it here, I guess.
+        // XXX: You can save them on beforeunload; maybe fix?
         saveUserSymbols();
       }
 
@@ -1443,8 +1459,8 @@
       }
 
       function symString(val, opts) {
-        if (val.inchExp === 1 && !opts?.saveMode) {
-          let [ftStr, inStr, delta] = inchesToStringReps(val.val);
+        if (val.umExp === 1 && !opts?.saveMode) {
+          let [ftStr, inStr, delta] = unitsToUSStringReps(val.val);
           return `${val.sym} = ${ftStr}${delta}`;
         }
         if (val.type === 'num') {
@@ -1467,16 +1483,17 @@
         document.getElementById('numberResultsDetail').textContent = str;
       }
 
-      function showFeetInchesResult(totalInches, updateExpr) {
+      function showFeetInchesResult(totalUnits, updateExpr) {
+
         document.getElementById('results').style.display = '';
         document.getElementById('numberResults').style.display = 'none';
         document.getElementById('error').style.display = 'none';
         document.getElementById('results').style.color = '';
 
-        document.getElementById('resultIn').textContent = val2str(totalInches);
-        document.getElementById('resultFt').textContent = val2str(totalInches/12);
+        document.getElementById('resultIn').textContent = val2str(totalUnits/IN);
+        document.getElementById('resultFt').textContent = val2str(totalUnits/FT);
 
-        let [ftStr, inStr, delta] = inchesToStringReps(totalInches);
+        let [ftStr, inStr, delta] = unitsToUSStringReps(totalUnits);
         document.getElementById('resultFtDetail').textContent = ftStr + delta;
         if (updateExpr)
           document.getElementById('expr').value = ftStr + delta;
@@ -1485,12 +1502,13 @@
 
         // show metric for good measure
         document.getElementById('resultMeters').textContent =
-          val2str(totalInches * 0.0254);
+          val2str(totalUnits/M);
         document.getElementById('resultMetersMetricFeet').textContent =
-          val2str(totalInches * 0.025);
+          val2str((totalUnits/M)/(2.54/2.50));
       }
 
-      function inchesToStringReps(totalInches) {
+      function unitsToUSStringReps(totalUnits) {
+        let totalInches = totalUnits/IN;
         let minus = "";
         if (totalInches < 0) {
           totalInches = -totalInches;
