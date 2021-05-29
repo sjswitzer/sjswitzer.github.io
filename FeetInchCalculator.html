@@ -393,7 +393,10 @@
             <td> Millimeters
           <tr>
             <td> hectare
-            <td> A hectare, or 100m x 100m
+            <td> A hectare, or <code>100m &times; 100m</code>
+          <tr>
+            <td> litre
+            <td> A volume of <code>10cm &times; 10 cm &times; 10 cm</code>.
         </table>
         <p> In fact, any <i>variable</i> you define with a unit can be used as
             a unit itself.
@@ -537,6 +540,7 @@
       const KM = 1000*M;
       const IN = 25400*UM;
       const FT = 12*IN;
+      const MI = 5280*FT;
 
       // Errors that are too chatty to show while typing.
       //   (Error will be shown if the user hits "enter.")
@@ -574,7 +578,7 @@
             let displayExp = umExp;
             let units = ['in', 'ft', 'acre', 'mi'];
             if (metric)
-              units = ['cm', 'm', 'hectare', 'km' ];
+              units = ['cm', 'litre', 'm', 'hectare', 'km' ];
             let bestUnit = units[0];
             if (umExp < 0)
               bestUnit = units[units.length-1];
@@ -894,13 +898,15 @@
         pi: Math.PI,
         in: { type: 'num', umExp: 1, val: IN, name: "inch" },
         ft: { type: 'num', umExp: 1, val: FT, name: "foot" },
-        mi: { type: 'num', umExp: 1, val: 5280*FT, name: "mile" },
+        mi: { type: 'num', umExp: 1, val: MI, name: "mile" },
         acre: { type: 'num', umExp: 2, val:  66*FT * 660*FT },
         mm: { type: 'num', umExp: 1, val: MM, name: "milimeter", metric: true },
         cm: { type: 'num', umExp: 1, val: CM, name: "centimeter", metric: true },
         m:  { type: 'num', umExp: 1, val: M, name: "meter", metric: true },
         km: { type: 'num', umExp: 1, val: KM, name: "kilometer", metric: true },
         hectare: { type: 'num', umExp: 2, val: (100*M)**2, name: "hectare", metric: true },
+        litre : { type: 'num', umExp: 3, val: (10*CM)**3, name: "litre", metric: true },
+        liter : { type: 'num', umExp: 3, val: (10*CM)**3, name: "litre", metric: true },
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
@@ -995,6 +1001,7 @@
           addUnit('link', 66*FT/100);   // chain/100
           addUnit('point', IN/72);
           addUnit('pica', IN/6);        // 1/6", 12 points
+          addUnit('yd', 3*FT);
           showUserSymbols();
           throw "Surprise!";
         }
@@ -1200,7 +1207,7 @@
         if (val === null)
           return null;
         while (true) {
-          if (take('*')) {
+          if (take('*') || take('\u00D7')) {
             let val2 = parseExponentiation(opts);
             if (val2 === null) {
               parsepos = backtrack;
