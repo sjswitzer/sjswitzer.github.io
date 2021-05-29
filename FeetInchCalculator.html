@@ -930,7 +930,7 @@
         // Square root
         sqrt: function(...params) {
           if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
-          let val = params.pop();
+          let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
           let umExp = val.umExp/2;
           if (umExp !== (umExp|0)) throw `${this.sym}(x): parameter must have even units`;
@@ -961,6 +961,22 @@
               break;
           }
           return { type: 'num', umExp: umExp, val: accum/n, metric: metric };
+        },
+
+        // Force metric units
+        Metric: function(...params) {
+          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
+          let val = params[0];
+          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+          return { ...val, metric: true };
+        },
+
+        // Force US Customary Units
+        USCU: function(...params) {
+          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
+          let val = params[0];
+          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+          return { ...val, metric: false };
         },
 
         // Easter egg function that defines a bunch of units
