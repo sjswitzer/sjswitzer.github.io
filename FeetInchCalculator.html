@@ -902,7 +902,7 @@
         hectare: { type: 'num', umExp: 2, val: (100*M)**2, name: "hectare", metric: true },
 
         // General n-dimensional hypotenuse
-        hyp: function(...params) {
+        hyp: function Hypotenuse(...params) {
           if (params.length < 1)
             return { type: 'num', umExp: 0, val: 0 };
           let val = params.pop();
@@ -980,7 +980,7 @@
         },
 
         // Easter egg function that defines a bunch of units
-        Egg: function(p) {
+        Egg: function EasterEgg(p) {
           const addUnit = (sym, inches, exp) => {
             exp = exp ?? 1;
             userSymbols[sym] = { sym: sym, type: 'num', umExp: exp, val: inches };
