@@ -647,13 +647,13 @@
         }
       }
 
-      function showError(e, allErrors) {
+      function showError(e, opts) {
         // always update the text, in case the error box is already showing
         let msg = e;
         if (e instanceof ChattyError)
           msg = e.message;
         document.getElementById('error').textContent = String(msg);
-        if (!allErrors && e instanceof ChattyError)
+        if (!opts?.allErrors && e instanceof ChattyError)
           return;
         // we had an error so hide the results block and show the error block
         document.getElementById('results').style.display = 'none';
@@ -1417,7 +1417,7 @@
           }
         }
         catch (e) {
-          showError(e, userHitEnter);
+          showError(e, { allErrors: userHitEnter });
         }
 
         // Gray out the result since we can't parse correctly right now
