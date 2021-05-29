@@ -409,7 +409,7 @@
             preceded by a <code>/</code> (without spaces), it is an inverse unit.
             For instance, <code>60 /ft2</code> means 60 per square foot.
             <code>144/ft2</code> means 144 per square foot or, equivalently, 1 per square inch
-            (which is how it will display). What per square foot? Anything. Think "ducks" and
+            (which is how it will display). <i>What</i> per square foot? Anything. Think "ducks" and
             you'll be on the right track.
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
@@ -521,6 +521,15 @@
     <script type="text/javascript">
       "use strict";
 
+      // Errors that are too chatty to show while typing.
+      //   (Error will be shown if the user hits "enter.")
+      class ChattyError extends Error {
+        constructor(msg) {
+          super();
+          this.message = msg;
+        }
+      }
+
       // A curious thing worth noting: It turns out that fractions of the form
       // "n / power-of-2" are precicely the values that can be represented exactly
       // in floating point arithmetic and also the conventional way of expressing
@@ -542,12 +551,165 @@
       const FT = 12*IN;
       const MI = 5280*FT;
 
-      // Errors that are too chatty to show while typing.
-      //   (Error will be shown if the user hits "enter.")
-      class ChattyError extends Error {
-        constructor(msg) {
-          super();
-          this.message = msg;
+      const symbols = {
+        pi: Math.PI,
+        in: { type: 'num', umExp: 1, val: IN, name: "inch" },
+        ft: { type: 'num', umExp: 1, val: FT, name: "foot" },
+        mi: { type: 'num', umExp: 1, val: MI, name: "mile" },
+        acre: { type: 'num', umExp: 2, val:  66*FT * 660*FT },
+        mm: { type: 'num', umExp: 1, val: MM, name: "milimeter", metric: true },
+        cm: { type: 'num', umExp: 1, val: CM, name: "centimeter", metric: true },
+        m:  { type: 'num', umExp: 1, val: M, name: "meter", metric: true },
+        km: { type: 'num', umExp: 1, val: KM, name: "kilometer", metric: true },
+        hectare: { type: 'num', umExp: 2, val: (100*M)**2, name: "hectare", metric: true },
+        litre : { type: 'num', umExp: 3, val: (10*CM)**3, name: "litre", metric: true },
+        liter : { type: 'num', umExp: 3, val: (10*CM)**3, name: "litre", metric: true },
+
+        // General n-dimensional hypotenuse
+        hyp: function Hypotenuse(...params) {
+          if (params.length < 1)
+            return { type: 'num', umExp: 0, val: 0 };
+          let val = params.pop();
+          let umExp = val.umExp;
+          let metric = val.metric;
+          let accum = 0;
+          while (true) {
+            if (val.val !== 0) {
+              if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+              if (val.umExp != umExp) {
+                if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
+                type = val.type;
+              }
+              accum += val.val * val.val;
+              if (!val.metric)
+                metric = false;
+            }
+            val = params.pop();
+            if (!val)
+              break;
+          }
+          return { type: 'num', umExp: umExp, val: Math.sqrt(accum), metric:metric };
+        },
+
+        // Square root
+        sqrt: function(...params) {
+          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
+          let val = params[0];
+          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+          let umExp = val.umExp/2;
+          if (umExp !== (umExp|0)) throw `${this.sym}(x): parameter must have even units`;
+          return { type: 'num', umExp: umExp, val: Math.sqrt(val.val), metric: val.metric };
+        },
+
+        mean: function(...params) {
+          if (params.length < 1) throw `${this.sym}(): no parameters`;
+          let val = params.pop();
+          let umExp = val.umExp;
+          let metric = val.metric;
+          let accum = 0, n = 0;
+          while (true) {
+            if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+            if (val.val === 0) {
+              n += 1;
+            } else {
+              if (val.umExp != umExp) {
+                if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
+              }
+              accum += val.val;
+              n += 1;
+              if (!val.metric)
+                metric = false;
+            }
+            val = params.pop();
+            if (!val)
+              break;
+          }
+          return { type: 'num', umExp: umExp, val: accum/n, metric: metric };
+        },
+
+        // Force metric units
+        Metric: function ForceMetricUnits(...params) {
+          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
+          let val = params[0];
+          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+          return { ...val, metric: true };
+        },
+
+        // Force US Customary Units
+        US: function ForceUSCustomaryUnits(...params) {
+          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
+          let val = params[0];
+          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+          return { ...val, metric: false };
+        },
+
+        // Easter egg function that defines a bunch of units
+        Egg: function EasterEgg(p) {
+          const addUnit = (sym, units, exp) => {
+            exp = exp ?? 1;
+            userSymbols[sym] = { sym: sym, type: 'num', umExp: exp, val: units };
+          }
+          // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
+          addUnit('fathom', 6*FT);
+          addUnit('league', 3*MI);
+          addUnit('chain', 66*FT);
+          addUnit('furlong', 66*FT*10); // 10 chains
+          addUnit('rod', 66*FT/4);      // chain/4
+          addUnit('link', 66*FT/100);   // chain/100
+          addUnit('point', IN/72);
+          addUnit('pica', IN/6);        // 1/6", 12 points
+          addUnit('yd', 3*FT);
+          showUserSymbols();
+          throw "Surprise!";
+        }
+      };
+
+      const userSymbols = {};
+      let environment = {};
+
+      function getSymbol(name) {
+        let val = environment[name];
+        if (val === undefined)
+          val = userSymbols[name];
+        if (val === undefined)
+          val = symbols[name];
+        if (typeof val === 'number')
+          val = { type: 'num', umExp: 0, val: val };
+        else if (val instanceof Function)
+          val = { type: 'fn', sym: name, params:["..."], native: val, body: `#BuiltinFunction-${val.name}#` };
+        // special case to create pseudo-variables for powered units
+        const match = /^([a-z]+)([0-9]+)$/i.exec(name);
+        if (match) {
+          let val2 = getSymbol(match[1]);
+          let exp = Number(match[2]);
+          if (val2 && val2.type === 'num' && val2.umExp && val2.val && exp > 1)
+            return { type: 'num', umExp: val2.umExp * exp, val: Math.pow(val2.val, exp), metric: val2.metric };
+        }
+        return val;
+      }
+
+      function invokeFunction(symVal, params) {
+        if (symVal.type !== 'fn') throw "Not a function";
+        if (symVal.native)
+          return symVal.native(...params);   // symVal is "this" in a native function
+        if (params.length !== symVal.params.length)
+           throw new ChattyError(`incorrect number of params for ${symVal.sym}(${symVal.params.join(',')})`);
+        const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
+        try {
+          parsestr = symVal.body;
+          parsepos = 0;
+          environment = {};
+          for (const i in params)
+            environment[symVal.params[i]] = params[i];
+          let val = parseExpr();
+          skipSpaces();
+          if (peekc()) throw "Invalid function";
+          return val;
+        }
+        finally {
+          environment = saveEnv;
+          parsestr = saveParsestr;
+          parsepos = saveParsepos;
         }
       }
 
@@ -894,168 +1056,6 @@
         return null;
       }
 
-      const symbols = {
-        pi: Math.PI,
-        in: { type: 'num', umExp: 1, val: IN, name: "inch" },
-        ft: { type: 'num', umExp: 1, val: FT, name: "foot" },
-        mi: { type: 'num', umExp: 1, val: MI, name: "mile" },
-        acre: { type: 'num', umExp: 2, val:  66*FT * 660*FT },
-        mm: { type: 'num', umExp: 1, val: MM, name: "milimeter", metric: true },
-        cm: { type: 'num', umExp: 1, val: CM, name: "centimeter", metric: true },
-        m:  { type: 'num', umExp: 1, val: M, name: "meter", metric: true },
-        km: { type: 'num', umExp: 1, val: KM, name: "kilometer", metric: true },
-        hectare: { type: 'num', umExp: 2, val: (100*M)**2, name: "hectare", metric: true },
-        litre : { type: 'num', umExp: 3, val: (10*CM)**3, name: "litre", metric: true },
-        liter : { type: 'num', umExp: 3, val: (10*CM)**3, name: "litre", metric: true },
-
-        // General n-dimensional hypotenuse
-        hyp: function Hypotenuse(...params) {
-          if (params.length < 1)
-            return { type: 'num', umExp: 0, val: 0 };
-          let val = params.pop();
-          let umExp = val.umExp;
-          let metric = val.metric;
-          let accum = 0;
-          while (true) {
-            if (val.val !== 0) {
-              if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-              if (val.umExp != umExp) {
-                if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
-                type = val.type;
-              }
-              accum += val.val * val.val;
-              if (!val.metric)
-                metric = false;
-            }
-            val = params.pop();
-            if (!val)
-              break;
-          }
-          return { type: 'num', umExp: umExp, val: Math.sqrt(accum), metric:metric };
-        },
-
-        // Square root
-        sqrt: function(...params) {
-          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
-          let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-          let umExp = val.umExp/2;
-          if (umExp !== (umExp|0)) throw `${this.sym}(x): parameter must have even units`;
-          return { type: 'num', umExp: umExp, val: Math.sqrt(val.val), metric: val.metric };
-        },
-
-        mean: function(...params) {
-          if (params.length < 1) throw `${this.sym}(): no parameters`;
-          let val = params.pop();
-          let umExp = val.umExp;
-          let metric = val.metric;
-          let accum = 0, n = 0;
-          while (true) {
-            if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-            if (val.val === 0) {
-              n += 1;
-            } else {
-              if (val.umExp != umExp) {
-                if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
-              }
-              accum += val.val;
-              n += 1;
-              if (!val.metric)
-                metric = false;
-            }
-            val = params.pop();
-            if (!val)
-              break;
-          }
-          return { type: 'num', umExp: umExp, val: accum/n, metric: metric };
-        },
-
-        // Force metric units
-        Metric: function ForceMetricUnits(...params) {
-          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
-          let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-          return { ...val, metric: true };
-        },
-
-        // Force US Customary Units
-        US: function ForceUSCustomaryUnits(...params) {
-          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
-          let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-          return { ...val, metric: false };
-        },
-
-        // Easter egg function that defines a bunch of units
-        Egg: function EasterEgg(p) {
-          const addUnit = (sym, units, exp) => {
-            exp = exp ?? 1;
-            userSymbols[sym] = { sym: sym, type: 'num', umExp: exp, val: units };
-          }
-          // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
-          addUnit('fathom', 6*FT);
-          addUnit('league', 3*MI);
-          addUnit('chain', 66*FT);
-          addUnit('furlong', 66*FT*10); // 10 chains
-          addUnit('rod', 66*FT/4);      // chain/4
-          addUnit('link', 66*FT/100);   // chain/100
-          addUnit('point', IN/72);
-          addUnit('pica', IN/6);        // 1/6", 12 points
-          addUnit('yd', 3*FT);
-          showUserSymbols();
-          throw "Surprise!";
-        }
-      };
-
-      const userSymbols = {};
-      let environment = {};
-
-      function getSymbol(name) {
-        let val = environment[name];
-        if (val === undefined)
-          val = userSymbols[name];
-        if (val === undefined)
-          val = symbols[name];
-        if (typeof val === 'number')
-          val = { type: 'num', umExp: 0, val: val };
-        else if (val instanceof Function)
-          val = { type: 'fn', sym: name, params:["..."], native: val, body: `#BuiltinFunction-${val.name}#` };
-        // special case to create pseudo-variables for powered units
-        const match = /^([a-z]+)([0-9]+)$/i.exec(name);
-        if (match) {
-          let val2 = getSymbol(match[1]);
-          let exp = Number(match[2]);
-          if (val2 && val2.type === 'num' && val2.umExp && val2.val && exp > 1)
-            return { type: 'num', umExp: val2.umExp * exp, val: Math.pow(val2.val, exp), metric: val2.metric };
-        }
-        return val;
-      }
-
-      function invokeFunction(symVal, params) {
-        if (symVal.type !== 'fn') throw "Not a function";
-        if (symVal.native)
-          return symVal.native(...params);
-        if (params.length !== symVal.params.length)
-           throw new ChattyError(`incorrect number of params for ${symVal.sym}(${symVal.params.join(',')})`);
-        const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
-        try {
-          parsestr = symVal.body;
-          parsepos = 0;
-          environment = {};
-          for (const i in params)
-            environment[symVal.params[i]] = params[i];
-          let val = parseExpr();
-          skipSpaces();
-          if (peekc()) throw "Invalid function";
-          return val;
-        }
-        finally {
-          environment = saveEnv;
-          parsestr = saveParsestr;
-          parsepos = saveParsepos;
-        }
-      }
-
       // Parse a term, which is either a unary expression, a
       // parenthesized expression, a function call, or a value or a word (variable)
       //    '+' term
@@ -1207,7 +1207,7 @@
         if (val === null)
           return null;
         while (true) {
-          if (take('*') || take('\u00D7')) {
+          if (take('*') || take('\u00D7')) {  // '*' or times sign
             let val2 = parseExponentiation(opts);
             if (val2 === null) {
               parsepos = backtrack;
@@ -1222,7 +1222,7 @@
                 metric: isMetric(val, val2) };
             else
               throw "Unknown value type";
-          } else if (take('/')) {
+          } else if (take('/') || take('\u00F7')) { // '/' or divide sign
             let val2 = parseExponentiation(opts);
             if (val2 === null) {
               parsepos = backtrack;
