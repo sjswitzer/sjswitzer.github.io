@@ -640,7 +640,7 @@
           if (isNaN(totalInches)) throw "Bad input";
           if (!isFinite(totalInches)) throw "Divide by zero"
 
-          showFeetInchesResult(totalInches*IN, /* updateExpr */ true);
+          showFeetInchesResult(totalInches*IN, { updateExpr: true });
         }
         catch (e) {
           showError(e);
@@ -1499,7 +1499,7 @@
         document.getElementById('numberResultsDetail').textContent = str;
       }
 
-      function showFeetInchesResult(totalUnits, updateExpr) {
+      function showFeetInchesResult(totalUnits, opts) {
 
         document.getElementById('results').style.display = '';
         document.getElementById('numberResults').style.display = 'none';
@@ -1511,7 +1511,7 @@
 
         let [ftStr, inStr, delta] = unitsToUSStringReps(totalUnits);
         document.getElementById('resultFtDetail').textContent = ftStr + delta;
-        if (updateExpr)
+        if (opts?.updateExpr)
           document.getElementById('expr').value = ftStr + delta;
 
         document.getElementById('resultInDetail').textContent = inStr + delta;
