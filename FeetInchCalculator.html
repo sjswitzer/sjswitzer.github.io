@@ -426,7 +426,8 @@
             in later expressions, e.g. <code>frontage/3</code>.
             Amusingly, perhaps, because <code>frontage</code> is a length, it can also be
             used as a unit: <code>1/3 frontage</code> or <code>1/3frontage</code>.
-        <p> The variables <code>ft</code>, <code>in</code>, <code>m</code>, and <code>cm</code>
+        <p> The variables <code>ft</code>, <code>in</code>, <code>m</code>, <code>cm</code>,
+            etc. described in "Units" above
             are predefined for use as values or as units. The variable <code>pi</code> is
             predefined in case you care about circles. Predefined variables cannot be changed.
         <h2> Functions </h2>
@@ -981,9 +982,9 @@
 
         // Easter egg function that defines a bunch of units
         Egg: function EasterEgg(p) {
-          const addUnit = (sym, inches, exp) => {
+          const addUnit = (sym, units, exp) => {
             exp = exp ?? 1;
-            userSymbols[sym] = { sym: sym, type: 'num', umExp: exp, val: inches };
+            userSymbols[sym] = { sym: sym, type: 'num', umExp: exp, val: units };
           }
           // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
           addUnit('fathom', 6*FT);
