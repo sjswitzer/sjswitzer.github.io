@@ -964,7 +964,7 @@
         },
 
         // Force metric units
-        Metric: function(...params) {
+        Metric: function ForceMetricUnits(...params) {
           if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
@@ -972,7 +972,7 @@
         },
 
         // Force US Customary Units
-        USCU: function(...params) {
+        US: function ForceUSCustomaryUnits(...params) {
           if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
@@ -1011,7 +1011,7 @@
         if (typeof val === 'number')
           val = { type: 'num', umExp: 0, val: val };
         else if (val instanceof Function)
-          val = { type: 'fn', sym: name, params:["..."], native: val, body: `#builtin-${name}#` };
+          val = { type: 'fn', sym: name, params:["..."], native: val, body: `#BuiltinFunction-${val.name}#` };
         // special case to create pseudo-variables for powered units
         const match = /^([a-z]+)([0-9]+)$/i.exec(name);
         if (match) {
