@@ -214,7 +214,7 @@
       }
     </style>
   </head>
-  <body">
+  <body>
     <div class="layout-column shrink-wrap">
       <div class="force-width">
         <input type="text" style="text-align: right;"
@@ -774,8 +774,12 @@
             }
             val = val / quotient;
             unitsStr += bestUnit;
-            if (displayExp != 1)
-              unitsStr += String(displayExp);
+            if (displayExp != 1) {
+              let expStr = String(displayExp);
+              if (opts?.html)
+                expStr = `<sup>${expStr}</sup>`;
+              unitsStr += expStr;
+            }
           }
         }
         if (opts?.saveMode || Math.abs(val) < 10000 * EPSILON) {
@@ -1444,7 +1448,7 @@
         document.getElementById('error').style.display = 'none';
         document.getElementById('numberResults').style.color = '';
 
-        document.getElementById('numberResultsDetail').textContent = val2str(val);
+        document.getElementById('numberResultsDetail').innerHTML = val2str(val, { html: true });
       }
 
       function escapeHTML(str) {
