@@ -501,6 +501,7 @@
             Google will do that for you too</a>.
         <p> Oh well, it was a good excuse to spiff up my HTML, CSS, and JavaScript skills.
             Not a bad weekend project.
+        <p> A-B-C. A—Always. B—Be. C—Coding.
         <p> Copyright &copy; 2021, Stan Switzer
         <div style="float: left; margin: 0em .5em 4.5em 0em">
           <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
@@ -528,6 +529,64 @@
         }
       }
 
+      class Units {
+        static isScalar(units = {}) {
+          for (const unit in units)
+            if (units[unit] != 0)
+              return false;
+          return true;
+        }
+
+        static equal(units1 = {}, units2 = {}) {
+          for (const unit in units1)
+            if (units1[unit] !== units2[unit])
+              return false;
+          for (const unit in units2)
+            if (units1[unit] !== units2[unit])
+              return false;
+          return true;
+        }
+
+        static div(units = {}, n) {
+          ret = {};
+          for (const unit in units) {
+            const expDiv = units[unit]/n;
+            if (expDiv !== (expDiv|0))
+              return null;
+            ret[unit] = expDiv;
+          }
+          return ret;
+        }
+
+        static mul(units = {}, n) {
+          let ret = {};
+          for (const unit in units)
+            ret[unit] = units[unit]*n;
+          return ret;
+        }
+
+        static add(units1 = {}, units2 ={}, factor = 1) {
+          let keys = {}, ret = {};
+          for (const key in units1)
+            keys[key] = true;
+          for (const key in units2)
+            keys[key] = true;
+          for (const key in keys) {
+            if (!units1[key])
+              ret[key] = factor * units2[key];
+            else if (!units2[key])
+              ret[key] = units1[key];
+            else
+              ret[key] = units1[key] + factor * units1[key];
+          }
+          return ret;
+        }
+
+        static sub(units1, units2, factor = 1) {
+          return Units.add(units1, units2, -factor);
+        }
+      }
+
       // A curious thing worth noting: It turns out that fractions of the form
       // "n / power-of-2" are precicely the values that can be represented exactly
       // in floating point arithmetic and also the conventional way of expressing
@@ -537,8 +596,7 @@
       // It later occurred to me that doing calculations in metric units of a
       // hundredth of a centimeter or less would lead to exact results for both systems
       // most often. The largest SI unit that would serve is the micrometer, μm or,
-      // in ASCII, um. So currently, the basic unit of length is the "um", and in the
-      // code the symbol "umExp" refers to the exponent of the micrometer unit.
+      // in ASCII, um. So currently, the basic unit of length is the "um".
       //
       // If an expression contains any US units, the results will be displayed in
       // those units. If an expression contains only metric units, the results
@@ -555,42 +613,52 @@
 
       const symbols = {
         pi: Math.PI,
-        in: { type: 'num', umExp: 1, val: IN, name: "inch" },
-        ft: { type: 'num', umExp: 1, val: FT, name: "foot" },
-        mi: { type: 'num', umExp: 1, val: MI, name: "mile" },
-        acre: { type: 'num', umExp: 2, val:  66*FT * 660*FT },
-        mm: { type: 'num', umExp: 1, val: MM, name: "milimeter", metric: true },
-        cm: { type: 'num', umExp: 1, val: CM, name: "centimeter", metric: true },
-        m:  { type: 'num', umExp: 1, val: M, name: "meter", metric: true },
-        km: { type: 'num', umExp: 1, val: KM, name: "kilometer", metric: true },
-        hectare: { type: 'num', umExp: 2, val: (100*M)**2, name: "hectare", metric: true },
-        litre : { type: 'num', umExp: 3, val: (10*CM)**3, name: "litre", metric: true },
-        liter : { type: 'num', umExp: 3, val: (10*CM)**3, name: "litre", metric: true },
+        in: { type: 'num', units: { um: 1 }, val: IN, name: "inch", uscu: true },
+        ft: { type: 'num', units: { um: 1 }, val: FT, name: "foot", uscu: true },
+        mi: { type: 'num', units: { um: 1 }, val: MI, name: "mile", uscu: true },
+        acre: { type: 'num', units: { um: 2 }, val:  66*FT * 660*FT, uscu: true },
+        mm: { type: 'num', units: { um: 1 }, val: MM, name: "milimeter" },
+        cm: { type: 'num', units: { um: 1 }, val: CM, name: "centimeter" },
+        m:  { type: 'num', units: { um: 1 }, val: M, name: "meter" },
+        km: { type: 'num', units: { um: 1 }, val: KM, name: "kilometer" },
+        hectare: { type: 'num', units: { um: 2 }, val: (100*M)**2, name: "hectare" },
+        litre : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "litre" },
+        liter : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "liter" },
+
+        s: { type: 'num', units: { s: 1 }, val: 1, name: "second" },
+        min: { type: 'num', units: { s: 60 }, val: 60, name: "minute" },
+        hr: { type: 'num', units: { s: 1 }, val: 60*60, name: "hour" },
+        day: { type: 'num', units: { s: 1 }, val: 60*60*24, name: "day" },
+
+        gm: { type: 'num', units: { gm: 1 }, val: 1, name: "gram" },
+        kg: { type: 'num', units: { gm: 1 }, val: 1000, name: "kilogram" },
+        lb: { type: 'num', units: { gm: 1 }, val: 453.59237, name: "pound mass", uscu: true },
+        lb: { type: 'num', units: { gm: 1 }, val: 453.59237/16, name: "ounce mass", uscu: true },
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
           if (params.length < 1)
-            return { type: 'num', umExp: 0, val: 0 };
+            return { type: 'num', units: {}, val: 0 };
           let val = params.pop();
-          let umExp = val.umExp;
-          let metric = val.metric;
+          let units = val.units;
+          let uscu = val.uscu;
           let accum = 0;
           while (true) {
             if (val.val !== 0) {
               if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-              if (val.umExp != umExp) {
-                if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
+              if (!Units.equal(val.units, units)) {
+                if (accum !== 0) throw `${this.sym}(): parameter types incommensurable`;
                 type = val.type;
               }
               accum += val.val * val.val;
-              if (!val.metric)
-                metric = false;
+              if (val.uscu)
+                uscu = true;
             }
             val = params.pop();
             if (!val)
               break;
           }
-          return { type: 'num', umExp: umExp, val: Math.sqrt(accum), metric:metric };
+          return { type: 'num', units, val: Math.sqrt(accum), uscu };
         },
 
         // Square root
@@ -598,35 +666,34 @@
           if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-          let umExp = val.umExp/2;
-          if (umExp !== (umExp|0)) throw `${this.sym}(x): parameter must have even units`;
-          return { type: 'num', umExp: umExp, val: Math.sqrt(val.val), metric: val.metric };
+          let newUnits = Units.div(val.units, 2);
+          if (!newUnits) throw `${this.sym}(x): parameter must have even units`;
+          return { type: 'num', units: newUnits, val: Math.sqrt(val.val), uscu: val.uscu };
         },
 
         mean: function(...params) {
           if (params.length < 1) throw `${this.sym}(): no parameters`;
           let val = params.pop();
-          let umExp = val.umExp;
-          let metric = val.metric;
+          let units = val.units;
+          let uscu = val.uscu;
           let accum = 0, n = 0;
           while (true) {
             if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
             if (val.val === 0) {
               n += 1;
             } else {
-              if (val.umExp != umExp) {
-                if (accum !== 0) throw `${this.sym}(): parameter types incompatible`;
-              }
+              if (Units.equal(val.units != units))
+                if (accum !== 0) throw `${this.sym}(): parameter types incommensurable`;
               accum += val.val;
               n += 1;
-              if (!val.metric)
-                metric = false;
+              if (val.uscu)
+                uscu = true;
             }
             val = params.pop();
             if (!val)
               break;
           }
-          return { type: 'num', umExp: umExp, val: accum/n, metric: metric };
+          return { type: 'num', units, val: accum/n, uscu };
         },
 
         // Force metric units
@@ -634,7 +701,7 @@
           if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-          return { ...val, metric: true };
+          return { ...val, uscu: false };
         },
 
         // Force US Customary Units
@@ -642,14 +709,13 @@
           if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-          return { ...val, metric: false };
+          return { ...val, uscu: true };
         },
 
         // Easter egg function that defines a bunch of units
         Egg: function EasterEgg(p) {
-          const addUnit = (sym, units, exp) => {
-            exp = exp ?? 1;
-            userSymbols[sym] = { sym: sym, type: 'num', umExp: exp, val: units };
+          const addUnit = (sym, val, units = { um: 1 }, uscu = true) => {
+            userSymbols[sym] = { type: 'num', units, val, uscu, sym };
           }
           // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
           addUnit('fathom', 6*FT);
@@ -676,7 +742,7 @@
         if (val === undefined)
           val = symbols[name];
         if (typeof val === 'number')
-          val = { type: 'num', umExp: 0, val: val };
+          val = { type: 'num', units: {}, val: val };
         else if (val instanceof Function)
           val = { type: 'fn', sym: name, params:["..."], native: val, body: `#BuiltinFunction-${val.name}#` };
         // special case to create pseudo-variables for powered units
@@ -684,8 +750,8 @@
         if (match) {
           let val2 = getSymbol(match[1]);
           let exp = Number(match[2]);
-          if (val2 && val2.type === 'num' && val2.umExp && val2.val && exp > 1)
-            return { type: 'num', umExp: val2.umExp * exp, val: Math.pow(val2.val, exp), metric: val2.metric };
+          if (val2 && val2.type === 'num' && !Units.isScalar(val2.units) && val2.val && exp > 1)
+            return { type: 'num', units: Units.mul(val2.units, exp), val: Math.pow(val2.val, exp), uscu: val2.uscu };
         }
         return val;
       }
@@ -734,54 +800,67 @@
       function val2str(val, opts) {
         let unitsStr = "";
         if (val.val !== undefined) {
-          let umExp = val.umExp;
-          let metric = val.metric;
+          let units = val.units;
+          let uscu = val.uscu;
           val = val.val;
-          if (umExp !== undefined && umExp !== 0) {
-            // Find best unit to express the value in
-            let displayExp = umExp;
-            let units = ['in', 'ft', 'acre', 'mi'];
-            if (metric)
-              units = ['cm', 'litre', 'm', 'hectare', 'km' ];
-            let bestUnit = units[0];
-            if (umExp < 0)
-              bestUnit = units[units.length-1];
-            for (const symName of units) {
-              const sym = symbols[symName];
-              const unitsRatio = umExp / sym.umExp;
-              if (unitsRatio !== (unitsRatio |0))
-                continue;
-              const quotient = Math.pow(sym.val, unitsRatio);
-              const valAdjusted = val/quotient;
-              if (umExp > 0) {
-                if (valAdjusted < 1) // last unit with val >= 1 (if possible)
-                  break;
-                bestUnit = symName;
-                displayExp = unitsRatio;
-              } else {
-                if (valAdjusted >= 1) { // first unit with val >= 1
+          if (!Units.isScalar(units)) {
+            // Find best units to express the value in
+            function displayUnit(unitSym) {
+              let unitExp = units[unitSym];
+              let displayExp = unitExp;
+              let unitSyms = [unitSym];
+              if (unitSym === 'um') {
+                unitSyms = ['cm', 'litre', 'm', 'hectare', 'km' ];
+                if (uscu)
+                  unitSyms = ['in', 'ft', 'acre', 'mi'];
+              }
+              let bestUnit = unitSyms[0];
+              if (unitExp < 0)
+                bestUnit = unitSyms[unitSyms.length-1];
+              for (const symName of unitSyms) {
+                const sym = symbols[symName];
+                const unitsRatio = unitExp / sym.units[unitSym];
+                if (unitsRatio !== (unitsRatio|0))
+                  continue;
+                const quotient = Math.pow(sym.val, unitsRatio);
+                const valAdjusted = val/quotient;
+                if (unitExp > 0) {
+                  if (valAdjusted < 1) // last unit with val >= 1 (if possible)
+                    break;
                   bestUnit = symName;
                   displayExp = unitsRatio;
-                  break;
+                } else {
+                  if (valAdjusted >= 1) { // first unit with val >= 1
+                    bestUnit = symName;
+                    displayExp = unitsRatio;
+                    break;
+                  }
                 }
               }
+              const sym = symbols[bestUnit];
+              const unitsRatio = unitExp / sym.units[unitSym];
+              const quotient = Math.pow(sym.val, unitsRatio);
+              if (displayExp < 0) {
+                unitsStr += " /";
+                displayExp = -displayExp;
+              } else {
+                unitsStr += " "
+              }
+              val = val / quotient;
+              unitsStr += bestUnit;
+              if (displayExp != 1) {
+                let expStr = String(displayExp);
+                if (opts?.html)
+                  expStr = `<sup>${expStr}</sup>`;
+                unitsStr += expStr;
+              }
             }
-            const sym = symbols[bestUnit];
-            unitsStr = " ";
-            const unitsRatio = umExp / sym.umExp;
-            const quotient = Math.pow(sym.val, unitsRatio);
-            if (displayExp < 0) {
-              unitsStr = " /";
-              displayExp = -displayExp;
-            }
-            val = val / quotient;
-            unitsStr += bestUnit;
-            if (displayExp != 1) {
-              let expStr = String(displayExp);
-              if (opts?.html)
-                expStr = `<sup>${expStr}</sup>`;
-              unitsStr += expStr;
-            }
+            for (const unit in units) // first all positive exp units
+              if (units[unit] > 0)
+                displayUnit(unit);
+              for (const unit in units) // then all negative exp units
+              if (units[unit] < 0)
+                displayUnit(unit);
           }
         }
         if (opts?.saveMode || Math.abs(val) < 10000 * EPSILON) {
@@ -981,68 +1060,71 @@
       // number-fractions (nf) each followed by a unit:
       //    n
       //    nf unit
-      //    nf unit [ nf unit ['^' n]? ]*
+      //    nf unit [ nf [ '/'? unit ['^' n]? ]+ ]*
           
       function parseValue(opts) {
         const backtrack1 = parsepos;
-        let num = 0, umExp = 0;
+        let num = 0, units = {};
         let lastUnitVal = Number.POSITIVE_INFINITY;
-        let metric = true;   // consider it metric unless we encounter any non-metric unit
+        let uscu = false;   // consider it metric unless we encounter any non-metric unit
 
         // The idea of lastUnitVal is that units should get progressively smaller.
         // Otherwise, someone could enter 2'3' when they meant 2'3"
 
         while (true) {
-          const backtrack2 = parsepos;
           let val = parseNumFrac(opts);
           if (val === null)
             break;
           if (take("'")) {
-            if (FT >= lastUnitVal || (umExp !== 0 && umExp != 1)) throw "Implausible units";
+            if (FT >= lastUnitVal || (units && units.um && units.um != 1)) throw "Implausible units";
             lastUnitVal = FT;
-            umExp = 1;
+            units.um = 1;
             num += val*FT;
-            metric = false;
+            uscu = true;
           } else if (take('"')) {
-            if (IN >= lastUnitVal || (umExp !== 0 && umExp != 1)) throw "Implausible units";
+            if (IN >= lastUnitVal || (units.um && units.um != 1)) throw "Implausible units";
             lastUnitVal = 1;
-            umExp = 1;
+            units.um = 1;
             num += val*IN;
-            metric = false;
+            uscu = true;
           } else {
             // system and user-defined units
-            let hasSlash = take('/');
-            let word = parseWord({ ...opts, noSkip: hasSlash });
-            if (word) {
-              const symVal = getSymbol(word);
-              if (!symVal)
-                throw new ChattyError(`Unknown unit: "${word}"`);
-              if (!symVal.umExp || !symVal.val)
-                throw new ChattyError(`Not a unit: "${word}"`);
-              let exp = symVal.umExp, val1 = symVal.val;
-              if (hasSlash) {
-                exp = -exp;
-                val1 = 1/val1;
-              }
-              if (symVal.val >= lastUnitVal || (umExp !== 0 && umExp !== exp))
-                throw "Implausible units";
-              lastUnitVal = symVal.val;
-              umExp = exp;
-              num += val * val1;
-              if (!symVal.metric)
-                metric = false;
-            } else {
-              parsepos = backtrack2;
-              break;
+            while (true) {
+              const backtrack2 = parsepos;
+              let hasSlash = take('/');
+              let word = parseWord({ ...opts, noSkip: hasSlash });
+              if (word) {
+                const symVal = getSymbol(word);
+                if (!symVal)
+                  throw new ChattyError(`Unknown unit: "${word}"`);
+                if (Units.isScalar(symVal.units) || !symVal.val)
+                  throw new ChattyError(`Not a unit: "${word}"`);
+                let exp = symVal.units.um, val1 = symVal.val;
+                if (hasSlash) {
+                  exp = -exp;
+                  val1 = 1/val1;
+                }
+                if (Units.equal(units, symVal.units) && symVal.val >= lastUnitVal) // XXX
+                  throw "Implausible units";
+                lastUnitVal = symVal.val;
+                units = Units.add(units, symVal.units);  // XXX
+                num += val * val1;
+                if (symVal.uscu)
+                  uscu = true;
+              } else {
+                parsepos = backtrack2;
+                break;
+              } 
             }
+            break;
           }
         }
-        if (umExp !== 0)
-          return { type: 'num', umExp: umExp, val: num, metric: metric };
+        if (!Units.isScalar(units))
+          return { type: 'num', units, val: num, uscu };
         parsepos = backtrack1;
         num = parseNum(opts);
         if (num !== null)
-          return  {type: 'num', umExp: 0, val: num };
+          return  {type: 'num', units: {}, val: num };
         return null;
       }
 
@@ -1089,7 +1171,7 @@
             if (val.type === 'fn') throw new ChattyError("Can't negate functions");
             if (val.type === 'parse')
               return { type: 'parse', op: 'neg', expr: val };
-            return { type: val.type, umExp: val.umExp, val: -val.val, metric: val.metric };
+            return { type: val.type, units: val.units, val: -val.val, uscu: val.uscu };
           }
           parsepos = backtrack;
           return null;
@@ -1102,7 +1184,7 @@
               return { type: 'parse', op: 'recip', expr: val };
             const q = 1/val.val;
             if (!isFinite(q)) throw "Divide by zero";
-            return { type: val.type, umExp: -val.umExp, val: q, metric: val.metric };
+            return { type: val.type, units: Units.mul(val.units, -1), val: q, uscu: val.uscu };
           }
           parsepos = backtrack;
           return null;
@@ -1132,7 +1214,7 @@
             if (opts?.noUnits) {
               val = parseNum(opts);
               if (val !== null)
-                val = { type: 'num', umExp: 0, val: val };
+                val = { type: 'num', units: {}, val: val };
             } else {
               val = parseValue(opts);
             }
@@ -1188,12 +1270,12 @@
             throw "Cannot exponentiate functions";
           if (val.type === 'parse' || exp.type === 'parse')
             return { type: 'parse', op: 'exp', expr1: val, expr2: exp };
-          if (exp.umExp != 0)
+          if (!Units.isScalar(exp.units))
             throw "Must exponentiate with a scalar";
-          if (val.umExp != 0 && exp.val !== (exp.val|0))
+          if (!Units.isScalar(val.units) && exp.val !== (exp.val|0))
             throw "Cannot exponentiate non-scalars by non-integers";
-          return { type: 'num', umExp: val.umExp * exp.val,
-            val: Math.pow(val.val, exp.val), metric: val.metric };
+          return { type: 'num', units: Units.mul(val.units, exp.val),
+            val: Math.pow(val.val, exp.val), uscu: val.uscu };
         }
         return val;
       }
@@ -1203,11 +1285,6 @@
       //    exponentiation [ '/' exponentiation ]*
 
       function parseMulExpr(opts) {
-        function isMetric(val1, val2) {
-          return val1.metric && val2.metric
-              || val1.umExp === 0 && val2.metric
-              || val2.umExp === 0 && val1.metric;
-        }
         const backtrack = parsepos;
         let val = parseExponentiation(opts);
         if (val === null)
@@ -1224,8 +1301,8 @@
             if (val.type === 'parse' || val2.type === 'parse')
               val = { type: 'parse', op: '*', expr1: val, expr2: val2 };
             else if (val.type === 'num' && val2.type === 'num')
-              val = { type: 'num', umExp: val.umExp + val2.umExp, val: val.val * val2.val,
-                metric: isMetric(val, val2) };
+              val = { type: 'num', units: Units.add(val.units, val2.units), val: val.val * val2.val,
+                uscu: val.uscu || val2.uscu };
             else
               throw "Unknown value type";
           } else if (take('/') || take('\u00F7')) { // '/' or divide sign
@@ -1241,8 +1318,8 @@
             } else if (val.type === 'num' && val2.type === 'num') {
               const q = val.val / val2.val;
               if (!isFinite(q)) throw "Divide by zero";
-              val = { type: 'num', umExp: val.umExp - val2.umExp, val: q,
-                metric: isMetric(val, val2) };
+              val = { type: 'num', units: Units.sub(val.units, val2.units), val: q,
+                uscu: val.uscu || val2.uscu };
             } else {
               throw "Unknown value type";
             }
@@ -1258,11 +1335,6 @@
       //    mulexpr [ '-' mulexpr ]*
 
       function parseExpr(opts) {
-        function isMetric(val1, val2) {
-          return val1.metric && val2.metric
-              || val1.umExp === 0 && val2.metric
-              || val2.umExp === 0 && val1.metric;
-        }
         const backtrack = parsepos;
         let val = parseMulExpr(opts);
         if (val === null)
@@ -1283,9 +1355,9 @@
             } else if (val.val === 0) {
               val = val2;  // special case for adding 0; take second val
             } else if (val.type === 'num' && val2.type === 'num') {
-              if (val.umExp == val2.umExp) 
-                val = { type: 'num', umExp: val.umExp, val: val.val + val2.val,
-                metric: val.metric && val2.metric };
+              if (Units.equal(val.units, val2.units)) 
+                val = { type: 'num', units: val.units, val: val.val + val2.val,
+                  uscu: val.uscu || val2.uscu };
               else
                 throw new ChattyError("Cannot add different unit types")
             } else {
@@ -1304,9 +1376,9 @@
             } else if (val2.val === 0) {
               // special case for subtracting 0; take first val
             } else if (val.type === 'num' && val2.type === 'num') {
-              if (val.umExp === val2.umExp)
-                val = { type: 'num', umExp: val.umExp, val: val.val - val2.val,
-                  metric: val.metric && val2.metric };
+              if (Units.equal(val.units, val2.units))
+                val = { type: 'num', units: val.units, val: val.val - val2.val,
+                  uscu: val.uscu && val2.uscu };
               else
                 throw new ChattyError("Cannot subtract different unit types")
             }
@@ -1414,7 +1486,7 @@
               delete userSymbols[sym];  // to put the redefined symbol at the end
               userSymbols[sym] = val;
               showUserSymbols();
-            } else if (val.type === 'num' && val.umExp == 1 && !val.metric) {
+            } else if (val.type === 'num' && val.uscu && Units.equal(val.units, { um: 1 })) {
               showFeetInchesResult(val.val);
             } else if (val.type === 'num') {
               showResult(val);
@@ -1484,7 +1556,7 @@
       }
 
       function symString(val, opts) {
-        if (val.umExp === 1 && !opts?.saveMode) {
+        if (Units.equal(val.units, { um: 1 }) && !opts?.saveMode) {
           let [ftStr, inStr, delta] = unitsToUSStringReps(val.val);
           return `${val.sym} = ${ftStr}${delta}`;
         }
