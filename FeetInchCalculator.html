@@ -649,13 +649,13 @@
         cm: { type: 'num', units: { um: 1 }, val: CM, name: "centimeter", protect: true },
         m:  { type: 'num', units: { um: 1 }, val: M, name: "meter", protect: true },
         km: { type: 'num', units: { um: 1 }, val: KM, name: "kilometer", protect: true },
-        gal : { type: 'num', units: { um: 3 }, val: 231*IN**3, name: "gallon", uscu: true },
-        qt : { type: 'num', units: { um: 3 }, val: 231*IN**3/4, name: "quart", uscu: true },
+        gallon : { type: 'num', units: { um: 3 }, val: 231*IN**3, uscu: true },
+        quart : { type: 'num', units: { um: 3 }, val: 231*IN**3/4, uscu: true },
         pint : { type: 'num', units: { um: 3 }, val: 231*IN**3/8, uscu: true },
         cup : { type: 'num', units: { um: 3 }, val: 231*IN**3/16, uscu: true },
-        floz : { type: 'num', units: { um: 3 }, val: 231*IN**3/128, name: "fluid ounce", uscu: true },
-        tbsp : { type: 'num', units: { um: 3 }, val: 231*IN**3/256, name: "tablespoon", uscu: true },
-        tsp : { type: 'num', units: { um: 3 }, val: 231*IN**3/768, name: "teaspoon", uscu: true },
+        floz : { type: 'num', units: { um: 3 }, val: 231*IN**3/128, uscu: true },
+        tbsp : { type: 'num', units: { um: 3 }, val: 231*IN**3/256, uscu: true },
+        tsp : { type: 'num', units: { um: 3 }, val: 231*IN**3/768, uscu: true },
         hectare: { type: 'num', units: { um: 2 }, val: (100*M)**2, name: "hectare" },
         litre : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "litre" },
         liter : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "liter" },
@@ -1170,8 +1170,8 @@
           }
           if (!units)
             units = chunkUnits;
-          else if (!Units.equal(units, chunkUnits)) throw "Implausible units";
-            num += chunkVal;
+          else if (!Units.equal(units, chunkUnits)) throw new ChattyError("Implausible units");
+          num += chunkVal;
         }
         if (!Units.isScalar(units))
           return { type: 'num', units, val: num, uscu };
