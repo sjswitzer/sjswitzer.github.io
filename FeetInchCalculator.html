@@ -649,6 +649,13 @@
         cm: { type: 'num', units: { um: 1 }, val: CM, name: "centimeter", protect: true },
         m:  { type: 'num', units: { um: 1 }, val: M, name: "meter", protect: true },
         km: { type: 'num', units: { um: 1 }, val: KM, name: "kilometer", protect: true },
+        gal : { type: 'num', units: { um: 3 }, val: 231*IN**3, name: "gallon", uscu: true },
+        qt : { type: 'num', units: { um: 3 }, val: 231*IN**3/4, name: "quart", uscu: true },
+        pint : { type: 'num', units: { um: 3 }, val: 231*IN**3/8, uscu: true },
+        cup : { type: 'num', units: { um: 3 }, val: 231*IN**3/16, uscu: true },
+        floz : { type: 'num', units: { um: 3 }, val: 231*IN**3/128, name: "fluid ounce", uscu: true },
+        tbsp : { type: 'num', units: { um: 3 }, val: 231*IN**3/256, name: "tablespoon", uscu: true },
+        tsp : { type: 'num', units: { um: 3 }, val: 231*IN**3/768, name: "teaspoon", uscu: true },
         hectare: { type: 'num', units: { um: 2 }, val: (100*M)**2, name: "hectare" },
         litre : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "litre" },
         liter : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "liter" },
@@ -660,11 +667,12 @@
         hr: { type: 'num', units: { s: 1 }, val: 60*60, name: "hour" },
         day: { type: 'num', units: { s: 1 }, val: 60*60*24, name: "day" },
         week: { type: 'num', units: { s: 1 }, val: 60*60*24*7, name: "week" },
+        fortnight: { type: 'num', units: { s: 1 }, val: 60*60*24*14, name: "week" },
 
-        gm: { type: 'num', units: { gm: 1 }, val: 1, name: "gram" },
-        kg: { type: 'num', units: { gm: 1 }, val: 1000, name: "kilogram" },
         lb: { type: 'num', units: { gm: 1 }, val: 453.59237, name: "pound mass", uscu: true },
         oz: { type: 'num', units: { gm: 1 }, val: 453.59237/16, name: "ounce mass", uscu: true },
+        gm: { type: 'num', units: { gm: 1 }, val: 1, name: "gram" },
+        kg: { type: 'num', units: { gm: 1 }, val: 1000, name: "kilogram" },
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
@@ -843,12 +851,13 @@
             // Find best units to express the value in
             function displayUnit(unitSym) {
               let unitExp = units[unitSym];
-              let displayExp = unitExp;
+              let displayExp = unitExp
               let unitSyms = [unitSym];
               if (unitSym === 'um') {
-                unitSyms = ['cm', 'ml', 'litre', 'm', 'hectare', 'km' ];
+                unitSyms = ['ml', 'litre', 'cm', 'm', 'hectare', 'km'];
                 if (uscu)
-                  unitSyms = ['in', 'ft', 'acre', 'mi'];
+                  unitSyms = ['tsp', 'tbsp', 'cup', 'pint', 'quart', 'gallon',
+                    'acre', 'in', 'ft', 'mi'];
               } else if (unitSym === 's') {
                 unitSyms = ['s', 'min', 'hr', 'day'];
               } else if (unitSym === 'gm') {
