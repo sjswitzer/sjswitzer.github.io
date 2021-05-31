@@ -577,7 +577,7 @@
             else if (!units2[key])
               ret[key] = units1[key];
             else
-              ret[key] = units1[key] + factor * units1[key];
+              ret[key] = units1[key] + factor * units2[key];
           }
           return ret;
         }
@@ -626,14 +626,14 @@
         liter : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "liter" },
 
         s: { type: 'num', units: { s: 1 }, val: 1, name: "second" },
-        min: { type: 'num', units: { s: 60 }, val: 60, name: "minute" },
+        min: { type: 'num', units: { s: 1 }, val: 60, name: "minute" },
         hr: { type: 'num', units: { s: 1 }, val: 60*60, name: "hour" },
         day: { type: 'num', units: { s: 1 }, val: 60*60*24, name: "day" },
 
         gm: { type: 'num', units: { gm: 1 }, val: 1, name: "gram" },
         kg: { type: 'num', units: { gm: 1 }, val: 1000, name: "kilogram" },
         lb: { type: 'num', units: { gm: 1 }, val: 453.59237, name: "pound mass", uscu: true },
-        lb: { type: 'num', units: { gm: 1 }, val: 453.59237/16, name: "ounce mass", uscu: true },
+        oz: { type: 'num', units: { gm: 1 }, val: 453.59237/16, name: "ounce mass", uscu: true },
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
