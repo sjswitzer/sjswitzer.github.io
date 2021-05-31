@@ -547,7 +547,9 @@
           return true;
         }
 
-        static div(units = {}, n) {
+        // If a unit can be evenly divided, the new unit, else null
+        // We don't do fractal dimensions here.
+        static div(units = {}, n) { 
           let ret = {};
           for (const unit in units) {
             const expDiv = units[unit]/n;
@@ -585,6 +587,32 @@
         static sub(units1, units2, factor = 1) {
           return Units.add(units1, units2, -factor);
         }
+
+        // If dividing by reduceUnit brings the unit closer to a scalar, return the reduced unit,
+        // else return null
+        static reduces(reduceUnits = {}, units = {}) {
+          let res = {}, reduced = false;
+          for (const unit in reduceUnits) {
+            if (!reduceUnits[unit]) {
+              if (units[unit])
+                res[unit] = units[unit];
+              continue;
+            }
+            if (!units[unit])
+              return null;
+            const quotient = units[unit] / reduceUnits[unit];
+            if (quotient !== (quotient|0))
+              return null;
+            if (Math.abs(quotient) > Math.abs(units[unit]))
+              return null;
+            res[unit] = quotient;
+            if (Math.abs(quotient) < Math.abs(units[unit]))
+              reduced = true;
+          }
+          if (reduced)
+            return res;
+          return null;
+        }
       }
 
       // A curious thing worth noting: It turns out that fractions of the form
@@ -617,18 +645,21 @@
         ft: { type: 'num', units: { um: 1 }, val: FT, name: "foot", protect: true, uscu: true },
         mi: { type: 'num', units: { um: 1 }, val: MI, name: "mile", protect: true, uscu: true },
         acre: { type: 'num', units: { um: 2 }, val:  66*FT * 660*FT, protect: true, uscu: true },
-        mm: { type: 'num', units: { um: 1 }, val: MM, name: "milimeter", protect: true },
+        mm: { type: 'num', units: { um: 1 }, val: MM, name: "millimeter", protect: true },
         cm: { type: 'num', units: { um: 1 }, val: CM, name: "centimeter", protect: true },
         m:  { type: 'num', units: { um: 1 }, val: M, name: "meter", protect: true },
         km: { type: 'num', units: { um: 1 }, val: KM, name: "kilometer", protect: true },
         hectare: { type: 'num', units: { um: 2 }, val: (100*M)**2, name: "hectare" },
         litre : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "litre" },
         liter : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "liter" },
+        ml : { type: 'num', units: { um: 3 }, val: (CM)**3, name: "milliliter" },
+        cc : { type: 'num', units: { um: 3 }, val: (CM)**3, name: "cubic centimeter" },
 
         s: { type: 'num', units: { s: 1 }, val: 1, name: "second" },
         min: { type: 'num', units: { s: 1 }, val: 60, name: "minute" },
         hr: { type: 'num', units: { s: 1 }, val: 60*60, name: "hour" },
         day: { type: 'num', units: { s: 1 }, val: 60*60*24, name: "day" },
+        week: { type: 'num', units: { s: 1 }, val: 60*60*24*7, name: "week" },
 
         gm: { type: 'num', units: { gm: 1 }, val: 1, name: "gram" },
         kg: { type: 'num', units: { gm: 1 }, val: 1000, name: "kilogram" },
@@ -815,9 +846,15 @@
               let displayExp = unitExp;
               let unitSyms = [unitSym];
               if (unitSym === 'um') {
-                unitSyms = ['cm', 'litre', 'm', 'hectare', 'km' ];
+                unitSyms = ['cm', 'ml', 'litre', 'm', 'hectare', 'km' ];
                 if (uscu)
                   unitSyms = ['in', 'ft', 'acre', 'mi'];
+              } else if (unitSym === 's') {
+                unitSyms = ['s', 'min', 'hr', 'day'];
+              } else if (unitSym === 'gm') {
+                unitSyms = ['gm', 'kg'];
+                if (uscu)
+                  unitSyms = ['oz', 'lb'];
               }
               let bestUnit = unitSyms[0];
               if (unitExp < 0)
