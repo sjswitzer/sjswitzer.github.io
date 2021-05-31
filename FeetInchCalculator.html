@@ -433,7 +433,7 @@
         <p> The variables <code>ft</code>, <code>in</code>, <code>m</code>, <code>cm</code>,
             etc. described in "Units" above
             are predefined for use as values or as units. The variable <code>pi</code> is
-            predefined in case you care about circles. Predefined variables cannot be changed.
+            predefined in case you care about circles. Key predefined variables cannot be changed.
         <h2> Functions </h2>
         <p> Define functions to automate routine calculations by typing
             <code class="abstract">name(param,param,&hellip;) = expression</code>
@@ -611,16 +611,16 @@
       const FT = 12*IN;
       const MI = 5280*FT;
 
-      const symbols = {
+      const systemSymbols = {
         pi: Math.PI,
-        in: { type: 'num', units: { um: 1 }, val: IN, name: "inch", uscu: true },
-        ft: { type: 'num', units: { um: 1 }, val: FT, name: "foot", uscu: true },
-        mi: { type: 'num', units: { um: 1 }, val: MI, name: "mile", uscu: true },
-        acre: { type: 'num', units: { um: 2 }, val:  66*FT * 660*FT, uscu: true },
-        mm: { type: 'num', units: { um: 1 }, val: MM, name: "milimeter" },
-        cm: { type: 'num', units: { um: 1 }, val: CM, name: "centimeter" },
-        m:  { type: 'num', units: { um: 1 }, val: M, name: "meter" },
-        km: { type: 'num', units: { um: 1 }, val: KM, name: "kilometer" },
+        in: { type: 'num', units: { um: 1 }, val: IN, name: "inch", protect: true, uscu: true },
+        ft: { type: 'num', units: { um: 1 }, val: FT, name: "foot", protect: true, uscu: true },
+        mi: { type: 'num', units: { um: 1 }, val: MI, name: "mile", protect: true, uscu: true },
+        acre: { type: 'num', units: { um: 2 }, val:  66*FT * 660*FT, protect: true, uscu: true },
+        mm: { type: 'num', units: { um: 1 }, val: MM, name: "milimeter", protect: true },
+        cm: { type: 'num', units: { um: 1 }, val: CM, name: "centimeter", protect: true },
+        m:  { type: 'num', units: { um: 1 }, val: M, name: "meter", protect: true },
+        km: { type: 'num', units: { um: 1 }, val: KM, name: "kilometer", protect: true },
         hectare: { type: 'num', units: { um: 2 }, val: (100*M)**2, name: "hectare" },
         litre : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "litre" },
         liter : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "liter" },
@@ -740,18 +740,23 @@
         if (val === undefined)
           val = userSymbols[name];
         if (val === undefined)
-          val = symbols[name];
+          val = systemSymbols[name];
         if (typeof val === 'number')
           val = { type: 'num', units: {}, val: val };
         else if (val instanceof Function)
-          val = { type: 'fn', sym: name, params:["..."], native: val, body: `#BuiltinFunction-${val.name}#` };
+          val = { type: 'fn', sym: name, params:["..."], native: val,
+            body: `#BuiltinFunction-${val.name}#` };
         // special case to create pseudo-variables for powered units
         const match = /^([a-z]+)([0-9]+)$/i.exec(name);
         if (match) {
           let val2 = getSymbol(match[1]);
           let exp = Number(match[2]);
-          if (val2 && val2.type === 'num' && !Units.isScalar(val2.units) && val2.val && exp > 1)
-            return { type: 'num', units: Units.mul(val2.units, exp), val: Math.pow(val2.val, exp), uscu: val2.uscu };
+          if (val2.name)
+            name = `${val2.name}^${String(exp)}`;
+          if (val2 && val2.type === 'num' && !Units.isScalar(val2.units) && val2.val && exp > 1) {
+            return { type: 'num', units: Units.mul(val2.units, exp), val: Math.pow(val2.val, exp),
+              name, protect: val2.protect, uscu: val2.uscu };
+          }
         }
         return val;
       }
@@ -818,7 +823,7 @@
               if (unitExp < 0)
                 bestUnit = unitSyms[unitSyms.length-1];
               for (const symName of unitSyms) {
-                const sym = symbols[symName];
+                const sym = systemSymbols[symName];
                 const unitsRatio = unitExp / sym.units[unitSym];
                 if (unitsRatio !== (unitsRatio|0))
                   continue;
@@ -837,7 +842,7 @@
                   }
                 }
               }
-              const sym = symbols[bestUnit];
+              const sym = systemSymbols[bestUnit];
               const unitsRatio = unitExp / sym.units[unitSym];
               const quotient = Math.pow(sym.val, unitsRatio);
               if (displayExp < 0) {
@@ -1477,16 +1482,17 @@
           let val = parseInputStatement(document.getElementById('expr').value);
           if (val !== null) {
             if (userHitEnter && val.defined) {
-              let sym = val.sym;
-              if (symbols[sym]) {
+              const sym = val.sym;
+              const symVal = getSymbol(sym);
+              if (symVal?.protect) {
                 let name = `"${sym}"`;
-                if (symbols[sym].name)
-                  name = `${name} (${symbols[sym].name})`;
+                if (symVal.name && symVal.name !== sym)
+                  name = `${name} (${symVal.name})`;
                 throw `Cannot redefine system symbol ${name}`;
               }
               showAssignResult(val);
-              delete val.defined;     // removes the flag that forces the definition
-              delete userSymbols[sym];  // to put the redefined symbol at the end
+              delete val.defined;       // removes the flag that forces the definition
+              delete userSymbols[sym];  // put the redefined symbol at the end by deleting first
               userSymbols[sym] = val;
               showUserSymbols();
             } else if (val.type === 'num' && val.uscu && Units.equal(val.units, { um: 1 })) {
@@ -1704,7 +1710,7 @@
               skipSpaces();
               if (val !== null && !peekc()) { // nothing left over at the end
                 let sym = val.sym;
-                if (symbols[sym])
+                if (systemSymbols[sym]?.protect)
                   next;
                 delete val.defined;
                 userSymbols[sym] = val;
