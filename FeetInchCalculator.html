@@ -418,7 +418,7 @@
             meant <code>12'3"</code>.
             You can type nonsense like <code>3 1/2m 3.5"</code> if you want, but you won't
             do it by accident.
-        <p> Beware that spaces can occasionally make a big difference.
+        <p><i>Beware that spaces can occasionally make a big difference.</i>
             <code>1/2 in</code> or <code>1/2in</code> means half an inch,
             but <code>1 / 2 in</code> or even
             <code>1/ 2 in</code> means one over 2 inches. Just avoid putting spaces around
@@ -494,14 +494,14 @@
             <a href="https://linux.die.net/man/1/units">Unix "units" command</a>.
             Hell, <a href="https://www.google.com/search?q=12+acres+%2F+100+feet">
             Google will do it for you</a> if you ask it nicely. This program
-            does a limited amount of dimensional analysis in lenghts, areas, volumes, etc.
+            does a limited amount of dimensional analysis over a range of familiar units.
         <p> The main distinction of this tool is that it deals naturally with notations
             typically used with feet and inches. But, <i>sigh</i>,
             <a href="https://www.google.com/search?q=5%27+6+3%2F8%22+%2F+3">
             Google will do that for you too</a>.
         <p> Oh well, it was a good excuse to spiff up my HTML, CSS, and JavaScript skills.
             Not a bad weekend project.
-        <p> A-B-C. A—Always. B—Be. C—Coding.
+        <p> A-B-C. A-Always. B-Be. C-Coding.
         <p> Copyright &copy; 2021, Stan Switzer
         <div style="float: left; margin: 0em .5em 4.5em 0em">
           <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
@@ -548,7 +548,7 @@
         }
 
         static div(units = {}, n) {
-          ret = {};
+          let ret = {};
           for (const unit in units) {
             const expDiv = units[unit]/n;
             if (expDiv !== (expDiv|0))
@@ -645,9 +645,9 @@
           let accum = 0;
           while (true) {
             if (val.val !== 0) {
-              if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+              if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
               if (!Units.equal(val.units, units)) {
-                if (accum !== 0) throw `${this.sym}(): parameter types incommensurable`;
+                if (accum !== 0) throw `${this.sym}(): Parameter types incompatible`;
                 type = val.type;
               }
               accum += val.val * val.val;
@@ -663,27 +663,27 @@
 
         // Square root
         sqrt: function SquareRoot(...params) {
-          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
+          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+          if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
           let newUnits = Units.div(val.units, 2);
           if (!newUnits) throw `${this.sym}(x): parameter must have even units`;
           return { type: 'num', units: newUnits, val: Math.sqrt(val.val), uscu: val.uscu };
         },
 
         mean: function(...params) {
-          if (params.length < 1) throw `${this.sym}(): no parameters`;
+          if (params.length < 1) throw `${this.sym}(): No parameters`;
           let val = params.pop();
           let units = val.units;
           let uscu = val.uscu;
           let accum = 0, n = 0;
           while (true) {
-            if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+            if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
             if (val.val === 0) {
               n += 1;
             } else {
-              if (Units.equal(val.units != units))
-                if (accum !== 0) throw `${this.sym}(): parameter types incommensurable`;
+              if (!Units.equal(val.units, units))
+                if (accum !== 0) throw `${this.sym}(): Parameter types incompatible`;
               accum += val.val;
               n += 1;
               if (val.uscu)
@@ -698,15 +698,15 @@
 
         // Force metric units
         Metric: function ForceMetricUnits(...params) {
-          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
+          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
+          if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
           return { ...val, uscu: false };
         },
 
         // Force US Customary Units
         US: function ForceUSCustomaryUnits(...params) {
-          if (params.length !== 1) throw `${this.sym}(): needs one parameter`;
+          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
           return { ...val, uscu: true };
@@ -1064,28 +1064,29 @@
           
       function parseValue(opts) {
         const backtrack1 = parsepos;
-        let num = 0, units = {};
+        let num = 0, units;
         let lastUnitVal = Number.POSITIVE_INFINITY;
         let uscu = false;   // consider it metric unless we encounter any non-metric unit
 
         // The idea of lastUnitVal is that units should get progressively smaller.
         // Otherwise, someone could enter 2'3' when they meant 2'3"
 
-        while (true) {
-          let val = parseNumFrac(opts);
-          if (val === null)
+        while (true) {  // additive chunks [nf unit unit unit]*
+          let chunkVal = parseNumFrac(opts);
+          let chunkUnits = {};
+          if (chunkVal === null)
             break;
           if (take("'")) {
-            if (FT >= lastUnitVal || (units && units.um && units.um != 1)) throw "Implausible units";
+            if (FT >= lastUnitVal) throw "Implausible units";
             lastUnitVal = FT;
-            units.um = 1;
-            num += val*FT;
+            chunkUnits.um = 1;
+            chunkVal *= FT;
             uscu = true;
           } else if (take('"')) {
-            if (IN >= lastUnitVal || (units.um && units.um != 1)) throw "Implausible units";
+            if (IN >= lastUnitVal) throw "Implausible units";
             lastUnitVal = 1;
-            units.um = 1;
-            num += val*IN;
+            chunkUnits.um = 1;
+            chunkVal *= IN;
             uscu = true;
           } else {
             // system and user-defined units
@@ -1093,31 +1094,33 @@
               const backtrack2 = parsepos;
               let hasSlash = take('/');
               let word = parseWord({ ...opts, noSkip: hasSlash });
-              if (word) {
-                const symVal = getSymbol(word);
-                if (!symVal)
-                  throw new ChattyError(`Unknown unit: "${word}"`);
-                if (Units.isScalar(symVal.units) || !symVal.val)
-                  throw new ChattyError(`Not a unit: "${word}"`);
-                let exp = symVal.units.um, val1 = symVal.val;
-                if (hasSlash) {
-                  exp = -exp;
-                  val1 = 1/val1;
-                }
-                if (Units.equal(units, symVal.units) && symVal.val >= lastUnitVal) // XXX
-                  throw "Implausible units";
-                lastUnitVal = symVal.val;
-                units = Units.add(units, symVal.units);  // XXX
-                num += val * val1;
-                if (symVal.uscu)
-                  uscu = true;
-              } else {
+              if (!word) {
                 parsepos = backtrack2;
                 break;
-              } 
+              }
+              const sym = getSymbol(word);
+              if (!sym)
+                throw new ChattyError(`Unknown unit: "${word}"`);
+              if (Units.isScalar(sym) || !sym.val)
+                throw new ChattyError(`Not a unit: "${word}"`);
+              let symVal = sym.val;
+              if (hasSlash)
+                symVal = 1/symVal;
+              if (symVal.val >= lastUnitVal) throw "Implausible units";
+              lastUnitVal = sym.val;
+              if (hasSlash)
+                chunkUnits = Units.sub(chunkUnits, sym.units);
+              else
+                chunkUnits = Units.add(chunkUnits, sym.units);
+              chunkVal *= symVal;
+              if (sym.uscu)
+                uscu = true;
             }
-            break;
           }
+          if (!units)
+            units = chunkUnits;
+          else if (!Units.equal(units, chunkUnits)) throw "Implausible units";
+            num += chunkVal;
         }
         if (!Units.isScalar(units))
           return { type: 'num', units, val: num, uscu };
