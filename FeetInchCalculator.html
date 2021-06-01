@@ -373,25 +373,28 @@
             <th> Description
           <tr>
             <td> in
-            <td> Inchs
+            <td> Inch
           <tr>
             <td> ft
-            <td> Feet
+            <td> Foot
           <tr>
             <td> mi
-            <td> Miles
+            <td> Mile
           <tr>
             <td> acre
-            <td> Acres
-          <tr>
-            <td> m
-            <td> Meters
-          <tr>
-            <td> cm
-            <td> Centimeters
+            <td> Acre
           <tr>
             <td> mm
-            <td> Millimeters
+            <td> Millimeter
+          <tr>
+            <td> cm
+            <td> Centimeter
+          <tr>
+            <td> m
+            <td> Meter
+          <tr>
+            <td> km
+            <td> Kilometer
           <tr>
             <td> hectare
             <td> A hectare, or <code>100m &times; 100m</code>
@@ -529,89 +532,65 @@
         }
       }
 
-      class Units {
-        static isScalar(units = {}) {
-          for (const unit in units)
-            if (units[unit] != 0)
+      class Dim {
+        static isScalar(dim) {
+          if (!dim)
+            return true;
+          for (const measure in dim)
+            if (dim[measure] != 0)
               return false;
           return true;
         }
 
-        static equal(units1 = {}, units2 = {}) {
-          for (const unit in units1)
-            if (units1[unit] !== units2[unit])
+        static equal(dim1 = {}, dim2 = {}) {
+          for (const measure in dim1)
+            if (dim1[measure] !== dim2[measure])
               return false;
-          for (const unit in units2)
-            if (units1[unit] !== units2[unit])
+          for (const measure in dim2)
+            if (dim1[measure] !== dim2[measure])
               return false;
           return true;
         }
 
-        // If a unit can be evenly divided, the new unit, else null
+        // If a dimension can be evenly divided, the new dimension, else null
         // We don't do fractal dimensions here.
-        static div(units = {}, n) { 
+        static div(dim = {}, n) { 
           let ret = {};
-          for (const unit in units) {
-            const expDiv = units[unit]/n;
+          for (const measure in dim) {
+            const expDiv = dim[measure]/n;
             if (expDiv !== (expDiv|0))
               return null;
-            ret[unit] = expDiv;
+            ret[measure] = expDiv;
           }
           return ret;
         }
 
-        static mul(units = {}, n) {
+        static mul(dim = {}, n) {
           let ret = {};
-          for (const unit in units)
-            ret[unit] = units[unit]*n;
+          for (const measure in dim)
+            ret[measure] = dim[measure]*n;
           return ret;
         }
 
-        static add(units1 = {}, units2 ={}, factor = 1) {
-          let keys = {}, ret = {};
-          for (const key in units1)
-            keys[key] = true;
-          for (const key in units2)
-            keys[key] = true;
-          for (const key in keys) {
-            if (!units1[key])
-              ret[key] = factor * units2[key];
-            else if (!units2[key])
-              ret[key] = units1[key];
+        static add(dim1 = {}, dim2 ={}, factor = 1) {
+          let measures = {}, ret = {};
+          for (const measure in dim1)
+            measures[measure] = true;
+          for (const measure in dim2)
+            measures[measure] = true;
+          for (const measure in measures) {
+            if (!dim1[measure])
+              ret[measure] = factor * dim2[measure];
+            else if (!dim2[measure])
+              ret[measure] = dim1[measure];
             else
-              ret[key] = units1[key] + factor * units2[key];
+              ret[measure] = dim1[measure] + factor * dim2[measure];
           }
           return ret;
         }
 
-        static sub(units1, units2, factor = 1) {
-          return Units.add(units1, units2, -factor);
-        }
-
-        // If dividing by reduceUnit brings the unit closer to a scalar, return the reduced unit,
-        // else return null
-        static reduces(reduceUnits = {}, units = {}) {
-          let res = {}, reduced = false;
-          for (const unit in reduceUnits) {
-            if (!reduceUnits[unit]) {
-              if (units[unit])
-                res[unit] = units[unit];
-              continue;
-            }
-            if (!units[unit])
-              return null;
-            const quotient = units[unit] / reduceUnits[unit];
-            if (quotient !== (quotient|0))
-              return null;
-            if (Math.abs(quotient) > Math.abs(units[unit]))
-              return null;
-            res[unit] = quotient;
-            if (Math.abs(quotient) < Math.abs(units[unit]))
-              reduced = true;
-          }
-          if (reduced)
-            return res;
-          return null;
+        static sub(dim1, dim2, factor = 1) {
+          return Dim.add(dim1, dim2, -factor);
         }
       }
 
@@ -623,8 +602,8 @@
       //
       // It later occurred to me that doing calculations in metric units of a
       // hundredth of a centimeter or less would lead to exact results for both systems
-      // most often. The largest SI unit that would serve is the micrometer, μm or,
-      // in ASCII, um. But why not go further? Decimal fractions suffer in binary
+      // most often. The largest SI unit that would serve is the micrometer.
+      // But why not go further? Decimal fractions suffer in binary
       // representations. Many exact values in decimal must be approximated in binary.
       // But if you pick a small enough bas unit, all integral values greater that
       // can be exact. Doubles can represent 15 digits of precision with some breathing
@@ -636,62 +615,59 @@
       // those units. If an expression contains only metric units, the results
       // will be displayed in metric.
 
-      const FEMTOM = 1, PICOM = 1000*FEMTOM, NANOM = 1000*PICOM;
-      const UM = 1000*NANOM, MM = 1000*UM, CM = 10*MM;
-      const M  = 1000*MM, KM = 1000*M;
-      const IN = 25400*UM;
-      const FT = 12*IN;
-      const MI = 5280*FT;
+      const FEMTOM = 1, UM = 1e6*FEMTOM, MM = 1000*UM, CM = 10*MM, M  = 1000*MM, KM = 1000*M;
+      const IN = 25400*UM, FT = 12*IN, MI = 5280*FT;
+
+      const SEC = 1e15, MIN = 60*SEC, HR = 60*MIN; 
+      const GM = 1e12, KG = 1000*GM;
 
       const systemSymbols = {
         pi: Math.PI,
-        in: { type: 'num', units: { um: 1 }, val: IN, name: "inch", protect: true, uscu: true },
-        ft: { type: 'num', units: { um: 1 }, val: FT, name: "foot", protect: true, uscu: true },
-        mi: { type: 'num', units: { um: 1 }, val: MI, name: "mile", protect: true, uscu: true },
-        acre: { type: 'num', units: { um: 2 }, val:  66*FT * 660*FT, protect: true, uscu: true },
-        mm: { type: 'num', units: { um: 1 }, val: MM, name: "millimeter", protect: true },
-        cm: { type: 'num', units: { um: 1 }, val: CM, name: "centimeter", protect: true },
-        m:  { type: 'num', units: { um: 1 }, val: M, name: "meter", protect: true },
-        km: { type: 'num', units: { um: 1 }, val: KM, name: "kilometer", protect: true },
-        gallon : { type: 'num', units: { um: 3 }, val: 231*IN**3, uscu: true },
-        quart : { type: 'num', units: { um: 3 }, val: 231*IN**3/4, uscu: true },
-        pint : { type: 'num', units: { um: 3 }, val: 231*IN**3/8, uscu: true },
-        cup : { type: 'num', units: { um: 3 }, val: 231*IN**3/16, uscu: true },
-        floz : { type: 'num', units: { um: 3 }, val: 231*IN**3/128, uscu: true },
-        tbsp : { type: 'num', units: { um: 3 }, val: 231*IN**3/256, uscu: true },
-        tsp : { type: 'num', units: { um: 3 }, val: 231*IN**3/768, uscu: true },
-        hectare: { type: 'num', units: { um: 2 }, val: (100*M)**2, name: "hectare" },
-        litre : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "litre" },
-        liter : { type: 'num', units: { um: 3 }, val: (10*CM)**3, name: "liter" },
-        ml : { type: 'num', units: { um: 3 }, val: (CM)**3, name: "milliliter" },
-        cc : { type: 'num', units: { um: 3 }, val: (CM)**3, name: "cubic centimeter" },
+        in: { type: 'num', dim: { L: 1 }, val: IN, name: "inch", protect: true, uscu: true },
+        ft: { type: 'num', dim: { L: 1 }, val: FT, name: "foot", protect: true, uscu: true },
+        mi: { type: 'num', dim: { L: 1 }, val: MI, name: "mile", protect: true, uscu: true },
+        acre: { type: 'num', dim: { L: 2 }, val:  66*FT * 660*FT, protect: true, uscu: true },
+        mm: { type: 'num', dim: { L: 1 }, val: MM, name: "millimeter", protect: true },
+        cm: { type: 'num', dim: { L: 1 }, val: CM, name: "centimeter", protect: true },
+        m:  { type: 'num', dim: { L: 1 }, val: M, name: "meter", protect: true },
+        km: { type: 'num', dim: { L: 1 }, val: KM, name: "kilometer", protect: true },
+        gallon : { type: 'num', dim: { L: 3 }, val: 231*IN**3, uscu: true },
+        quart : { type: 'num', dim: { L: 3 }, val: 231*IN**3/4, uscu: true },
+        pint : { type: 'num', dim: { L: 3 }, val: 231*IN**3/8, uscu: true },
+        cup : { type: 'num', dim: { L: 3 }, val: 231*IN**3/16, uscu: true },
+        floz : { type: 'num', dim: { L: 3 }, val: 231*IN**3/128, uscu: true },
+        tbsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/256, uscu: true },
+        tsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/768, uscu: true },
+        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2, name: "hectare" },
+        litre : { type: 'num', dim: { L: 3 }, val: (10*CM)**3, name: "litre" },
+        liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3, name: "liter" },
+        ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, name: "milliliter" },
+        cc : { type: 'num', dim: { L: 3 }, val: (CM)**3, name: "cubic centimeter" },
 
-        s: { type: 'num', units: { s: 1 }, val: 1, name: "second" },
-        min: { type: 'num', units: { s: 1 }, val: 60, name: "minute" },
-        hr: { type: 'num', units: { s: 1 }, val: 60*60, name: "hour" },
-        day: { type: 'num', units: { s: 1 }, val: 60*60*24, name: "day" },
-        week: { type: 'num', units: { s: 1 }, val: 60*60*24*7, name: "week" },
+        s: { type: 'num', dim: { T: 1 }, val: SEC, name: "second" },
+        min: { type: 'num', dim: { T: 1 }, val: MIN, name: "minute" },
+        hr: { type: 'num', dim: { T: 1 }, val: HR, name: "hour" },
+        day: { type: 'num', dim: { T: 1 }, val: 24*HR, name: "day" },
+        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, name: "week" },
 
-        lb: { type: 'num', units: { gm: 1 }, val: 453.59237, name: "pound mass", uscu: true },
-        oz: { type: 'num', units: { gm: 1 }, val: 453.59237/16, name: "ounce mass", uscu: true },
-        gm: { type: 'num', units: { gm: 1 }, val: 1, name: "gram" },
-        kg: { type: 'num', units: { gm: 1 }, val: 1000, name: "kilogram" },
+        lb: { type: 'num', dim: { M: 1 }, val: 453.59237*GM, name: "pound mass", uscu: true },
+        oz: { type: 'num', dim: { M: 1 }, val: 453.59237/16*GM, name: "ounce mass", uscu: true },
+        gm: { type: 'num', dim: { M: 1 }, val: GM, name: "gram" },
+        kg: { type: 'num', dim: { M: 1 }, val: KG, name: "kilogram" },
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
           if (params.length < 1)
-            return { type: 'num', units: {}, val: 0 };
+            return { type: 'num', dim: {}, val: 0 };
           let val = params.pop();
-          let units = val.units;
+          let dim = val.dim;
           let uscu = val.uscu;
           let accum = 0;
           while (true) {
             if (val.val !== 0) {
               if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
-              if (!Units.equal(val.units, units)) {
+              if (!Dim.equal(val.dim, dim))
                 if (accum !== 0) throw `${this.sym}(): Parameter types incompatible`;
-                type = val.type;
-              }
               accum += val.val * val.val;
               if (val.uscu)
                 uscu = true;
@@ -700,7 +676,7 @@
             if (!val)
               break;
           }
-          return { type: 'num', units, val: Math.sqrt(accum), uscu };
+          return { type: 'num', dim, val: Math.sqrt(accum), uscu };
         },
 
         // Square root
@@ -708,15 +684,15 @@
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
-          let newUnits = Units.div(val.units, 2);
-          if (!newUnits) throw `${this.sym}(x): parameter must have even units`;
-          return { type: 'num', units: newUnits, val: Math.sqrt(val.val), uscu: val.uscu };
+          let newDim = Dim.div(val.dim, 2);
+          if (!newDim) throw `${this.sym}(x): parameter must have even units`;
+          return { type: 'num', dim: newDim, val: Math.sqrt(val.val), uscu: val.uscu };
         },
 
         mean: function(...params) {
           if (params.length < 1) throw `${this.sym}(): No parameters`;
           let val = params.pop();
-          let units = val.units;
+          let dim = val.dim;
           let uscu = val.uscu;
           let accum = 0, n = 0;
           while (true) {
@@ -724,7 +700,7 @@
             if (val.val === 0) {
               n += 1;
             } else {
-              if (!Units.equal(val.units, units))
+              if (!Dim.equal(val.dim, dim))
                 if (accum !== 0) throw `${this.sym}(): Parameter types incompatible`;
               accum += val.val;
               n += 1;
@@ -735,7 +711,7 @@
             if (!val)
               break;
           }
-          return { type: 'num', units, val: accum/n, uscu };
+          return { type: 'num', dim, val: accum/n, uscu };
         },
 
         // Force metric units
@@ -756,8 +732,8 @@
 
         // Easter egg function that defines a bunch of units
         Egg: function EasterEgg(p) {
-          const addUnit = (sym, val, units = { um: 1 }, uscu = true) => {
-            userSymbols[sym] = { type: 'num', units, val, uscu, sym };
+          const addUnit = (sym, val, dim = { um: 1 }, uscu = true) => {
+            userSymbols[sym] = { sym, type: 'num', dim, val, uscu };
           }
           // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
           addUnit('fathom', 6*FT);
@@ -767,7 +743,6 @@
           addUnit('rod', 66*FT/4);      // chain/4
           addUnit('link', 66*FT/100);   // chain/100
           addUnit('yd', 3*FT);
-          addUnit('1/', 60*60*24*14, { s: 1 });
 
           showUserSymbols();
           throw "Surprise!";
@@ -777,27 +752,28 @@
       const userSymbols = {};
       let environment = {};
 
-      function getSymbol(name) {
-        let val = environment[name];
+      function getSymbol(symName) {
+        let val = environment[symName];
         if (val === undefined)
-          val = userSymbols[name];
+          val = userSymbols[symName];
         if (val === undefined)
-          val = systemSymbols[name];
+          val = systemSymbols[symName];
         if (typeof val === 'number')
-          val = { type: 'num', units: {}, val: val };
+          val = { type: 'num', dim: {}, val: val };
         else if (val instanceof Function)
-          val = { type: 'fn', sym: name, params:["..."], native: val,
-            body: `#BuiltinFunction-${val.name}#` };
-        // special case to create pseudo-variables for powered units
-        const match = /^([a-z]+)([0-9]+)$/i.exec(name);
-        if (match) {
-          let val2 = getSymbol(match[1]);
-          let exp = Number(match[2]);
-          if (val2.name)
-            name = `${val2.name}^${String(exp)}`;
-          if (val2 && val2.type === 'num' && !Units.isScalar(val2.units) && val2.val && exp > 1) {
-            return { type: 'num', units: Units.mul(val2.units, exp), val: Math.pow(val2.val, exp),
-              name, protect: val2.protect, uscu: val2.uscu };
+          val = { sym: symName, type: 'fn',  params:["..."], native: val,
+            body: `#BuiltinFunction-${val.symName}#` };
+        if (!val) {
+          // special case to create pseudo-variables for exponentiated units
+          const match = /^([a-z]+)([0-9]+)$/i.exec(symName);
+          if (match) {
+            let val2 = getSymbol(match[1]);
+            let exp = Number(match[2]);
+            let name = `${match[1]}^${String(exp)}`;
+            if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim && exp > 1) {
+              return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(val2.val, exp),
+                name, protect: val2.protect, uscu: val2.uscu };
+            }
           }
         }
         return val;
@@ -845,57 +821,56 @@
       const DIGITS_PRECISION = 10, EPSILON = Math.pow(10, -DIGITS_PRECISION);
 
       
-
       function val2str(val, opts) {
         let unitsStr = "";
         if (val.val !== undefined) {
-          let units = val.units;
+          let dim = val.dim;
           let uscu = val.uscu;
           val = val.val;
-          if (!Units.isScalar(units)) {
+          if (!Dim.isScalar(dim)) {
             // Find best units to express the value in
-            function displayUnit(unitSym) {
-              let unitExp = units[unitSym];
-              let displayExp = unitExp
-              let unitSyms = [unitSym];
-              if (unitSym === 'um') {
+            function displayUnit(measure) {
+              let measureExp = dim[measure];
+              let displayExp = measureExp;
+              let unitSyms = ['mm'];    // XXX
+              if (measure === 'L') {
                 unitSyms = ['mm', 'cm', 'ml', 'litre', 'm', 'hectare', 'km'];
                 if (uscu)
                   unitSyms = ['in', 'tsp', 'tbsp', 'cup', 'pint', 'quart', 'gallon',
                     'acre', 'ft', 'mi'];
-              } else if (unitSym === 's') {
+              } else if (measure === 'T') {
                 unitSyms = ['s', 'min', 'hr', 'day'];
-              } else if (unitSym === 'gm') {
+              } else if (measure === 'M') {
                 unitSyms = ['gm', 'kg'];
                 if (uscu)
                   unitSyms = ['oz', 'lb'];
               }
               let bestUnit = unitSyms[0];
-              if (unitExp < 0)
+              if (measureExp < 0)
                 bestUnit = unitSyms[unitSyms.length-1];
               for (const symName of unitSyms) {
                 const sym = systemSymbols[symName];
-                const unitsRatio = unitExp / sym.units[unitSym];
-                if (unitsRatio !== (unitsRatio|0))
+                const measureRatio = measureExp / sym.dim[measure];
+                if (measureRatio !== (measureRatio |0))
                   continue;
-                const quotient = Math.pow(sym.val, unitsRatio);
+                const quotient = Math.pow(sym.val, measureRatio);
                 const valAdjusted = val/quotient;
-                if (unitExp > 0) {
+                if (measureExp > 0) {
                   if (valAdjusted < 1) // last unit with val >= 1 (if possible)
                     break;
                   bestUnit = symName;
-                  displayExp = unitsRatio;
+                  displayExp = measureRatio;
                 } else {
                   if (valAdjusted >= 1) { // first unit with val >= 1
                     bestUnit = symName;
-                    displayExp = unitsRatio;
+                    displayExp = measureRatio;
                     break;
                   }
                 }
               }
               const sym = systemSymbols[bestUnit];
-              const unitsRatio = unitExp / sym.units[unitSym];
-              const quotient = Math.pow(sym.val, unitsRatio);
+              const measureRatio = measureExp / sym.dim[measure];
+              const quotient = Math.pow(sym.val, measureRatio);
               if (displayExp < 0) {
                 unitsStr += " /";
                 displayExp = -displayExp;
@@ -911,12 +886,12 @@
                 unitsStr += expStr;
               }
             }
-            for (const unit in units) // first all positive exp units
-              if (units[unit] > 0)
-                displayUnit(unit);
-              for (const unit in units) // then all negative exp units
-              if (units[unit] < 0)
-                displayUnit(unit);
+            for (const measure in dim) // first all positive exp units
+              if (dim[measure] > 0)
+                displayUnit(measure);
+              for (const measure in dim) // then all negative exp units
+              if (dim[measure] < 0)
+                displayUnit(measure);
           }
         }
         if (opts?.saveMode || Math.abs(val) < 10000 * EPSILON) {
@@ -1120,7 +1095,7 @@
           
       function parseValue(opts) {
         const backtrack1 = parsepos;
-        let num = 0, units;
+        let num = 0, dim;
         let lastUnitVal = Number.POSITIVE_INFINITY;
         let uscu = false;   // consider it metric unless we encounter any non-metric unit
 
@@ -1129,19 +1104,19 @@
 
         while (true) {  // additive chunks [nf unit unit unit]*
           let chunkVal = parseNumFrac(opts);
-          let chunkUnits = {};
+          let chunkDim = {};
           if (chunkVal === null)
             break;
           if (take("'")) {
             if (FT >= lastUnitVal) throw "Implausible units";
             lastUnitVal = FT;
-            chunkUnits.um = 1;
+            chunkDim.L = 1;
             chunkVal *= FT;
             uscu = true;
           } else if (take('"')) {
             if (IN >= lastUnitVal) throw "Implausible units";
             lastUnitVal = 1;
-            chunkUnits.um = 1;
+            chunkDim.L = 1;
             chunkVal *= IN;
             uscu = true;
           } else {
@@ -1157,7 +1132,7 @@
               const sym = getSymbol(word);
               if (!sym)
                 throw new ChattyError(`Unknown unit: "${word}"`);
-              if (Units.isScalar(sym) || !sym.val)
+              if (Dim.isScalar(sym.dim) || !sym.val)
                 throw new ChattyError(`Not a unit: "${word}"`);
               let symVal = sym.val;
               if (hasSlash)
@@ -1165,25 +1140,25 @@
               if (symVal.val >= lastUnitVal) throw "Implausible units";
               lastUnitVal = sym.val;
               if (hasSlash)
-                chunkUnits = Units.sub(chunkUnits, sym.units);
+                chunkDim = Dim.sub(chunkDim, sym.dim);
               else
-                chunkUnits = Units.add(chunkUnits, sym.units);
+                chunkDim = Dim.add(chunkDim, sym.dim);
               chunkVal *= symVal;
               if (sym.uscu)
                 uscu = true;
             }
           }
-          if (!units)
-            units = chunkUnits;
-          else if (!Units.equal(units, chunkUnits)) throw new ChattyError("Implausible units");
+          if (!dim)
+            dim = chunkDim;
+          else if (!Dim.equal(dim, chunkDim)) throw new ChattyError("Implausible units");
           num += chunkVal;
         }
-        if (!Units.isScalar(units))
-          return { type: 'num', units, val: num, uscu };
+        if (!Dim.isScalar(dim))
+          return { type: 'num', dim, val: num, uscu };
         parsepos = backtrack1;
         num = parseNum(opts);
         if (num !== null)
-          return  {type: 'num', units: {}, val: num };
+          return  {type: 'num', dim: {}, val: num };
         return null;
       }
 
@@ -1204,7 +1179,7 @@
       }
 
       // Parse a term, which is either a unary expression, a
-      // parenthesized expression, a function call, or a value or a word (variable)
+      // parenthesized expression, a function call, a value or a word (variable)
       //    '+' term
       //    '-' term
       //    '/' term     -- reciprocal
@@ -1230,7 +1205,7 @@
             if (val.type === 'fn') throw new ChattyError("Can't negate functions");
             if (val.type === 'parse')
               return { type: 'parse', op: 'neg', expr: val };
-            return { type: val.type, units: val.units, val: -val.val, uscu: val.uscu };
+            return { type: val.type, dim: val.dim, val: -val.val, uscu: val.uscu };
           }
           parsepos = backtrack;
           return null;
@@ -1243,7 +1218,7 @@
               return { type: 'parse', op: 'recip', expr: val };
             const q = 1/val.val;
             if (!isFinite(q)) throw "Divide by zero";
-            return { type: val.type, units: Units.mul(val.units, -1), val: q, uscu: val.uscu };
+            return { type: val.type, dim: Dim.mul(val.dim, -1), val: q, uscu: val.uscu };
           }
           parsepos = backtrack;
           return null;
@@ -1273,7 +1248,7 @@
             if (opts?.noUnits) {
               val = parseNum(opts);
               if (val !== null)
-                val = { type: 'num', units: {}, val: val };
+                val = { type: 'num', dim: {}, val: val };
             } else {
               val = parseValue(opts);
             }
@@ -1329,11 +1304,11 @@
             throw "Cannot exponentiate functions";
           if (val.type === 'parse' || exp.type === 'parse')
             return { type: 'parse', op: 'exp', expr1: val, expr2: exp };
-          if (!Units.isScalar(exp.units))
+          if (!Dim.isScalar(exp.dim))
             throw "Must exponentiate with a scalar";
-          if (!Units.isScalar(val.units) && exp.val !== (exp.val|0))
+          if (!Dim.isScalar(val.dim) && exp.val !== (exp.val|0))
             throw "Cannot exponentiate non-scalars by non-integers";
-          return { type: 'num', units: Units.mul(val.units, exp.val),
+          return { type: 'num', dim: Dim.mul(val.dim, exp.val),
             val: Math.pow(val.val, exp.val), uscu: val.uscu };
         }
         return val;
@@ -1360,7 +1335,7 @@
             if (val.type === 'parse' || val2.type === 'parse')
               val = { type: 'parse', op: '*', expr1: val, expr2: val2 };
             else if (val.type === 'num' && val2.type === 'num')
-              val = { type: 'num', units: Units.add(val.units, val2.units), val: val.val * val2.val,
+              val = { type: 'num', dim: Dim.add(val.dim, val2.dim), val: val.val * val2.val,
                 uscu: val.uscu || val2.uscu };
             else
               throw "Unknown value type";
@@ -1377,7 +1352,7 @@
             } else if (val.type === 'num' && val2.type === 'num') {
               const q = val.val / val2.val;
               if (!isFinite(q)) throw "Divide by zero";
-              val = { type: 'num', units: Units.sub(val.units, val2.units), val: q,
+              val = { type: 'num', dim: Dim.sub(val.dim, val2.dim), val: q,
                 uscu: val.uscu || val2.uscu };
             } else {
               throw "Unknown value type";
@@ -1414,8 +1389,8 @@
             } else if (val.val === 0) {
               val = val2;  // special case for adding 0; take second val
             } else if (val.type === 'num' && val2.type === 'num') {
-              if (Units.equal(val.units, val2.units)) 
-                val = { type: 'num', units: val.units, val: val.val + val2.val,
+              if (Dim.equal(val.dim, val2.dim)) 
+                val = { type: 'num', dim: val.dim, val: val.val + val2.val,
                   uscu: val.uscu || val2.uscu };
               else
                 throw new ChattyError("Cannot add different unit types")
@@ -1435,8 +1410,8 @@
             } else if (val2.val === 0) {
               // special case for subtracting 0; take first val
             } else if (val.type === 'num' && val2.type === 'num') {
-              if (Units.equal(val.units, val2.units))
-                val = { type: 'num', units: val.units, val: val.val - val2.val,
+              if (Dim.equal(val.dim, val2.dim))
+                val = { type: 'num', dim: val.dim, val: val.val - val2.val,
                   uscu: val.uscu && val2.uscu };
               else
                 throw new ChattyError("Cannot subtract different unit types")
@@ -1546,7 +1521,7 @@
               delete userSymbols[sym];  // put the redefined symbol at the end by deleting first
               userSymbols[sym] = val;
               showUserSymbols();
-            } else if (val.type === 'num' && val.uscu && Units.equal(val.units, { um: 1 })) {
+            } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 })) {
               showFeetInchesResult(val.val);
             } else if (val.type === 'num') {
               showResult(val);
@@ -1616,7 +1591,7 @@
       }
 
       function symString(val, opts) {
-        if (Units.equal(val.units, { um: 1 }) && !opts?.saveMode) {
+        if (Dim.equal(val.dim, { um: 1 }) && !opts?.saveMode) {
           let [ftStr, inStr, delta] = unitsToUSStringReps(val.val);
           return `${val.sym} = ${ftStr}${delta}`;
         }
