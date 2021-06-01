@@ -624,17 +624,21 @@
       // It later occurred to me that doing calculations in metric units of a
       // hundredth of a centimeter or less would lead to exact results for both systems
       // most often. The largest SI unit that would serve is the micrometer, μm or,
-      // in ASCII, um. So currently, the basic unit of length is the "um".
+      // in ASCII, um. But why not go further? Decimal fractions suffer in binary
+      // representations. Many exact values in decimal must be approximated in binary.
+      // But if you pick a small enough bas unit, all integral values greater that
+      // can be exact. Doubles can represent 15 digits of precision with some breathing
+      // and dividing a multiple of 10 by a multiple of two still results in an integer.
+      // So we can safely chose the unit as 10^-15, a femtometer and be able to represent
+      // exact decimal values exactly in binary.
       //
       // If an expression contains any US units, the results will be displayed in
       // those units. If an expression contains only metric units, the results
       // will be displayed in metric.
 
-      const UM = 1;
-      const MM = 1000*UM;
-      const CM = 10*MM;
-      const M  = 1000*MM;
-      const KM = 1000*M;
+      const FEMTOM = 1, PICOM = 1000*FEMTOM, NANOM = 1000*PICOM;
+      const UM = 1000*NANOM, MM = 1000*UM, CM = 10*MM;
+      const M  = 1000*MM, KM = 1000*M;
       const IN = 25400*UM;
       const FT = 12*IN;
       const MI = 5280*FT;
@@ -667,7 +671,6 @@
         hr: { type: 'num', units: { s: 1 }, val: 60*60, name: "hour" },
         day: { type: 'num', units: { s: 1 }, val: 60*60*24, name: "day" },
         week: { type: 'num', units: { s: 1 }, val: 60*60*24*7, name: "week" },
-        fortnight: { type: 'num', units: { s: 1 }, val: 60*60*24*14, name: "week" },
 
         lb: { type: 'num', units: { gm: 1 }, val: 453.59237, name: "pound mass", uscu: true },
         oz: { type: 'num', units: { gm: 1 }, val: 453.59237/16, name: "ounce mass", uscu: true },
@@ -763,9 +766,9 @@
           addUnit('furlong', 66*FT*10); // 10 chains
           addUnit('rod', 66*FT/4);      // chain/4
           addUnit('link', 66*FT/100);   // chain/100
-          addUnit('point', IN/72);
-          addUnit('pica', IN/6);        // 1/6", 12 points
           addUnit('yd', 3*FT);
+          addUnit('1/', 60*60*24*14, { s: 1 });
+
           showUserSymbols();
           throw "Surprise!";
         }
@@ -841,6 +844,8 @@
 
       const DIGITS_PRECISION = 10, EPSILON = Math.pow(10, -DIGITS_PRECISION);
 
+      
+
       function val2str(val, opts) {
         let unitsStr = "";
         if (val.val !== undefined) {
@@ -854,10 +859,10 @@
               let displayExp = unitExp
               let unitSyms = [unitSym];
               if (unitSym === 'um') {
-                unitSyms = ['ml', 'litre', 'cm', 'm', 'hectare', 'km'];
+                unitSyms = ['mm', 'cm', 'ml', 'litre', 'm', 'hectare', 'km'];
                 if (uscu)
-                  unitSyms = ['tsp', 'tbsp', 'cup', 'pint', 'quart', 'gallon',
-                    'acre', 'in', 'ft', 'mi'];
+                  unitSyms = ['in', 'tsp', 'tbsp', 'cup', 'pint', 'quart', 'gallon',
+                    'acre', 'ft', 'mi'];
               } else if (unitSym === 's') {
                 unitSyms = ['s', 'min', 'hr', 'day'];
               } else if (unitSym === 'gm') {
