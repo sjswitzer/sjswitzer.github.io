@@ -282,6 +282,8 @@
                countries where a foot is taken to be exactly 30cm instead of 30.48cm. It's an
                <a href="https://en.wikipedia.org/wiki/ISO_2848#Metric_foot">
                  international standard</a>!
+          <li> In the "help" boxes, most sample expressions can be clicked to evaluate
+               the expression.
           <li> You can type a fairly general expression into the text box. Click the
                <span class="button" onclick="showHelp('help-expr')">?</span> button
                for more information.
@@ -412,10 +414,10 @@
             <td> litre
             <td> A volume of <code>10cm &times; 10 cm &times; 10 cm</code>.
         </table>
-        <p> Other less common units are also available.
+        <p> Other less common units are also defined.
             To learn more, you can either
             <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">read the code</a>
-            or read <span class="linklike" onclick="showHelp('help-builtin')">this summary</span>.
+            or <span class="linklike" onclick="showHelp('help-builtin')">this summary</span>.
         <p> Any <i>variable</i> you define with a unit can be used as
             a unit itself.
             For example, if you enter <code>cubit = 1 1/2'</code>, you can then use
@@ -450,7 +452,9 @@
         <p> The variables <code>ft</code>, <code>in</code>, <code>m</code>, <code>cm</code>,
             etc. described in "Units" above
             are predefined for use as values or as units. The variable <code>pi</code> is
-            predefined in case you care about circles. Key predefined variables cannot be changed.
+            predefined in case you care about circles.
+            <span class="linklike" onclick="showHelp('help-builtin')">Reserved</span>
+            predefined variables cannot be changed.
         <h2> Functions </h2>
         <p> Define functions to automate routine calculations by typing
             <code class="abstract">name(param,param,&hellip;) = expression</code>
@@ -542,8 +546,8 @@
       <div>
         <h2> Built-In Constants and Units </h2>
         <p> This table is generated automaticaly from internal system data.
-            It may not pretty, but it is comprehensive.
-        <p> Constants that are reserved (i.e., cannot be redefined) are noted.
+            It may not be pretty, but it is comprehensive.
+        <p> Symbols that are reserved (cannot be redefined) are noted.
         <p>
         <table class="stuff example2">
           <thead>
@@ -699,9 +703,6 @@
       const LBF = 4.448222*KG*M/(SEC*SEC);
 
       const systemSymbols = {
-        pi: { type: 'num', val: Math.PI },
-        mol: { type: 'num', val: 6.02214076e23, desc: "Avogadro's number" },
-
         // Length (L)
         in: { type: 'num', dim: { L: 1 }, val: IN, desc: "inch", reserved: true, uscu: true },
         ft: { type: 'num', dim: { L: 1 }, val: FT, desc: "foot", reserved: true, uscu: true },
@@ -711,11 +712,17 @@
         chain: { type: 'num', dim: { L: 1 }, val: 66*FT, desc: "surveyor's chain", uscu: true },
         furlong: { type: 'num', dim: { L: 1 }, val: 660*FT, uscu: true },
         mi: { type: 'num', dim: { L: 1 }, val: 5280*FT, desc: "mile", reserved: true, uscu: true },
-        acre: { type: 'num', dim: { L: 2 }, val:  66*FT * 660*FT, reserved: true, uscu: true },
         mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter", reserved: true },
         cm: { type: 'num', dim: { L: 1 }, val: CM, desc: "centimeter", reserved: true },
         m:  { type: 'num', dim: { L: 1 }, val: M, desc: "meter", reserved: true },
         km: { type: 'num', dim: { L: 1 }, val: KM, desc: "kilometer", reserved: true },
+
+        // Area (L^2)
+        acre: { type: 'num', dim: { L: 2 }, val:  66*FT * 660*FT, reserved: true, uscu: true },
+        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2, desc: "100 meters \u00D7 100 meters" },
+        are: { type: 'num', dim: { L: 2 }, val: (10*M)**2, desc: "10 meters \u00D7 10 meters" },
+
+        // Volume (L^3)
         gallon : { type: 'num', dim: { L: 3 }, val: 231*IN**3, uscu: true },
         quart : { type: 'num', dim: { L: 3 }, val: 231*IN**3/4, uscu: true },
         pint : { type: 'num', dim: { L: 3 }, val: 231*IN**3/8, uscu: true },
@@ -723,8 +730,6 @@
         floz : { type: 'num', dim: { L: 3 }, val: 231*IN**3/128, desc: "fluid ounce", uscu: true },
         tbsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/256, desc: "tablespoon", uscu: true },
         tsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/768, desc: "teaspoon", uscu: true },
-        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2, desc: "100 meters \u00D7 100 meters" },
-        are: { type: 'num', dim: { L: 2 }, val: (10*M)**2, desc: "10 meters \u00D7 10 meters" },
         litre : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
         liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
         ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, desc: "milliliter" },
@@ -745,28 +750,30 @@
         kg: { type: 'num', dim: { M: 1 }, val: KG, desc: "kilogram" },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27*KG },
 
-        // Force 
+        // Force (L M T^-2)
         N: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC), desc: "newton" },
         dyne: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC)/100000 },
         lbf: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: LBF, desc: "pound force", uscu: true },
 
-        // Energy
+        // Energy (L^2 M, T^-2)
         joule: { type: 'num', dim: { L: 2, M: 1, T:-2 }, val: KG*M*M/(SEC*SEC) },
         erg: { type: 'num', dim: { L: 2, M: 1, T:-2 }, val: KG*M*M/(SEC*SEC)/10000000 },
 
-        // Power
+        // Power (L^2 M T^-3)
         W: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: KG*M*M/(SEC*SEC*SEC), desc: "watt" },
         kW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 1000*KG*M*M/(SEC*SEC*SEC), desc: "kilowatt" },
         horsepower: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 550*FT*LBF/SEC, desc: "mechanical horsepower", uscu: true },
 
-        // Pressure
+        // Pressure (L^-1 M T^-2)
         Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: KG/(M*SEC*SEC), desc: "pascal" },
         kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 1000*KG/(M*SEC*SEC), desc: "kilopascal" },
         PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: LBF/(IN*IN), desc: "pounds per square inch", uscu: true },
         atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 101325*KG/(M*SEC*SEC), desc: "atmosphere" },
         bar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 100000*KG/(M*SEC*SEC) },
 
-        // Interesting constants
+        // Interesting constants (various)
+        pi: { type: 'num', val: Math.PI },
+        mol: { type: 'num', val: 6.02214076e23, desc: "Avogadro's number" },
         g: { type: 'num', dim: { L: 1, T:-2 }, val: 9.80665*M/(SEC*SEC)/10000000, desc: "standard gravity"},
         c: { type: 'num', dim: { L: 1, T:-1 }, val: 299792458*M/SEC, desc: "speed of light"},
 
