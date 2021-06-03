@@ -700,75 +700,75 @@
 
       const systemSymbols = {
         pi: { type: 'num', val: Math.PI },
-        mol: { type: 'num', val: 6.02214076e23, name: "Avogadro's number" },
+        mol: { type: 'num', val: 6.02214076e23, desc: "Avogadro's number" },
 
         // Length (L)
-        in: { type: 'num', dim: { L: 1 }, val: IN, name: "inch", reserved: true, uscu: true },
-        ft: { type: 'num', dim: { L: 1 }, val: FT, name: "foot", reserved: true, uscu: true },
-        yd: { type: 'num', dim: { L: 1 }, val: 3*FT, name: "yard", uscu: true },
-        link: { type: 'num', dim: { L: 1 }, val: 66*FT/100, name: "surveyor's link", uscu: true },
-        rod: { type: 'num', dim: { L: 1 }, val: 66*FT/4, name: "surveyor's rod", uscu: true },
-        chain: { type: 'num', dim: { L: 1 }, val: 66*FT, name: "surveyor's chain", uscu: true },
+        in: { type: 'num', dim: { L: 1 }, val: IN, desc: "inch", reserved: true, uscu: true },
+        ft: { type: 'num', dim: { L: 1 }, val: FT, desc: "foot", reserved: true, uscu: true },
+        yd: { type: 'num', dim: { L: 1 }, val: 3*FT, desc: "yard", uscu: true },
+        link: { type: 'num', dim: { L: 1 }, val: 66*FT/100, desc: "surveyor's link", uscu: true },
+        rod: { type: 'num', dim: { L: 1 }, val: 66*FT/4, desc: "surveyor's rod", uscu: true },
+        chain: { type: 'num', dim: { L: 1 }, val: 66*FT, desc: "surveyor's chain", uscu: true },
         furlong: { type: 'num', dim: { L: 1 }, val: 660*FT, uscu: true },
-        mi: { type: 'num', dim: { L: 1 }, val: 5280*FT, name: "mile", reserved: true, uscu: true },
+        mi: { type: 'num', dim: { L: 1 }, val: 5280*FT, desc: "mile", reserved: true, uscu: true },
         acre: { type: 'num', dim: { L: 2 }, val:  66*FT * 660*FT, reserved: true, uscu: true },
-        mm: { type: 'num', dim: { L: 1 }, val: MM, name: "millimeter", reserved: true },
-        cm: { type: 'num', dim: { L: 1 }, val: CM, name: "centimeter", reserved: true },
-        m:  { type: 'num', dim: { L: 1 }, val: M, name: "meter", reserved: true },
-        km: { type: 'num', dim: { L: 1 }, val: KM, name: "kilometer", reserved: true },
+        mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter", reserved: true },
+        cm: { type: 'num', dim: { L: 1 }, val: CM, desc: "centimeter", reserved: true },
+        m:  { type: 'num', dim: { L: 1 }, val: M, desc: "meter", reserved: true },
+        km: { type: 'num', dim: { L: 1 }, val: KM, desc: "kilometer", reserved: true },
         gallon : { type: 'num', dim: { L: 3 }, val: 231*IN**3, uscu: true },
         quart : { type: 'num', dim: { L: 3 }, val: 231*IN**3/4, uscu: true },
         pint : { type: 'num', dim: { L: 3 }, val: 231*IN**3/8, uscu: true },
         cup : { type: 'num', dim: { L: 3 }, val: 231*IN**3/16, uscu: true },
-        floz : { type: 'num', dim: { L: 3 }, val: 231*IN**3/128, name: "fluid ounce", uscu: true },
-        tbsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/256, name: "tablespoon", uscu: true },
-        tsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/768, name: "teaspoon", uscu: true },
-        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2, name: "100 meters \u00D7 100 meters" },
-        are: { type: 'num', dim: { L: 2 }, val: (10*M)**2, name: "10 meters \u00D7 10 meters" },
+        floz : { type: 'num', dim: { L: 3 }, val: 231*IN**3/128, desc: "fluid ounce", uscu: true },
+        tbsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/256, desc: "tablespoon", uscu: true },
+        tsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/768, desc: "teaspoon", uscu: true },
+        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2, desc: "100 meters \u00D7 100 meters" },
+        are: { type: 'num', dim: { L: 2 }, val: (10*M)**2, desc: "10 meters \u00D7 10 meters" },
         litre : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
         liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
-        ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, name: "milliliter" },
-        cc : { type: 'num', dim: { L: 3 }, val: (CM)**3, name: "cubic centimeter" },
+        ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, desc: "milliliter" },
+        cc : { type: 'num', dim: { L: 3 }, val: (CM)**3, desc: "cubic centimeter" },
 
         // Time (T)
-        s: { type: 'num', dim: { T: 1 }, val: SEC, name: "second", uscu: null },
-        min: { type: 'num', dim: { T: 1 }, val: MIN, name: "minute", uscu: true },
-        hr: { type: 'num', dim: { T: 1 }, val: HR, name: "hour", uscu: true },
+        s: { type: 'num', dim: { T: 1 }, val: SEC, desc: "second", uscu: null },
+        min: { type: 'num', dim: { T: 1 }, val: MIN, desc: "minute", uscu: true },
+        hr: { type: 'num', dim: { T: 1 }, val: HR, desc: "hour", uscu: true },
         day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: true },
-        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, name: "7 days", uscu: true },
-        fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, name: "2 weeks", uscu: true },
+        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, desc: "7 days", uscu: true },
+        fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, desc: "2 weeks", uscu: true },
 
         // Mass (M)
-        lb: { type: 'num', dim: { M: 1 }, val: 453.59237*GM, name: "pound mass", uscu: true },
-        oz: { type: 'num', dim: { M: 1 }, val: 453.59237/16*GM, name: "ounce mass", uscu: true },
-        gm: { type: 'num', dim: { M: 1 }, val: GM, name: "gram" },
-        kg: { type: 'num', dim: { M: 1 }, val: KG, name: "kilogram" },
+        lb: { type: 'num', dim: { M: 1 }, val: 453.59237*GM, desc: "pound mass", uscu: true },
+        oz: { type: 'num', dim: { M: 1 }, val: 453.59237/16*GM, desc: "ounce mass", uscu: true },
+        gm: { type: 'num', dim: { M: 1 }, val: GM, desc: "gram" },
+        kg: { type: 'num', dim: { M: 1 }, val: KG, desc: "kilogram" },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27*KG },
 
         // Force 
-        N: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC), name: "newton" },
+        N: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC), desc: "newton" },
         dyne: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC)/100000 },
-        lbf: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: LBF, name: "pound force", uscu: true },
+        lbf: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: LBF, desc: "pound force", uscu: true },
 
         // Energy
         joule: { type: 'num', dim: { L: 2, M: 1, T:-2 }, val: KG*M*M/(SEC*SEC) },
         erg: { type: 'num', dim: { L: 2, M: 1, T:-2 }, val: KG*M*M/(SEC*SEC)/10000000 },
 
         // Power
-        W: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: KG*M*M/(SEC*SEC*SEC), name: "watt" },
-        kW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 1000*KG*M*M/(SEC*SEC*SEC), name: "kilowatt" },
-        horsepower: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 550*FT*LBF/SEC, name: "mechanical horsepower", uscu: true },
+        W: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: KG*M*M/(SEC*SEC*SEC), desc: "watt" },
+        kW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 1000*KG*M*M/(SEC*SEC*SEC), desc: "kilowatt" },
+        horsepower: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 550*FT*LBF/SEC, desc: "mechanical horsepower", uscu: true },
 
         // Pressure
-        Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: KG/(M*SEC*SEC), name: "pascal" },
-        kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 1000*KG/(M*SEC*SEC), name: "kilopascal" },
-        PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: LBF/(IN*IN), name: "pounds per square inch", uscu: true },
-        atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 101325*KG/(M*SEC*SEC), name: "atmosphere" },
+        Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: KG/(M*SEC*SEC), desc: "pascal" },
+        kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 1000*KG/(M*SEC*SEC), desc: "kilopascal" },
+        PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: LBF/(IN*IN), desc: "pounds per square inch", uscu: true },
+        atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 101325*KG/(M*SEC*SEC), desc: "atmosphere" },
         bar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 100000*KG/(M*SEC*SEC) },
 
         // Interesting constants
-        g: { type: 'num', dim: { L: 1, T:-2 }, val: 9.80665*M/(SEC*SEC)/10000000, name: "standard gravity"},
-        c: { type: 'num', dim: { L: 1, T:-1 }, val: 299792458*M/SEC, name: "speed of light"},
+        g: { type: 'num', dim: { L: 1, T:-2 }, val: 9.80665*M/(SEC*SEC)/10000000, desc: "standard gravity"},
+        c: { type: 'num', dim: { L: 1, T:-1 }, val: 299792458*M/SEC, desc: "speed of light"},
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
@@ -875,9 +875,9 @@
             let val2 = getSymbol(match[1]);
             let exp = Number(match[2]);
             if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim && exp > 1) {
-              let name = val2.name && `${val2.name ?? match[1]}^${String(exp)}`;
+              let desc = val2.desc && `${val2.desc ?? match[1]}^${String(exp)}`;
               return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(val2.val, exp),
-                name, reserved: val2.reserved, uscu: val2.uscu };
+                desc, reserved: val2.reserved, uscu: val2.uscu };
             }
           }
         }
@@ -940,8 +940,8 @@
 
       function val2str(val, opts) {
         let descStr = "";
-        if (opts?.describe && val.name)
-          descStr = ` (${val.name})`;
+        if (opts?.describe && val.desc)
+          descStr = ` (${val.desc})`;
         let unitsStr = "", invUnitsStr = "";
         if (val.val !== undefined) {
           let dim = val.dim;
@@ -1669,13 +1669,13 @@
               const symVal = getSymbol(sym);
               if (symVal?.reserved) {
                 let name = `"${sym}"`;
-                if (symVal.name && symVal.name !== sym)
-                  name = `${name} (${symVal.name})`;
+                if (symVal.desc && symVal.desc !== sym)
+                  name = `${name} (${symVal.desc})`;
                 throw `Cannot redefine reserved symbol ${name}`;
               }
               showAssignResult(val);
               delete val.defined;       // removes the flag that forces the definition
-              delete val.name;          // removes description
+              delete val.desc;          // removes description
               delete userSymbols[sym];  // put the redefined symbol at the end by deleting first
               userSymbols[sym] = val;
               showUserSymbols();
@@ -1958,7 +1958,7 @@
           const val = systemSymbols[sym];
           if (val.type !== 'num')
             continue;
-          let desc = val.name ?? sym;
+          let desc = val.desc ?? sym;
           if (val.reserved)
             desc += " <i>(reserved)</i>";
           html += `<tr><td>${sym}<td>/${sym}<td>${desc}`;
