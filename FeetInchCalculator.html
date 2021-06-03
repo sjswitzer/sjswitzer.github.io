@@ -748,7 +748,10 @@
         are: { type: 'num', dim: { L: 2 }, val: (10*M)**2, desc: "10 meters \u00D7 10 meters" },
 
         // Volume (L^3)
-        //   (liquid)
+        //    Sadly, there's ambiguity in units between liquid volume, dry volume, and mass
+        //    and, further, differences between the US and Imperial systems.
+        //    when in conflict, I've chosen liquid volumes and US units.
+        // (liquid)
         gallon : { type: 'num', dim: { L: 3 }, val: GAL, uscu: true },
         quart : { type: 'num', dim: { L: 3 }, val: GAL/4, uscu: true },
         pint : { type: 'num', dim: { L: 3 }, val: GAL/8, uscu: true },
@@ -762,8 +765,9 @@
         litre : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
         liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
         ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, desc: "milliliter" },
-        //   (dry)
-        cc : { type: 'num', dim: { L: 3 }, val: (CM)**3, desc: "cubic centimeter" },
+        // (dry)
+        cc : { type: 'num', dim: { L: 3 }, val: CM**3, desc: "cubic centimeter" },
+        cord : { type: 'num', dim: { L: 3 }, val: 128*FT**3, uscu: true },
 
         // Time (T)
         s: { type: 'num', dim: { T: 1 }, val: SEC, desc: "second", uscu: null },
@@ -779,21 +783,23 @@
 
         // Mass (M)
         lb: { type: 'num', dim: { M: 1 }, val: LBM, desc: "pound mass", uscu: true },
-        oz: { type: 'num', dim: { M: 1 }, val: LBM, desc: "ounce mass", uscu: true },
+        oz: { type: 'num', dim: { M: 1 }, val: LBM/16, desc: "ounce mass", uscu: true },
         grain: { type: 'num', dim: { M: 1 }, val: LBM/7000, uscu: true },
         stone: { type: 'num', dim: { M: 1 }, val: 14*LBM, uscu: true,
             desc: "UK stone" },
         hundredweight: { type: 'num', dim: { M: 1 }, val: 112*LBM, uscu: true,
-            desc: "UK hundredweight" },
+            desc: "UK hundredweight" },  // in the US it's 100lb, but nobody uses it so...
         longton: { type: 'num', dim: { M: 1 }, val: 2240*LBM, uscu: true,
             desc: "UK (long) ton" },
         ton: { type: 'num', dim: { M: 1 }, val: 2000*LBM, uscu: true,
             desc: "US ton" },
-        tonne: { type: 'num', dim: { M: 1 }, val: 1000*KG, uscu: true,
+        tonne: { type: 'num', dim: { M: 1 }, val: 1000*KG,
             desc: "metric ton" },
+        carat: { type: 'num', dim: { M: 1 }, val: 200*MG, desc: "gram" },
         mg: { type: 'num', dim: { M: 1 }, val: MG, desc: "gram" },
         gm: { type: 'num', dim: { M: 1 }, val: GM, desc: "gram" },
         kg: { type: 'num', dim: { M: 1 }, val: KG, desc: "kilogram" },
+        carat: { type: 'num', dim: { M: 1 }, val: 200*MG, desc: "gram" },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27*KG },
 
         // Force (L M T^-2)
@@ -822,12 +828,14 @@
 
         // Interesting constants (various)
         pi: { type: 'num', val: Math.PI },
+        dozen: { type: 'num', val: 12 },  // :)
         mol: { type: 'num', val: 6.02214076e23, desc: "Avogadro's number" },
         g: { type: 'num', dim: { L: 1, T:-2 }, val: 9.80665*M/(SEC*SEC)/10000000,
              desc: "standard gravity (earth)"},
         G: { type: 'num', dim: { L: 3, M: -1, T:-2 }, val: 6.674e-11*M*M*M/(KG*SEC*SEC),
              desc: "universal gravitational constant" },
         c: { type: 'num', dim: { L: 1, T:-1 }, val: 299792458*M/SEC, desc: "speed of light"},
+        
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
@@ -1053,9 +1061,9 @@
                 // (unit.uscu === null is a hack for units like time that are universal)
                 if (a.unit.uscu !== null && b.unit.uscu !== null
                     && !a.unit.uscu !== !b.unit.uscu) {
-                  if (uscu === !a.unit.uscu)
-                    return 1;
-                  return -1;
+                  if (!uscu === !a.unit.uscu)
+                    return -1;
+                  return 1;
                 }
 
                 // Negative exponents go first
@@ -1078,7 +1086,7 @@
               let res = cmp(a,b), rev = cmp(b,a);
               if (res !== -rev)
                 throw "bad comparitor";
-              return res
+              return res;
             });
             if (logLevel > 0)
                console.log("======== " + parseStr + " ========\n" +
