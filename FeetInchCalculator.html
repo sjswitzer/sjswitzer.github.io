@@ -933,7 +933,7 @@
       }
 
       function invokeFunction(symVal, params) {
-        if (symVal.type !== 'fn') throw "Not a function";
+        if (symVal.type !== 'fn') throw new ChattyError("Not a function");
         if (symVal.native)
           return symVal.native(...params);   // symVal is "this" in a native function
         if (params.length !== symVal.params.length)
@@ -1741,7 +1741,6 @@
               showAssignResult(val);
               delete val.defined;       // removes the flag that forces the definition
               delete val.desc;          // removes description
-              delete userSymbols[sym];  // put the redefined symbol at the end by deleting first
               userSymbols[sym] = val;
               showUserSymbols();
             } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.leadingTerm) {
