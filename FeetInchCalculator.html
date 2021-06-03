@@ -378,6 +378,9 @@
             <td> ft
             <td> Foot
           <tr>
+            <td> yd
+            <td> Yard
+          <tr>
             <td> mi
             <td> Mile
           <tr>
@@ -397,19 +400,19 @@
             <td> Kilometer
           <tr>
             <td> hectare
-            <td> A hectare, or <code>100m &times; 100m</code>
+            <td> Hectare, or <code>100m &times; 100m</code>
           <tr>
             <td> litre
             <td> A volume of <code>10cm &times; 10 cm &times; 10 cm</code>.
         </table>
-        <p> In fact, any <i>variable</i> you define with a unit can be used as
+        <p> Any <i>variable</i> you define with a unit can be used as
             a unit itself.
-            For example, if you enter <code>yd = 3'</code>, you can then use
-            expressions like <code>3yd 5 1/2"</code>.
+            For example, if you enter <code>cubit = 2 1/2'</code>, you can then use
+            expressions like <code>3 cubit 5 1/2"</code>.
         <p> A unit can be immediately followed (without spaces) by a number which is
             the power of that unit. For instance, <code>3 yd2</code> is three square yards
             (27 square feet)
-            and <code>2 ft3</code> is two cubic feet. if a unit specifier is immediately
+            and <code>2 ft3</code> is two cubic feet. If a unit specifier is immediately
             preceded by a <code>/</code> (without spaces), it is an inverse unit.
             For instance, <code>60 /ft2</code> means 60 per square foot.
             <code>144/ft2</code> means 144 per square foot or, equivalently, 1 per square inch
@@ -463,6 +466,9 @@
           <tr>
             <td> sqrt(x) 
             <td> Square root
+          <tr>
+            <td> cbrt(x) 
+            <td> Cube root
         </table>
         <h2> Saved State </h2>
         <p> User-defined variables and functions are saved between sessions in local
@@ -542,27 +548,26 @@
           return true;
         }
 
-        static equal(dim1 = {}, dim2 = {}) {
-          for (const measure in dim1)
-            if (dim1[measure] !== dim2[measure])
-              return false;
-          for (const measure in dim2)
-            if (dim1[measure] !== dim2[measure])
-              return false;
-          return true;
+        static basis(dim) {
+          let res = null;
+          for (const measure in dim)
+            if (dim[measure] !== 0) {
+              if (res)
+                return null;
+              res = measure;
+            }
+          return res;
         }
 
-        // If a dimension can be evenly divided, the new dimension, else null
-        // We don't do fractal dimensions here.
-        static div(dim = {}, n) { 
-          let ret = {};
-          for (const measure in dim) {
-            const expDiv = dim[measure]/n;
-            if (expDiv !== (expDiv|0))
-              return null;
-            ret[measure] = expDiv;
+        static equal(dim1 = {}, dim2 = {}) {
+          for (const measure in dim1) {
+            if ((dim1[measure]??0) !== (dim2[measure]??0))
+              return false;
           }
-          return ret;
+          for (const measure in dim2)
+            if ((dim1[measure]??0) !== (dim2[measure]??0))
+              return false;
+          return true;
         }
 
         static mul(dim = {}, n) {
@@ -570,6 +575,48 @@
           for (const measure in dim)
             ret[measure] = dim[measure]*n;
           return ret;
+        }
+
+        // If a dimension can be evenly divided, the new dimension, else null
+        // We don't do fractal dimensions here.
+        static div(dim = {}, n) { 
+        let ret = {};
+          for (const measure in dim) {
+            const expDiv = dim[measure]/n;
+            if (expDiv !== Math.trunc(expDiv))
+              return null;
+            ret[measure] = expDiv;
+          }
+          return ret;
+        }
+
+        static reduce(dim1, dim2) {
+          // If dim1 can be reduced by a power of dim2,
+          // returns [ exp, reducedDim]. Exp is zero if not reduced.
+          // Dimensions are reduced if at least one dimension can be
+          // reduced to zero exponent. Partial reductions are not
+          // allowed or you end up with things like hectare kilometers.
+          let measures = {}, ret = {}, reduced = false;
+          for (const measure in dim1)
+            measures[measure] = true;
+          for (const measure in dim2)
+            measures[measure] = true;
+          let exp = 0;
+          for (const measure in measures) {
+            let exp1 = dim1[measure]??0, exp2 = dim2[measure]??0;
+            if (exp2 === 0) {
+              ret[measure] = exp1;
+              continue;
+            }
+            let thisExp = exp1/exp2;
+            if (thisExp !== Math.trunc(thisExp))
+              return [ 0, {} ];
+            if (exp && exp !== thisExp)
+              return [ 0, {} ];
+            exp = thisExp;
+            ret[measure] = 0;
+          }
+          return [ exp, ret ];
         }
 
         static add(dim1 = {}, dim2 ={}, factor = 1) {
@@ -605,27 +652,31 @@
       // most often. The largest SI unit that would serve is the micrometer.
       // But why not go further? Decimal fractions suffer in binary
       // representations. Many exact values in decimal must be approximated in binary.
-      // But if you pick a small enough bas unit, all integral values greater that
-      // can be exact. Doubles can represent 15 digits of precision with some breathing
-      // and dividing a multiple of 10 by a multiple of two still results in an integer.
-      // So we can safely chose the unit as 10^-15, a femtometer and be able to represent
-      // exact decimal values exactly in binary.
+      // But if you pick a small enough base unit, all integral values greater that
+      // can be exact. 
       //
       // If an expression contains any US units, the results will be displayed in
       // those units. If an expression contains only metric units, the results
       // will be displayed in metric.
 
-      const FEMTOM = 1, UM = 1e6*FEMTOM, MM = 1000*UM, CM = 10*MM, M  = 1000*MM, KM = 1000*M;
-      const IN = 25400*UM, FT = 12*IN, MI = 5280*FT;
+      const UM = 1000, MM = 1000*UM, CM = 10*MM, M  = 1000*MM, KM = 1000*M;
+      const IN = 25400*UM, FT = 12*IN;
 
-      const SEC = 1e15, MIN = 60*SEC, HR = 60*MIN; 
-      const GM = 1e12, KG = 1000*GM;
+      const SEC = 1, MIN = 60*SEC, HR = 60*MIN; 
+      const GM = 1000, KG = 1000*GM;
 
       const systemSymbols = {
         pi: Math.PI,
+        mol: 6.02214076e23,
+
         in: { type: 'num', dim: { L: 1 }, val: IN, name: "inch", protect: true, uscu: true },
         ft: { type: 'num', dim: { L: 1 }, val: FT, name: "foot", protect: true, uscu: true },
-        mi: { type: 'num', dim: { L: 1 }, val: MI, name: "mile", protect: true, uscu: true },
+        yd: { type: 'num', dim: { L: 1 }, val: 3*FT, name: "yard", uscu: true },
+        link: { type: 'num', dim: { L: 1 }, val: 66*FT/100, uscu: true },
+        rod: { type: 'num', dim: { L: 1 }, val: 66*FT/4, uscu: true },
+        chain: { type: 'num', dim: { L: 1 }, val: 66*FT, uscu: true },
+        furlong: { type: 'num', dim: { L: 1 }, val: 660*FT, uscu: true },
+        mi: { type: 'num', dim: { L: 1 }, val: 5280*FT, name: "mile", protect: true, uscu: true },
         acre: { type: 'num', dim: { L: 2 }, val:  66*FT * 660*FT, protect: true, uscu: true },
         mm: { type: 'num', dim: { L: 1 }, val: MM, name: "millimeter", protect: true },
         cm: { type: 'num', dim: { L: 1 }, val: CM, name: "centimeter", protect: true },
@@ -638,22 +689,34 @@
         floz : { type: 'num', dim: { L: 3 }, val: 231*IN**3/128, uscu: true },
         tbsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/256, uscu: true },
         tsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/768, uscu: true },
-        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2, name: "hectare" },
-        litre : { type: 'num', dim: { L: 3 }, val: (10*CM)**3, name: "litre" },
-        liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3, name: "liter" },
+        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2 },
+        are: { type: 'num', dim: { L: 2 }, val: (10*M)**2 },
+        litre : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
+        liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
         ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, name: "milliliter" },
         cc : { type: 'num', dim: { L: 3 }, val: (CM)**3, name: "cubic centimeter" },
 
-        s: { type: 'num', dim: { T: 1 }, val: SEC, name: "second" },
-        min: { type: 'num', dim: { T: 1 }, val: MIN, name: "minute" },
-        hr: { type: 'num', dim: { T: 1 }, val: HR, name: "hour" },
-        day: { type: 'num', dim: { T: 1 }, val: 24*HR, name: "day" },
-        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, name: "week" },
+        s: { type: 'num', dim: { T: 1 }, val: SEC, name: "second", uscu: null },
+        min: { type: 'num', dim: { T: 1 }, val: MIN, name: "minute", uscu: true },
+        hr: { type: 'num', dim: { T: 1 }, val: HR, name: "hour", uscu: true },
+        day: { type: 'num', dim: { T: 1 }, val: 24*HR, name: "day", uscu: true },
+        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, name: "week", uscu: true },
 
         lb: { type: 'num', dim: { M: 1 }, val: 453.59237*GM, name: "pound mass", uscu: true },
         oz: { type: 'num', dim: { M: 1 }, val: 453.59237/16*GM, name: "ounce mass", uscu: true },
         gm: { type: 'num', dim: { M: 1 }, val: GM, name: "gram" },
         kg: { type: 'num', dim: { M: 1 }, val: KG, name: "kilogram" },
+        dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27*KG },
+
+        N: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC), name: "newton" },
+        dyne: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC)/100000 },
+        lbf: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: 4.448222*KG*M/(SEC*SEC), name: "pound force", uscu: true },
+
+        joule: { type: 'num', dim: { L: 2, M: 1, T:-2 }, val: KG*M*M/(SEC*SEC) },
+        erg: { type: 'num', dim: { L: 2, M: 1, T:-2 }, val: KG*M*M/(SEC*SEC)/10000000 },
+
+        g: { type: 'num', dim: { L: 1, T:-2 }, val: 9.80665*M/(SEC*SEC)/10000000, name: "standard gravity"},
+        c: { type: 'num', dim: { L: 1, T:-1 }, val: 299792458*M/SEC, name: "speed of light"},
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
@@ -687,6 +750,16 @@
           let newDim = Dim.div(val.dim, 2);
           if (!newDim) throw `${this.sym}(x): parameter must have even units`;
           return { type: 'num', dim: newDim, val: Math.sqrt(val.val), uscu: val.uscu };
+        },
+
+        // Cubic root
+        cbrt: function CubicRoot(...params) {
+          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
+          let val = params[0];
+          if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
+          let newDim = Dim.div(val.dim, 3);
+          if (!newDim) throw `${this.sym}(x): parameter must have even units`;
+          return { type: 'num', dim: newDim, val: Math.cbrt(val.val), uscu: val.uscu };
         },
 
         mean: function(...params) {
@@ -729,24 +802,6 @@
           if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
           return { ...val, uscu: true };
         },
-
-        // Easter egg function that defines a bunch of units
-        Egg: function EasterEgg(p) {
-          const addUnit = (sym, val, dim = { um: 1 }, uscu = true) => {
-            userSymbols[sym] = { sym, type: 'num', dim, val, uscu };
-          }
-          // https://en.wikipedia.org/wiki/United_States_customary_units#Length  
-          addUnit('fathom', 6*FT);
-          addUnit('league', 3*MI);
-          addUnit('chain', 66*FT);
-          addUnit('furlong', 66*FT*10); // 10 chains
-          addUnit('rod', 66*FT/4);      // chain/4
-          addUnit('link', 66*FT/100);   // chain/100
-          addUnit('yd', 3*FT);
-
-          showUserSymbols();
-          throw "Surprise!";
-        }
       };
 
       const userSymbols = {};
@@ -761,8 +816,8 @@
         if (typeof val === 'number')
           val = { type: 'num', dim: {}, val: val };
         else if (val instanceof Function)
-          val = { sym: symName, type: 'fn',  params:["..."], native: val,
-            body: `#BuiltinFunction-${val.symName}#` };
+          val = { type: 'fn',  params:["..."], native: val,
+            body: `#BuiltinFunction-${symName}#` };
         if (!val) {
           // special case to create pseudo-variables for exponentiated units
           const match = /^([a-z]+)([0-9]+)$/i.exec(symName);
@@ -776,6 +831,8 @@
             }
           }
         }
+        if (val && !val.sym)
+          val.sym = symName;
         return val;
       }
 
@@ -785,10 +842,10 @@
           return symVal.native(...params);   // symVal is "this" in a native function
         if (params.length !== symVal.params.length)
            throw new ChattyError(`incorrect number of params for ${symVal.sym}(${symVal.params.join(',')})`);
-        const saveEnv = environment, saveParsestr = parsestr, saveParsepos = parsepos;
+        const saveEnv = environment, saveParseStr = parseStr, saveParsePos = parsePos;
         try {
-          parsestr = symVal.body;
-          parsepos = 0;
+          parseStr = symVal.body;
+          parsePos = 0;
           environment = {};
           for (const i in params)
             environment[symVal.params[i]] = params[i];
@@ -799,8 +856,8 @@
         }
         finally {
           environment = saveEnv;
-          parsestr = saveParsestr;
-          parsepos = saveParsepos;
+          parseStr = saveParseStr;
+          parsePos = saveParsePos;
         }
       }
 
@@ -820,83 +877,112 @@
 
       const DIGITS_PRECISION = 10, EPSILON = Math.pow(10, -DIGITS_PRECISION);
 
-      
+      const candidateUnits = [
+        'in', 'ft', 'mi', 'acre',
+        'tsp', 'tbsp', 'cup', 'pint', 'quart', 'gallon',
+        'oz', 'lb',
+        'mm', 'cm', 'm', 'km', 'hectare', 'ml', 'litre',
+        'gm', 'kg', 'N',
+        's', 'min', 'hr'
+      ].map(sym => getSymbol(sym))   // filter out any non-units (user may have redefined some)
+             .filter(val => val.type === 'num' && val.val && !Dim.isScalar(val.dim));
+
       function val2str(val, opts) {
-        let unitsStr = "";
+        let unitsStr = "", invUnitsStr = "";
         if (val.val !== undefined) {
           let dim = val.dim;
-          let uscu = val.uscu;
+          let uscu = !!val.uscu;
           val = val.val;
-          if (!Dim.isScalar(dim)) {
-            // Find best units to express the value in
-            function displayUnit(measure) {
-              let measureExp = dim[measure];
-              let displayExp = measureExp;
-              let unitSyms = ['mm'];    // XXX
-              if (measure === 'L') {
-                unitSyms = ['mm', 'cm', 'ml', 'litre', 'm', 'hectare', 'km'];
-                if (uscu)
-                  unitSyms = ['in', 'tsp', 'tbsp', 'cup', 'pint', 'quart', 'gallon',
-                    'acre', 'ft', 'mi'];
-              } else if (measure === 'T') {
-                unitSyms = ['s', 'min', 'hr', 'day'];
-              } else if (measure === 'M') {
-                unitSyms = ['gm', 'kg'];
-                if (uscu)
-                  unitSyms = ['oz', 'lb'];
-              }
-              let bestUnit = unitSyms[0];
-              if (measureExp < 0)
-                bestUnit = unitSyms[unitSyms.length-1];
-              for (const symName of unitSyms) {
-                const sym = systemSymbols[symName];
-                const measureRatio = measureExp / sym.dim[measure];
-                if (measureRatio !== (measureRatio |0))
-                  continue;
-                const quotient = Math.pow(sym.val, measureRatio);
-                const valAdjusted = val/quotient;
-                if (measureExp > 0) {
-                  if (valAdjusted < 1) // last unit with val >= 1 (if possible)
-                    break;
-                  bestUnit = symName;
-                  displayExp = measureRatio;
-                } else {
-                  if (valAdjusted >= 1) { // first unit with val >= 1
-                    bestUnit = symName;
-                    displayExp = measureRatio;
-                    break;
+          // Find best units to express the value in
+          let iterations = 0;
+          while (!Dim.isScalar(dim)) {
+            if (++iterations > 100)
+              throw "Failed to reduce units";
+            let unitDescs = [];
+            for (const unit of candidateUnits) {
+              const [exp, reduced] = Dim.reduce(dim, unit.dim);
+              let newVal = val;
+              let posExp = 0, negExp = 0;
+              if (exp) {
+                for (const measure in unit.dim) {
+                  // It's more precice to avoid raising to negative powers.
+                  // This avoids some .9999999999999999 scenarios.
+                  const exp2 = exp * unit.dim[measure];
+                  if (exp2 > 0) {
+                    const divisor = Math.pow(unit.val, exp2);
+                    newVal = newVal / divisor;
+                    posExp += 1;
+                  } else if (exp2 < 0) {
+                    const factor = Math.pow(unit.val, -exp2);
+                    newVal = newVal * factor;
+                    negExp += 1;
                   }
                 }
-              }
-              const sym = systemSymbols[bestUnit];
-              const measureRatio = measureExp / sym.dim[measure];
-              const quotient = Math.pow(sym.val, measureRatio);
-              if (displayExp < 0) {
-                unitsStr += " /";
-                displayExp = -displayExp;
-              } else {
-                unitsStr += " "
-              }
-              val = val / quotient;
-              unitsStr += bestUnit;
-              if (displayExp != 1) {
-                let expStr = String(displayExp);
-                if (opts?.html)
-                  expStr = `<sup>${expStr}</sup>`;
-                unitsStr += expStr;
+                unitDescs.push({unit, exp, posExp, negExp, newVal, reduced});
               }
             }
-            for (const measure in dim) // first all positive exp units
-              if (dim[measure] > 0)
-                displayUnit(measure);
-              for (const measure in dim) // then all negative exp units
-              if (dim[measure] < 0)
-                displayUnit(measure);
+            unitDescs.sort((a,b) => {  // Note that we're sorting from best to worst
+              function cmp(a,b) {
+                // Units system should match
+                // (unit.uscu === null is a hack for units like time that are universal)
+                if (a.unit.uscu !== null && b.unit.uscu !== null
+                    && !a.unit.uscu !== !b.unit.uscu) {
+                  if (uscu === !a.unit.uscu)
+                    return 1;
+                  return -1;
+                }
+
+                // Negative exponents go first
+                if (!!a.negExp !== !!b.negExp) {
+                  if (!!a.negExp)
+                    return -1;
+                  return 1;
+                }
+
+                // Values greater than 1 beat values less than one
+                if (a.newVal >= 1 && b.newVal < 1)
+                  return -1;
+                if (b.newVal >= 1 && a.newVal < 1)
+                  return 1;
+
+                // Smaller values beat larger
+                return a.newVal - b.newVal;
+              }
+              // ensure comparitor is well-behaved
+              let res = cmp(a,b), rev = cmp(b,a);
+              if (res !== -rev)
+                throw "bad comparitor";
+              return res
+            });
+            console.log("======== " + parseStr + " ========"); // XXX
+            console.log(JSON.stringify(unitDescs, null, 2)); // XXX
+            if (unitDescs.length < 1)
+              throw "system error: insufficient basis units";
+            const unitDesc = unitDescs[0];
+            let str = " ";
+            let displayExp = unitDesc.exp;
+            if (displayExp < 0) {
+              displayExp = -displayExp;
+              str += " /"
+            }
+            str += unitDesc.unit.sym;
+            if (displayExp !== 1) {
+              let expStr = String(displayExp);
+              if (opts?.html)
+                expStr = `<sup>${expStr}</sup>`;
+              str += expStr;
+            }
+            if (unitDesc.exp < 0)
+              invUnitsStr += str;
+            else
+              unitsStr += str;
+            val = unitDesc.newVal;
+            dim = unitDesc.reduced;
           }
         }
         if (opts?.saveMode || Math.abs(val) < 10000 * EPSILON) {
           // full precision value
-          return String(val) + unitsStr;
+          return String(val) + unitsStr + invUnitsStr;
         } else {
           // Avoids display of nonsense like 2.5000...001 while
           // maintaining accuracy to "DIGITS_PRECISION" decimal digits.
@@ -905,7 +991,7 @@
             val = val.substr(0, val.length-1);
           if (val.endsWith("."))
             val = val.substr(0, val.length-1);
-          return val + unitsStr;
+          return val + unitsStr + invUnitsStr;
         }
       }
 
@@ -948,8 +1034,8 @@
       // Parser, for general calculation with expressions
       //
 
-      let parsestr = "", initialParseStr = "";
-      let parsepos = 0, parseFurthest = 0;
+      let parseStr = "", initialParseStr = "";
+      let parsePos = 0, parseFurthest = 0;
       const DIGITS = "0123456789";
       const ALPHA =
         "abcdefghijklmnopqrstuvwxyz" +
@@ -958,31 +1044,33 @@
       const NOSKIP = { noSkip: true };
 
       function peekc() {
-        if (parsepos < parsestr.length)
-          return parsestr.charAt(parsepos);
+        if (parsePos < parseStr.length)
+          return parseStr.charAt(parsePos);
         return null;
       }
 
       function getc() {
-        if (parsepos < parsestr.length) {
-          let ch = parsestr.charAt(parsepos);
-          parsepos += 1;
-          if (parsepos > parseFurthest && parsestr === initialParseStr)
-            parseFurthest = parsepos;
+        if (parsePos < parseStr.length) {
+          let ch = parseStr.charAt(parsePos);
+          parsePos += 1;
+          if (parsePos > parseFurthest && parseStr === initialParseStr)
+            parseFurthest = parsePos;
           return ch;
         }
         return null;
       }
 
       function take(match, opts) {
-        const backtrack = parsepos;
+        const backtrack = parsePos;
         if (!opts?.noSkip)
           skipSpaces();
-        if (parsestr.charAt(parsepos) === match) {
-          parsepos += 1;
+        if (parseStr.charAt(parsePos) === match) {
+          parsePos += 1;
+          if (parsePos > parseFurthest && parseStr === initialParseStr)
+            parseFurthest = parsePos;
           return true;
         }
-        parsepos = backtrack;
+        parsePos = backtrack;
         return false;
       }
 
@@ -1004,7 +1092,7 @@
       //    .ddd
 
       function parseNum(opts) {
-        const backtrack = parsepos;
+        const backtrack = parsePos;
         let nDigits = 0;
         if (!opts?.noSkip)
           skipSpaces();
@@ -1027,7 +1115,7 @@
               nDigits += 1;
             }
           }
-          const backtrack2 = parsepos;
+          const backtrack2 = parsePos;
           if (!opts?.intOnly && take('e', NOSKIP)) {
             take('+', NOSKIP);
             take('-', NOSKIP);
@@ -1035,19 +1123,19 @@
               // let JavaScript parse the number
               while (DIGITS.includes(peekc()))
                 getc();
-              let str = parsestr.substring(backtrack, parsepos);
+              let str = parseStr.substring(backtrack, parsePos);
               let val = Number.parseFloat(str);
               if (isNaN(val)) {
-                parsepos = backtrack;
+                parsePos = backtrack;
                 throw `Bad number: ${str}`;
               }
               return val;
             }
           }
-          parsepos = backtrack2;
+          parsePos = backtrack2;
           if (nDigits > 0)
             return val/div; 
-          parsepos = backtrack;    
+          parsePos = backtrack;    
         }
         return null;
       }
@@ -1061,11 +1149,11 @@
         let val = parseNum(opts);
         if (val === null)
           return null;
-        const backtrack = parsepos;
+        const backtrack = parsePos;
         if (take('/', NOSKIP)) {
           let denom = parseNum({ noSkip: true, intOnly: true });
           if (denom === null) {
-            parsepos = backtrack;
+            parsePos = backtrack;
             return val;
           }
           const q = val/denom;
@@ -1083,7 +1171,7 @@
             return val + q;
           }
         }
-        parsepos = backtrack;
+        parsePos = backtrack;
         return val;
       }
 
@@ -1094,7 +1182,7 @@
       //    nf unit [ nf [ '/'? unit ['^' n]? ]+ ]*
           
       function parseValue(opts) {
-        const backtrack1 = parsepos;
+        const backtrack1 = parsePos;
         let num = 0, dim;
         let lastUnitVal = Number.POSITIVE_INFINITY;
         let uscu = false;   // consider it metric unless we encounter any non-metric unit
@@ -1104,29 +1192,32 @@
 
         while (true) {  // additive chunks [nf unit unit unit]*
           let chunkVal = parseNumFrac(opts);
-          let chunkDim = {};
           if (chunkVal === null)
             break;
+          let chunkDim = {};
+          let gotUnit = false;
           if (take("'")) {
             if (FT >= lastUnitVal) throw "Implausible units";
             lastUnitVal = FT;
             chunkDim.L = 1;
             chunkVal *= FT;
             uscu = true;
+            gotUnit = true;
           } else if (take('"')) {
             if (IN >= lastUnitVal) throw "Implausible units";
             lastUnitVal = 1;
             chunkDim.L = 1;
             chunkVal *= IN;
             uscu = true;
+            gotUnit = true;
           } else {
             // system and user-defined units
             while (true) {
-              const backtrack2 = parsepos;
+              const backtrack2 = parsePos;
               let hasSlash = take('/');
               let word = parseWord({ ...opts, noSkip: hasSlash });
               if (!word) {
-                parsepos = backtrack2;
+                parsePos = backtrack2;
                 break;
               }
               const sym = getSymbol(word);
@@ -1139,6 +1230,7 @@
                 symVal = 1/symVal;
               if (symVal.val >= lastUnitVal) throw "Implausible units";
               lastUnitVal = sym.val;
+              let saveChunkDim = chunkDim;
               if (hasSlash)
                 chunkDim = Dim.sub(chunkDim, sym.dim);
               else
@@ -1146,16 +1238,23 @@
               chunkVal *= symVal;
               if (sym.uscu)
                 uscu = true;
+              gotUnit = true;
             }
+          }
+          if (!gotUnit) {
+            dim = undefined;
+            parsePos = backtrack1;
+            break;
           }
           if (!dim)
             dim = chunkDim;
-          else if (!Dim.equal(dim, chunkDim)) throw new ChattyError("Implausible units");
+          else if (!Dim.equal(dim, chunkDim))
+            throw new ChattyError("Implausible units");
           num += chunkVal;
         }
-        if (!Dim.isScalar(dim))
+        if (dim)
           return { type: 'num', dim, val: num, uscu };
-        parsepos = backtrack1;
+        parsePos = backtrack1;
         num = parseNum(opts);
         if (num !== null)
           return  {type: 'num', dim: {}, val: num };
@@ -1165,7 +1264,7 @@
       // Parse a word
 
       function parseWord(opts) {
-        const backtrack = parsepos;
+        const backtrack = parsePos;
         if (!opts?.noSkip)
           skipSpaces();
         if (ALPHA.includes(peekc())) {
@@ -1174,7 +1273,7 @@
             word += getc();
           return word;
         }
-        parsepos = backtrack;
+        parsePos = backtrack;
         return null;
       }
 
@@ -1189,14 +1288,14 @@
       //    word
 
       function parseTerm(opts) {
-        const backtrack = parsepos;
+        const backtrack = parsePos;
 
         // Deal with unary first
         if (take('+')) {
           let val = parseTerm(opts);
           if (val !== null)
             return val;
-          parsepos = backtrack;
+          parsePos = backtrack;
           return null;
         }
         if (take('-')) {
@@ -1207,7 +1306,7 @@
               return { type: 'parse', op: 'neg', expr: val };
             return { type: val.type, dim: val.dim, val: -val.val, uscu: val.uscu };
           }
-          parsepos = backtrack;
+          parsePos = backtrack;
           return null;
         }
         if (take('/')) {
@@ -1220,7 +1319,7 @@
             if (!isFinite(q)) throw "Divide by zero";
             return { type: val.type, dim: Dim.mul(val.dim, -1), val: q, uscu: val.uscu };
           }
-          parsepos = backtrack;
+          parsePos = backtrack;
           return null;
         }
 
@@ -1255,7 +1354,7 @@
           }
         }
         if (val === null) {
-          parsepos = backtrack;
+          parsePos = backtrack;
           return null;
         }
 
@@ -1270,7 +1369,7 @@
             arg = parseExpr(opts);
           }
           if (!take(')')) {
-            parsepos = backtrack;
+            parsePos = backtrack;
             return null;
           }
           let paramsParse = false;
@@ -1293,11 +1392,11 @@
         let val = parseTerm(opts);
         if (val === null)
           return null;
-        const backtrack = parsepos;
+        const backtrack = parsePos;
         if (take('^')) {
           let exp = parseExponentiation({ ...opts, noUnits: true });
           if (!exp) {
-            parsepos = backtrack;
+            parsePos = backtrack;
             return val;
           }
           if (val.type === 'fn' || exp.type === 'fn')
@@ -1306,7 +1405,7 @@
             return { type: 'parse', op: 'exp', expr1: val, expr2: exp };
           if (!Dim.isScalar(exp.dim))
             throw "Must exponentiate with a scalar";
-          if (!Dim.isScalar(val.dim) && exp.val !== (exp.val|0))
+          if (!Dim.isScalar(val.dim) && exp.val !== Math.trunc(exp.val))
             throw "Cannot exponentiate non-scalars by non-integers";
           return { type: 'num', dim: Dim.mul(val.dim, exp.val),
             val: Math.pow(val.val, exp.val), uscu: val.uscu };
@@ -1319,7 +1418,7 @@
       //    exponentiation [ '/' exponentiation ]*
 
       function parseMulExpr(opts) {
-        const backtrack = parsepos;
+        const backtrack = parsePos;
         let val = parseExponentiation(opts);
         if (val === null)
           return null;
@@ -1327,7 +1426,7 @@
           if (take('*') || take('\u00D7')) {  // '*' or times sign
             let val2 = parseExponentiation(opts);
             if (val2 === null) {
-              parsepos = backtrack;
+              parsePos = backtrack;
               return null;
             }
             if (val.type === 'fn' || val2.type === 'fn')
@@ -1342,7 +1441,7 @@
           } else if (take('/') || take('\u00F7')) { // '/' or divide sign
             let val2 = parseExponentiation(opts);
             if (val2 === null) {
-              parsepos = backtrack;
+              parsePos = backtrack;
               return null;
             }
             if (val.type === 'fn' || val2.type === 'fn')
@@ -1369,7 +1468,7 @@
       //    mulexpr [ '-' mulexpr ]*
 
       function parseExpr(opts) {
-        const backtrack = parsepos;
+        const backtrack = parsePos;
         let val = parseMulExpr(opts);
         if (val === null)
           return null;
@@ -1377,7 +1476,7 @@
           if (take('+')) {
             let val2 = parseMulExpr(opts);
             if (val2 === null) {
-              parsepos = backtrack;
+              parsePos = backtrack;
               return null;
             }
             if (val.type === 'fn' || val2.type === 'fn')
@@ -1400,7 +1499,7 @@
           } else if (take('-')) {
             let val2 = parseMulExpr(opts);
             if (val2 === null) {
-              parsepos = backtrack;
+              parsePos = backtrack;
               return null;
             }
             if (val.type === 'fn' || val2.type === 'fn')
@@ -1432,7 +1531,7 @@
       //    word '(' [ word [ ',' word ]* ]? ')' '=' expr
 
       function parseStatement(opts) {
-        const backtrack = parsepos;
+        const backtrack = parsePos;
         let word = parseWord(opts);
         if (word !== null) {
           if (take('=')) {
@@ -1463,12 +1562,12 @@
                 for (const p of params)
                   environment[p] = { type: 'parse', sym: p, defined: true };
                 skipSpaces();
-                const exprStart = parsepos;
+                const exprStart = parsePos;
                 let expr = parseExpr(opts);
                 environment = saveEnv;
                 if (expr !== null)
                   return { type: 'fn', expr: expr, sym: word, defined: true,
-                           params: params, body: parsestr.substr(exprStart) };
+                           params: params, body: parseStr.substr(exprStart) };
                }
                catch (e) {
                  environment = saveEnv;
@@ -1476,7 +1575,7 @@
                }
              }
            }
-           parsepos = backtrack;
+           parsePos = backtrack;
         }
         return parseExpr();
       }
@@ -1486,17 +1585,17 @@
       // making sure all the input is consumed.
       //
       function parseInputStatement(stmt, env, opts) {
-        parsestr = initialParseStr = stmt;
-        parsepos = 0;
+        parseStr = initialParseStr = stmt;
+        parsePos = 0;
         parseFurthest = 0;
         environment = env || {};
         let val = parseStatement(opts);
         skipSpaces();
         if (val === null || peekc()) {
-          let rest = parsestr.substr(parseFurthest);
+          let rest = parseStr.substr(parseFurthest);
           if (rest.length > 0)
             throw new ChattyError(`Cannot parse beyond "${rest}"`);
-          else if (parsestr.trim() !== "")
+          else if (parseStr.trim() !== "")
             throw new ChattyError(`Incomplete input`);
         }
         return val;
@@ -1530,10 +1629,10 @@
             }
             return;
           } else {
-            let rest = parsestr.substr(parseFurthest);
+            let rest = parseStr.substr(parseFurthest);
             if (rest.length > 0)
               throw new ChattyError(`Cannot parse beyond "${rest}"`);
-            else if (parsestr.trim() !== "")
+            else if (parseStr.trim() !== "")
               throw new ChattyError(`Incomplete input`);
           }
         }
@@ -1650,12 +1749,12 @@
         // Recover feet and inches from from result
         // (round to nearest 1/denom)
         let denom = 32;
-        let inches =  ((totalInches*denom + 0.5)|0)/denom;
-        let ft = (inches/12)|0;      // "n|0" truncates to an integer
+        let inches =  Math.trunc(totalInches*denom + 0.5)/denom;
+        let ft = Math.trunc(inches/12);
         inches = inches - ft*12;
-        let frac = inches - (inches|0);
-        inches = inches|0;
-        let num = (frac*denom)|0;
+        let frac = inches - Math.trunc(inches);
+        inches = Math.trunc(inches);
+        let num = Math.trunc(frac*denom);
         while (denom > 2 && num%2 === 0) {  // reduce fraction
           denom = denom/2;
           num = num/2;
