@@ -495,6 +495,10 @@
               <code>100 km/hr|hr</code> displays the speed in terms of miles/hour.
               How many watts in 100 horsepower? <code>100 horsepower|W</code>.
               How many tablespoons in a cup? <code>cup | tbsp</code>.
+              <a href="https://www.britannica.com/science/atmospheric-pressure">Sea-level air pressure</a>
+              in PSI? <code>atm | PSI</code>.
+              What <i>is</i> 20000 leagues anyway? <code>20000 league|mi</code>.
+              How far away is the Sun? <code>au|mi</code>.
         <h2> Saved State </h2>
         <p> User-defined variables and functions are saved between sessions in local
             storage.
@@ -725,11 +729,16 @@
         chain: { type: 'num', dim: { L: 1 }, val: 66*FT, desc: "surveyor's chain", uscu: true },
         furlong: { type: 'num', dim: { L: 1 }, val: 660*FT, uscu: true },
         mi: { type: 'num', dim: { L: 1 }, val: 5280*FT, desc: "mile", reserved: true, uscu: true },
+        nml: { type: 'num', dim: { L: 1 }, val: 1852*M, reserved: true, uscu: true,
+            desc: "nautical mile" },
+        league: { type: 'num', dim: { L: 1 }, val: 5.556*KM, reserved: true, uscu: true,
+            desc: "nautical league" },
         mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter", reserved: true },
         cm: { type: 'num', dim: { L: 1 }, val: CM, desc: "centimeter", reserved: true },
         m:  { type: 'num', dim: { L: 1 }, val: M, desc: "meter", reserved: true },
         km: { type: 'num', dim: { L: 1 }, val: KM, desc: "kilometer", reserved: true },
-
+        au:  { type: 'num', dim: { L: 1 }, val: 149597870700*M, desc: "astronomical unit" },
+        
         // Area (L^2)
         acre: { type: 'num', dim: { L: 2 }, val:  66*FT * 660*FT, reserved: true, uscu: true },
         hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2, desc: "100 meters \u00D7 100 meters" },
@@ -755,6 +764,10 @@
         day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: true },
         week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, desc: "7 days", uscu: true },
         fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, desc: "2 weeks", uscu: true },
+
+        // Velocity (L T-1)
+        knot: { type: 'num', dim: { L: 1, T: -1 }, val: 1852*M/HR, uscu: true,
+            desc: "nautical mile per hour" },
 
         // Mass (M)
         lb: { type: 'num', dim: { M: 1 }, val: 453.59237*GM, desc: "pound mass", uscu: true },
@@ -787,7 +800,10 @@
         // Interesting constants (various)
         pi: { type: 'num', val: Math.PI },
         mol: { type: 'num', val: 6.02214076e23, desc: "Avogadro's number" },
-        g: { type: 'num', dim: { L: 1, T:-2 }, val: 9.80665*M/(SEC*SEC)/10000000, desc: "standard gravity"},
+        g: { type: 'num', dim: { L: 1, T:-2 }, val: 9.80665*M/(SEC*SEC)/10000000,
+             desc: "standard gravity (earth)"},
+        G: { type: 'num', dim: { L: 3, M: -1, T:-2 }, val: 6.674e-11*M*M*M/(KG*SEC*SEC),
+             desc: "universal gravitational constant" },
         c: { type: 'num', dim: { L: 1, T:-1 }, val: 299792458*M/SEC, desc: "speed of light"},
 
         // General n-dimensional hypotenuse
@@ -992,23 +1008,18 @@
               candidates = [leadingTerm];
             for (const unit of candidates) {
               const [exp, reduced] = Dim.reduce(dim, unit.dim);
-              let newVal = val;
               let posExp = 0, negExp = 0;
               if (exp) {
+                let unitVal = Math.pow(unit.val, exp);
+                let newVal = val / unitVal
                 for (const measure in unit.dim) {
-                  if (!unit.dim[measure])
+                  let dim = unit.dim[measure];
+                  if (!dim)
                     continue;
-                  // It's more precice to avoid raising to negative powers.
-                  // This avoids some .9999999999999999 scenarios.
-                  if (exp > 0) {
-                    const divisor = Math.pow(unit.val, exp);
-                    newVal = newVal / divisor;
+                  if (dim * exp > 0)
                     posExp += 1;
-                  } else if (exp < 0) {
-                    const factor = Math.pow(unit.val, -exp);
-                    newVal = newVal * factor;
+                  else if (dim * exp < 0)
                     negExp += 1;
-                  }
                 }
                 unitDescs.push({unit, exp, posExp, negExp, newVal, reduced});
               }
