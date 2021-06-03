@@ -1633,6 +1633,7 @@
               }
               showAssignResult(val);
               delete val.defined;       // removes the flag that forces the definition
+              delete val.name;          // removes description
               delete userSymbols[sym];  // put the redefined symbol at the end by deleting first
               userSymbols[sym] = val;
               showUserSymbols();
