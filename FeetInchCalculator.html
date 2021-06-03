@@ -762,7 +762,7 @@
         },
 
         // Cubic root
-        cbrt: function CubicRoot(...params) {
+        cbrt: function CubeRoot(...params) {
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
@@ -826,15 +826,15 @@
           val = { type: 'num', dim: {}, val: val };
         else if (val instanceof Function)
           val = { type: 'fn',  params:["..."], native: val,
-            body: `#BuiltinFunction-${symName}#` };
+            body: `#BuiltinFunction-${val.name}#` };
         if (!val) {
           // special case to create pseudo-variables for exponentiated units
           const match = /^([a-z]+)([0-9]+)$/i.exec(symName);
           if (match) {
             let val2 = getSymbol(match[1]);
             let exp = Number(match[2]);
-            let name = `${match[1]}^${String(exp)}`;
             if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim && exp > 1) {
+              let name = `${val2.name ?? match[1]}^${String(exp)}`;
               return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(val2.val, exp),
                 name, protect: val2.protect, uscu: val2.uscu };
             }
@@ -898,7 +898,7 @@
 
       function val2str(val, opts) {
         let descStr = "";
-        if (val.name)
+        if (opts?.describe && val.name)
           descStr = ` (${val.name})`;
         let unitsStr = "", invUnitsStr = "";
         if (val.val !== undefined) {
@@ -1672,7 +1672,7 @@
         document.getElementById('error').style.display = 'none';
         document.getElementById('numberResults').style.color = '';
 
-        document.getElementById('numberResultsDetail').innerHTML = val2str(val, { html: true });
+        document.getElementById('numberResultsDetail').innerHTML = val2str(val, { html: true, describe: true });
       }
 
       function escapeHTML(str) {
