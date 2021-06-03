@@ -499,7 +499,7 @@
               in PSI? <code>atm | PSI</code>.
               What <i>is</i> 20000 leagues anyway? <code>20000 league|mi</code>.
               How far away is the Sun? <code>au|mi</code>.
-        <h2> Saved State </h2>
+        <h2> Saved Definitions </h2>
         <p> User-defined variables and functions are saved between sessions in local
             storage.
         <h2> Odds And Ends </h2>
@@ -1990,7 +1990,8 @@
           let symStr = symString(userSymbols[sym], { saveMode: true });
           if (symStr) {
             wad.defs.push(symStr);
-            // console.log(`Saving: ${symStr}`);
+            if (logLevel > 0)
+              console.log(`Saving: ${symStr}`);
           }
         }
         let json = JSON.stringify(wad);
