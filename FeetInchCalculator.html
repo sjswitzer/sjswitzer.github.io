@@ -671,7 +671,7 @@
 
       const systemSymbols = {
         pi: Math.PI,
-        mol: 6.02214076e23,
+        mol: { type: 'num', val: 6.02214076e23, name: "Avogadro's number" },
 
         // Length (L)
         in: { type: 'num', dim: { L: 1 }, val: IN, name: "inch", protect: true, uscu: true },
