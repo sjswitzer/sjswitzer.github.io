@@ -910,13 +910,14 @@
                 for (const measure in unit.dim) {
                   // It's more precice to avoid raising to negative powers.
                   // This avoids some .9999999999999999 scenarios.
-                  const exp2 = exp * unit.dim[measure];
-                  if (exp2 > 0) {
-                    const divisor = Math.pow(unit.val, exp2);
+                  if (!unit.dim[measure])
+                    continue;
+                  if (exp > 0) {
+                    const divisor = Math.pow(unit.val, exp);
                     newVal = newVal / divisor;
                     posExp += 1;
                   } else if (exp2 < 0) {
-                    const factor = Math.pow(unit.val, -exp2);
+                    const factor = Math.pow(unit.val, -exp);
                     newVal = newVal * factor;
                     negExp += 1;
                   }
@@ -1229,8 +1230,6 @@
               if (Dim.isScalar(sym.dim) || !sym.val)
                 throw new ChattyError(`Not a unit: "${word}"`);
               let symVal = sym.val;
-              if (hasSlash)
-                symVal = 1/symVal;
               if (symVal.val >= lastUnitVal) throw "Implausible units";
               lastUnitVal = sym.val;
               let saveChunkDim = chunkDim;
@@ -1238,7 +1237,10 @@
                 chunkDim = Dim.sub(chunkDim, sym.dim);
               else
                 chunkDim = Dim.add(chunkDim, sym.dim);
-              chunkVal *= symVal;
+              if (hasSlash)
+                chunkVal /= symVal;
+              else
+                chunkVal *= symVal;
               if (sym.uscu)
                 uscu = true;
               gotUnit = true;
