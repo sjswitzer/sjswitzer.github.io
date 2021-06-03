@@ -278,7 +278,7 @@
           <li> A value like five and a half feet can be entered as 5.5 feet or as 5 feet 6 inches.
           <li> A value like six and a quarter inches can be entered as 6.25 inches or
                as 6 inches and 1/4.
-          <li> A "metric foot" is a convention used by the construction industry in metric
+          <li> A &ldquo;metric foot&rdquo; is a convention used by the construction industry in metric
                countries where a foot is taken to be exactly 30cm instead of 30.48cm. It's an
                <a href="https://en.wikipedia.org/wiki/ISO_2848#Metric_foot">
                  international standard</a>!
@@ -304,10 +304,10 @@
             <code>ft</code> <code>'</code> <code>in</code> <code>"</code> 
             <code>m</code> and <code>cm</code>.
         <p> As you type, the expression might be momentarily unparsable, e.g.,
-            "<code>3'+</code>", until you finish typing. 
+            &ldquo;<code>3'+</code>&rdquo;, until you finish typing. 
             The results box will be grayed out while that happens.
             It would be too noisy to alert each of these errors, but if you don't 
-            know why it's grayed out, you can hit enter to see an error message.
+            know why it's grayed out, you can hit &ldquo;enter&rdquo; to see an error message.
         </p>
         <table class="stuff example">
           <tr>
@@ -432,8 +432,8 @@
             preceded by a <code>/</code> (without spaces), it is an inverse unit.
             For instance, <code>60 /ft2</code> means 60 per square foot.
             <code>144/ft2</code> means 144 per square foot or, equivalently, 1 per square inch
-            (which is how it will display). <i>What</i> per square foot? Anything. Think "ducks" and
-            you'll be on the right track.
+            (which is how it will display). <i>What</i> per square foot? Anything.
+            Think &ldquo;ducks&rdquo; and`you'll be on the right track.
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
             This is to prevent accidentally typing <code>12'3'</code> when you really
@@ -446,8 +446,8 @@
             <code>1/ 2 in</code> means one over 2 inches. Just avoid putting spaces around
             the slash in a fractional unit and you'll be fine.
         <h2> Variables </h2>
-        <p> Define variables by typing <code class="abstract">name = expression</code>
-            then hitting "enter."
+        <p> To define Define variables type <code class="abstract">name = expression</code>
+            then hit &ldquo;enter.&rdquo;
             For instance, <code>frontage = 45'4 3/4"</code>. You can then use those values
             in later expressions, e.g. <code>frontage/3</code>.
             Amusingly, perhaps, because <code>frontage</code> is a length, it can also be
@@ -461,12 +461,12 @@
         <h2> Functions </h2>
         <p> Define functions to automate routine calculations by typing
             <code class="abstract">name(param,param,&hellip;) = expression</code>
-            then hitting "enter." For instance, you can define a function to average to numbers
+            then hitting &ldquo;enter.&rdquo; For instance, you can define a function to average to numbers
             or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
             <code>mean(&hellip;)</code> already does that, so&hellip;).
         <p> Function bodies can use any of their parameters (<i>of course</i>) and variables
             that have already been defined. As a special case, a function with no parameters
-            can be used as a "dynamic variable." That is, assuming variables <code>a</code>
+            can be used as a &ldquo;dynamic variable.&rdquo; That is, assuming variables <code>a</code>
             and <code>b</code> are already defined, the function
             <code>c() = a + b</code> can be invoked as <code>c()</code> or <code>c</code>,
             and in either case gives you the current value of <code>a + b</code>.
@@ -499,6 +499,7 @@
               in PSI? <code>atm | PSI</code>.
               What <i>is</i> 20000 leagues anyway? <code>20000 league|mi</code>.
               How far away is the Sun? <code>au|mi</code>.
+              How much does a gallon of water weigh in pounds? <code>kg/liter*gallon|lb</code>.
         <h2> Saved Definitions </h2>
         <p> User-defined variables and functions are saved between sessions in local
             storage.
@@ -532,14 +533,14 @@
             <a href="https://linux.die.net/man/1/units">Unix "units" command</a>.
             Hell, <a href="https://www.google.com/search?q=12+acres+%2F+100+feet">
             Google will do it for you</a> if you ask it nicely. But I couldn't
-            help myself, got carried away and ended up implementing a fairly
+            help myself, so I got carried away and ended up implementing a fairly
             broad slice of dimensional arithmetic.
         <p> Still, the main distinction of this tool is that it deals naturally with notations
             typically used with feet and inches. But, <i>sigh</i>,
             <a href="https://www.google.com/search?q=5%27+6+3%2F8%22+%2F+3">
             Google will do that for you too</a>.
         <p> Oh well, it was a good excuse to spiff up my HTML, CSS, and JavaScript skills.
-            Not bad for a weekend project that got out of hand.
+            Not bad for a weekend project that got way out of hand.
         <p> A-B-C. A-Always. B-Be. C-Coding.
         <p> Copyright &copy; 2021, Stan Switzer
         <div style="float: left; margin: 0em .5em 4.5em 0em">
@@ -713,11 +714,11 @@
       // will be displayed in metric.
 
       const UM = 1000, MM = 1000*UM, CM = 10*MM, M  = 1000*MM, KM = 1000*M;
-      const IN = 25400*UM, FT = 12*IN;
+      const IN = 25400*UM, FT = 12*IN, MI = 5280*FT, NMI = 1852*M;
 
       const SEC = 1, MIN = 60*SEC, HR = 60*MIN; 
       const MG = 1000, GM = 1000*MG, KG = 1000*GM;
-      const LBF = 4.448222*KG*M/(SEC*SEC);
+      const GAL = 231*IN**3, LBM = 453.59237*GM, LBF = 4.448222*KG*M/(SEC*SEC);
 
       const systemSymbols = {
         // Length (L)
@@ -728,8 +729,8 @@
         rod: { type: 'num', dim: { L: 1 }, val: 66*FT/4, desc: "surveyor's rod", uscu: true },
         chain: { type: 'num', dim: { L: 1 }, val: 66*FT, desc: "surveyor's chain", uscu: true },
         furlong: { type: 'num', dim: { L: 1 }, val: 660*FT, uscu: true },
-        mi: { type: 'num', dim: { L: 1 }, val: 5280*FT, desc: "mile", reserved: true, uscu: true },
-        nml: { type: 'num', dim: { L: 1 }, val: 1852*M, reserved: true, uscu: true,
+        mi: { type: 'num', dim: { L: 1 }, val: MI, desc: "mile", reserved: true, uscu: true },
+        nml: { type: 'num', dim: { L: 1 }, val: NMI, reserved: true, uscu: true,
             desc: "nautical mile" },
         league: { type: 'num', dim: { L: 1 }, val: 5.556*KM, reserved: true, uscu: true,
             desc: "nautical league" },
@@ -740,21 +741,28 @@
         au:  { type: 'num', dim: { L: 1 }, val: 149597870700*M, desc: "astronomical unit" },
         
         // Area (L^2)
-        acre: { type: 'num', dim: { L: 2 }, val:  66*FT * 660*FT, reserved: true, uscu: true },
-        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2, desc: "100 meters \u00D7 100 meters" },
+        acre: { type: 'num', dim: { L: 2 }, val: 66*FT * 660*FT, reserved: true, uscu: true },
+        township: { type: 'num', dim: { L: 2 }, val: (6*MI)**2, uscu: true },
+        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2,
+            desc: "100 meters \u00D7 100 meters" },
         are: { type: 'num', dim: { L: 2 }, val: (10*M)**2, desc: "10 meters \u00D7 10 meters" },
 
         // Volume (L^3)
-        gallon : { type: 'num', dim: { L: 3 }, val: 231*IN**3, uscu: true },
-        quart : { type: 'num', dim: { L: 3 }, val: 231*IN**3/4, uscu: true },
-        pint : { type: 'num', dim: { L: 3 }, val: 231*IN**3/8, uscu: true },
-        cup : { type: 'num', dim: { L: 3 }, val: 231*IN**3/16, uscu: true },
-        floz : { type: 'num', dim: { L: 3 }, val: 231*IN**3/128, desc: "fluid ounce", uscu: true },
-        tbsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/256, desc: "tablespoon", uscu: true },
-        tsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/768, desc: "teaspoon", uscu: true },
+        //   (liquid)
+        gallon : { type: 'num', dim: { L: 3 }, val: GAL, uscu: true },
+        quart : { type: 'num', dim: { L: 3 }, val: GAL/4, uscu: true },
+        pint : { type: 'num', dim: { L: 3 }, val: GAL/8, uscu: true },
+        cup : { type: 'num', dim: { L: 3 }, val: GAL/16, uscu: true },
+        gi : { type: 'num', dim: { L: 3 }, val: GAL/32, uscu: true, desc: "gill" },
+        floz : { type: 'num', dim: { L: 3 }, val: GAL/128, desc: "fluid ounce", uscu: true },
+        dram : { type: 'num', dim: { L: 3 }, val: GAL/128/8, uscu: true },
+        minim : { type: 'num', dim: { L: 3 }, val: GAL/128/8/60, uscu: true },
+        tbsp : { type: 'num', dim: { L: 3 }, val: GAL/256, desc: "tablespoon", uscu: true },
+        tsp : { type: 'num', dim: { L: 3 }, val: GAL/768, desc: "teaspoon", uscu: true },
         litre : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
         liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
         ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, desc: "milliliter" },
+        //   (dry)
         cc : { type: 'num', dim: { L: 3 }, val: (CM)**3, desc: "cubic centimeter" },
 
         // Time (T)
@@ -766,16 +774,23 @@
         fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, desc: "2 weeks", uscu: true },
 
         // Velocity (L T-1)
-        knot: { type: 'num', dim: { L: 1, T: -1 }, val: 1852*M/HR, uscu: true,
+        knot: { type: 'num', dim: { L: 1, T: -1 }, val: NMI/HR, uscu: true,
             desc: "nautical mile per hour" },
 
         // Mass (M)
-        lb: { type: 'num', dim: { M: 1 }, val: 453.59237*GM, desc: "pound mass", uscu: true },
-        oz: { type: 'num', dim: { M: 1 }, val: 453.59237/16*GM, desc: "ounce mass", uscu: true },
-        grain: { type: 'num', dim: { M: 1 }, val: 453.59237/7000*GM, uscu: true },
-        stone: { type: 'num', dim: { M: 1 }, val: 14*453.59237*GM, uscu: true },
-        hundredweight: { type: 'num', dim: { M: 1 }, val: 112*453.59237*GM, uscu: true },
-        ton: { type: 'num', dim: { M: 1 }, val: 2240*453.59237*GM, uscu: true },
+        lb: { type: 'num', dim: { M: 1 }, val: LBM, desc: "pound mass", uscu: true },
+        oz: { type: 'num', dim: { M: 1 }, val: LBM, desc: "ounce mass", uscu: true },
+        grain: { type: 'num', dim: { M: 1 }, val: LBM/7000, uscu: true },
+        stone: { type: 'num', dim: { M: 1 }, val: 14*LBM, uscu: true,
+            desc: "UK stone" },
+        hundredweight: { type: 'num', dim: { M: 1 }, val: 112*LBM, uscu: true,
+            desc: "UK hundredweight" },
+        longton: { type: 'num', dim: { M: 1 }, val: 2240*LBM, uscu: true,
+            desc: "UK (long) ton" },
+        ton: { type: 'num', dim: { M: 1 }, val: 2000*LBM, uscu: true,
+            desc: "US ton" },
+        tonne: { type: 'num', dim: { M: 1 }, val: 1000*KG, uscu: true,
+            desc: "metric ton" },
         mg: { type: 'num', dim: { M: 1 }, val: MG, desc: "gram" },
         gm: { type: 'num', dim: { M: 1 }, val: GM, desc: "gram" },
         kg: { type: 'num', dim: { M: 1 }, val: KG, desc: "kilogram" },
@@ -797,9 +812,12 @@
 
         // Pressure (L^-1 M T^-2)
         Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: KG/(M*SEC*SEC), desc: "pascal" },
-        kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 1000*KG/(M*SEC*SEC), desc: "kilopascal" },
-        PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: LBF/(IN*IN), desc: "pounds per square inch", uscu: true },
-        atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 101325*KG/(M*SEC*SEC), desc: "atmosphere" },
+        kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 1000*KG/(M*SEC*SEC),
+            desc: "kilopascal" },
+        PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: LBF/(IN*IN),
+            desc: "pounds per square inch", uscu: true },
+        atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 101325*KG/(M*SEC*SEC),
+            desc: "atmosphere" },
         bar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 100000*KG/(M*SEC*SEC) },
 
         // Interesting constants (various)
