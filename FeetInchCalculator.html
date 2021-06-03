@@ -690,9 +690,9 @@
         quart : { type: 'num', dim: { L: 3 }, val: 231*IN**3/4, uscu: true },
         pint : { type: 'num', dim: { L: 3 }, val: 231*IN**3/8, uscu: true },
         cup : { type: 'num', dim: { L: 3 }, val: 231*IN**3/16, uscu: true },
-        floz : { type: 'num', dim: { L: 3 }, val: 231*IN**3/128, uscu: true },
-        tbsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/256, uscu: true },
-        tsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/768, uscu: true },
+        floz : { type: 'num', dim: { L: 3 }, val: 231*IN**3/128, name: "fluid ounce", uscu: true },
+        tbsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/256, name: "tablespoon", uscu: true },
+        tsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/768, name: "teaspoon", uscu: true },
         hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2 },
         are: { type: 'num', dim: { L: 2 }, val: (10*M)**2 },
         litre : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
@@ -702,10 +702,11 @@
 
         // Time (T)
         s: { type: 'num', dim: { T: 1 }, val: SEC, name: "second", uscu: null },
-        min: { type: 'num', dim: { T: 1 }, val: MIN, name: "minute", uscu: true },
-        hr: { type: 'num', dim: { T: 1 }, val: HR, name: "hour", uscu: true },
-        day: { type: 'num', dim: { T: 1 }, val: 24*HR, name: "day", uscu: true },
-        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, name: "week", uscu: true },
+        min: { type: 'num', dim: { T: 1 }, val: MIN, name: "minute", uscu: null },
+        hr: { type: 'num', dim: { T: 1 }, val: HR, name: "hour", uscu: null },
+        day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: null },
+        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, uscu: null },
+        fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, uscu: null },
 
         // Mass (M)
         lb: { type: 'num', dim: { M: 1 }, val: 453.59237*GM, name: "pound mass", uscu: true },
