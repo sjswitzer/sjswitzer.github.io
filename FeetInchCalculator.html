@@ -119,11 +119,18 @@
       div.help table.example tr td:first-child {
         width: 7em;
       }
-      div.help table.example {
+      div.help table.example2 tr td:nth-child(1),
+      div.help table.example2 tr td:nth-child(2) {
+        width: 3em;
+      }
+      div.help table.example, div.help table.example2 {
         margin-left: 1em;
       }
       /* Testing affordance; example text can be stuffed into the expr box */
-      div.help table.stuff.example tr td:first-child:hover, div.help code:hover {
+      div.help code:hover,
+      div.help table.stuff.example tr td:first-child:hover,
+      div.help table.stuff.example2 tr td:nth-child(1):hover,
+      div.help table.stuff.example2 tr td:nth-child(2):hover {
         cursor: pointer;
         color: #0000dd;
         text-decoration: underline;
@@ -405,9 +412,10 @@
             <td> litre
             <td> A volume of <code>10cm &times; 10 cm &times; 10 cm</code>.
         </table>
-        <p> A large number of other less useful units are predefined and your best bet to
-            learn them is to guess (<code>quart</code>, <code>chain</code>) or look at the
-            <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">source code</a>.
+        <p> Other less common units are also available.
+            To learn more, you can either
+            <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">read the code</a>
+            or read <span class="linklike" onclick="showHelp('help-builtin')">this summary</span>.
         <p> Any <i>variable</i> you define with a unit can be used as
             a unit itself.
             For example, if you enter <code>cubit = 1 1/2'</code>, you can then use
@@ -527,6 +535,27 @@
           </a>.
         <br> Find source on
           <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">GitHub</a>
+      </div>
+    </div>
+    <div class="help" id="help-builtin">
+      <span class="close-button" onclick="showHelp()"></span>
+      <div>
+        <h2> Built-In Constants and Units </h2>
+        <p> This table is generated automaticaly from internal system data.
+            It may not pretty, but it is comprehensive.
+        <p> Constants that are reserved (i.e., cannot be redefined) are noted.
+        <p>
+        <table class="stuff example2">
+          <thead>
+            <tr>
+              <th> Symbol
+              <th> Inverse
+              <th> Description
+            </tr>
+          </thead>
+          <tbody id="builtin-symbols">
+          </tbody>
+        </table>
       </div>
     </div>
     <script type="text/javascript">
@@ -670,23 +699,23 @@
       const LBF = 4.448222*KG*M/(SEC*SEC);
 
       const systemSymbols = {
-        pi: Math.PI,
+        pi: { type: 'num', val: Math.PI },
         mol: { type: 'num', val: 6.02214076e23, name: "Avogadro's number" },
 
         // Length (L)
-        in: { type: 'num', dim: { L: 1 }, val: IN, name: "inch", protect: true, uscu: true },
-        ft: { type: 'num', dim: { L: 1 }, val: FT, name: "foot", protect: true, uscu: true },
+        in: { type: 'num', dim: { L: 1 }, val: IN, name: "inch", reserved: true, uscu: true },
+        ft: { type: 'num', dim: { L: 1 }, val: FT, name: "foot", reserved: true, uscu: true },
         yd: { type: 'num', dim: { L: 1 }, val: 3*FT, name: "yard", uscu: true },
         link: { type: 'num', dim: { L: 1 }, val: 66*FT/100, name: "surveyor's link", uscu: true },
         rod: { type: 'num', dim: { L: 1 }, val: 66*FT/4, name: "surveyor's rod", uscu: true },
         chain: { type: 'num', dim: { L: 1 }, val: 66*FT, name: "surveyor's chain", uscu: true },
         furlong: { type: 'num', dim: { L: 1 }, val: 660*FT, uscu: true },
-        mi: { type: 'num', dim: { L: 1 }, val: 5280*FT, name: "mile", protect: true, uscu: true },
-        acre: { type: 'num', dim: { L: 2 }, val:  66*FT * 660*FT, protect: true, uscu: true },
-        mm: { type: 'num', dim: { L: 1 }, val: MM, name: "millimeter", protect: true },
-        cm: { type: 'num', dim: { L: 1 }, val: CM, name: "centimeter", protect: true },
-        m:  { type: 'num', dim: { L: 1 }, val: M, name: "meter", protect: true },
-        km: { type: 'num', dim: { L: 1 }, val: KM, name: "kilometer", protect: true },
+        mi: { type: 'num', dim: { L: 1 }, val: 5280*FT, name: "mile", reserved: true, uscu: true },
+        acre: { type: 'num', dim: { L: 2 }, val:  66*FT * 660*FT, reserved: true, uscu: true },
+        mm: { type: 'num', dim: { L: 1 }, val: MM, name: "millimeter", reserved: true },
+        cm: { type: 'num', dim: { L: 1 }, val: CM, name: "centimeter", reserved: true },
+        m:  { type: 'num', dim: { L: 1 }, val: M, name: "meter", reserved: true },
+        km: { type: 'num', dim: { L: 1 }, val: KM, name: "kilometer", reserved: true },
         gallon : { type: 'num', dim: { L: 3 }, val: 231*IN**3, uscu: true },
         quart : { type: 'num', dim: { L: 3 }, val: 231*IN**3/4, uscu: true },
         pint : { type: 'num', dim: { L: 3 }, val: 231*IN**3/8, uscu: true },
@@ -694,8 +723,8 @@
         floz : { type: 'num', dim: { L: 3 }, val: 231*IN**3/128, name: "fluid ounce", uscu: true },
         tbsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/256, name: "tablespoon", uscu: true },
         tsp : { type: 'num', dim: { L: 3 }, val: 231*IN**3/768, name: "teaspoon", uscu: true },
-        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2 },
-        are: { type: 'num', dim: { L: 2 }, val: (10*M)**2 },
+        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2, name: "100 meters \u00D7 100 meters" },
+        are: { type: 'num', dim: { L: 2 }, val: (10*M)**2, name: "10 meters \u00D7 10 meters" },
         litre : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
         liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3 },
         ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, name: "milliliter" },
@@ -706,8 +735,8 @@
         min: { type: 'num', dim: { T: 1 }, val: MIN, name: "minute", uscu: true },
         hr: { type: 'num', dim: { T: 1 }, val: HR, name: "hour", uscu: true },
         day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: true },
-        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, uscu: true },
-        fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, uscu: true },
+        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, name: "7 days", uscu: true },
+        fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, name: "2 weeks", uscu: true },
 
         // Mass (M)
         lb: { type: 'num', dim: { M: 1 }, val: 453.59237*GM, name: "pound mass", uscu: true },
@@ -836,9 +865,7 @@
           val = userSymbols[symName];
         if (val === undefined)
           val = systemSymbols[symName];
-        if (typeof val === 'number')
-          val = { type: 'num', dim: {}, val: val };
-        else if (val instanceof Function)
+        if (val instanceof Function)
           val = { type: 'fn',  params:["..."], native: val,
             body: `#BuiltinFunction-${val.name}#` };
         if (!val) {
@@ -850,7 +877,7 @@
             if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim && exp > 1) {
               let name = val2.name && `${val2.name ?? match[1]}^${String(exp)}`;
               return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(val2.val, exp),
-                name, protect: val2.protect, uscu: val2.uscu };
+                name, reserved: val2.reserved, uscu: val2.uscu };
             }
           }
         }
@@ -1640,11 +1667,11 @@
             if (userHitEnter && val.defined) {
               const sym = val.sym;
               const symVal = getSymbol(sym);
-              if (symVal?.protect) {
+              if (symVal?.reserved) {
                 let name = `"${sym}"`;
                 if (symVal.name && symVal.name !== sym)
                   name = `${name} (${symVal.name})`;
-                throw `Cannot redefine system symbol ${name}`;
+                throw `Cannot redefine reserved symbol ${name}`;
               }
               showAssignResult(val);
               delete val.defined;       // removes the flag that forces the definition
@@ -1867,7 +1894,7 @@
               skipSpaces();
               if (val !== null && !peekc()) { // nothing left over at the end
                 let sym = val.sym;
-                if (systemSymbols[sym]?.protect)
+                if (systemSymbols[sym]?.reserved)
                   next;
                 delete val.defined;
                 userSymbols[sym] = val;
@@ -1925,10 +1952,25 @@
         }
       }
 
+      function addBuiltinSymbolsHelp() {
+        let html = "";
+        for (const sym in systemSymbols) {
+          const val = systemSymbols[sym];
+          if (val.type !== 'num')
+            continue;
+          let desc = val.name ?? sym;
+          if (val.reserved)
+            desc += " <i>(reserved)</i>";
+          html += `<tr><td>${sym}<td>/${sym}<td>${desc}`;
+        }
+        document.getElementById('builtin-symbols').innerHTML = html;
+      }
+
       window.addEventListener('load', function onLoad(evt) {
         loadUserSymbols();
         updateResult();
         addExampleStuffs();
+        addBuiltinSymbolsHelp()
       });
 
       window.addEventListener("beforeunload", function(evt) {
