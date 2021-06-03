@@ -834,7 +834,7 @@
             let val2 = getSymbol(match[1]);
             let exp = Number(match[2]);
             if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim && exp > 1) {
-              let name = `${val2.name ?? match[1]}^${String(exp)}`;
+              let name = val2.name && `${val2.name ?? match[1]}^${String(exp)}`;
               return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(val2.val, exp),
                 name, protect: val2.protect, uscu: val2.uscu };
             }
