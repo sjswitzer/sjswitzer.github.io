@@ -282,7 +282,8 @@
                countries where a foot is taken to be exactly 30cm instead of 30.48cm. It's an
                <a href="https://en.wikipedia.org/wiki/ISO_2848#Metric_foot">
                  international standard</a>!
-          <li> In the "help" boxes, most sample expressions can be clicked to evaluate
+          <li> In these help boxes, most sample expressions, like
+               <code>11'4"/2</code>, can be clicked to evaluate
                the expression.
           <li> You can type a fairly general expression into the text box. Click the
                <span class="button" onclick="showHelp('help-expr')">?</span> button
@@ -574,6 +575,8 @@
         }
       }
 
+      let logLevel = 0;
+
       class Dim {
         static isScalar(dim) {
           if (!dim)
@@ -861,6 +864,16 @@
           if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
           return { ...val, uscu: true };
         },
+
+        // Set logging level
+        Logging: function SetLogLevel(...params) {
+          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
+          let val = params[0];
+          if (val.type !== 'num' || !Dim.isScalar(val.dim) || val.val < 0 ) throw `${this.sym}(x): Illegal parameter`;
+          let oldLevel = logLevel;
+          logLevel = val.val;
+          return { type: 'num', dim: {}, val: oldLevel };
+        },
       };
 
       const userSymbols = {};
@@ -939,7 +952,7 @@
         'in', 'ft', 'mi', 'acre',
         'tsp', 'tbsp', 'cup', 'pint', 'quart', 'gallon',
         'oz', 'lb',
-        'mm', 'cm', 'm', 'km', 'hectare', 'ml', 'litre',
+        'mm', 'cm', 'm', 'km', 'hectare', 'ml', 'liter',
         'gm', 'kg',
         's', 'min', 'hr'
       ].map(sym => getSymbol(sym))   // filter out any non-units (user may have redefined some)
@@ -1016,8 +1029,9 @@
                 throw "bad comparitor";
               return res
             });
-            console.log("======== " + parseStr + " ========"); // XXX
-            console.log(JSON.stringify(unitDescs, null, 2)); // XXX
+            if (logLevel > 0)
+               console.log("======== " + parseStr + " ========\n" +
+                 JSON.stringify(unitDescs, null, 2));
             if (unitDescs.length < 1)
               throw "system error: insufficient basis units";
             const unitDesc = unitDescs[0];
