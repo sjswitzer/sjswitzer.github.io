@@ -667,6 +667,7 @@
 
       const SEC = 1, MIN = 60*SEC, HR = 60*MIN; 
       const GM = 1000, KG = 1000*GM;
+      const LBF = 4.448222*KG*M/(SEC*SEC);
 
       const systemSymbols = {
         pi: Math.PI,
@@ -715,14 +716,26 @@
         kg: { type: 'num', dim: { M: 1 }, val: KG, name: "kilogram" },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27*KG },
 
-        // Force
+        // Force 
         N: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC), name: "newton" },
         dyne: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC)/100000 },
-        lbf: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: 4.448222*KG*M/(SEC*SEC), name: "pound force", uscu: true },
+        lbf: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: LBF, name: "pound force", uscu: true },
 
         // Energy
         joule: { type: 'num', dim: { L: 2, M: 1, T:-2 }, val: KG*M*M/(SEC*SEC) },
         erg: { type: 'num', dim: { L: 2, M: 1, T:-2 }, val: KG*M*M/(SEC*SEC)/10000000 },
+
+        // Power
+        W: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: KG*M*M/(SEC*SEC*SEC), name: "watt" },
+        kW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 1000*KG*M*M/(SEC*SEC*SEC), name: "kilowatt" },
+        horsepower: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 550*FT*LBF/SEC, name: "mechanical horsepower", uscu: true },
+
+        // Pressure
+        Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: KG/(M*SEC*SEC), name: "pascal" },
+        kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 1000*KG/(M*SEC*SEC), name: "kilopascal" },
+        PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: LBF/(IN*IN), name: "pounds per square inch", uscu: true },
+        atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 101325*KG/(M*SEC*SEC), name: "atmosphere" },
+        bar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 100000*KG/(M*SEC*SEC) },
 
         // Interesting constants
         g: { type: 'num', dim: { L: 1, T:-2 }, val: 9.80665*M/(SEC*SEC)/10000000, name: "standard gravity"},
@@ -730,7 +743,7 @@
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
-          if (params.length < 1)
+          if (params.length < 1)	
             return { type: 'num', dim: {}, val: 0 };
           let val = params.pop();
           let dim = val.dim;
