@@ -703,11 +703,11 @@
 
         // Time (T)
         s: { type: 'num', dim: { T: 1 }, val: SEC, name: "second", uscu: null },
-        min: { type: 'num', dim: { T: 1 }, val: MIN, name: "minute", uscu: null },
-        hr: { type: 'num', dim: { T: 1 }, val: HR, name: "hour", uscu: null },
-        day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: null },
-        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, uscu: null },
-        fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, uscu: null },
+        min: { type: 'num', dim: { T: 1 }, val: MIN, name: "minute", uscu: true },
+        hr: { type: 'num', dim: { T: 1 }, val: HR, name: "hour", uscu: true },
+        day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: true },
+        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, uscu: true },
+        fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, uscu: true },
 
         // Mass (M)
         lb: { type: 'num', dim: { M: 1 }, val: 453.59237*GM, name: "pound mass", uscu: true },
@@ -901,11 +901,12 @@
       const DIGITS_PRECISION = 10, EPSILON = Math.pow(10, -DIGITS_PRECISION);
 
       const candidateUnits = [
+        'N',
         'in', 'ft', 'mi', 'acre',
         'tsp', 'tbsp', 'cup', 'pint', 'quart', 'gallon',
         'oz', 'lb',
         'mm', 'cm', 'm', 'km', 'hectare', 'ml', 'litre',
-        'gm', 'kg', 'N',
+        'gm', 'kg',
         's', 'min', 'hr'
       ].map(sym => getSymbol(sym))   // filter out any non-units (user may have redefined some)
              .filter(val => val.type === 'num' && val.val && !Dim.isScalar(val.dim));
