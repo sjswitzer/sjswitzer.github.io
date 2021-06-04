@@ -499,7 +499,7 @@
                  More formally, it's the angle from the x-axis of the vector (x,y).
         </table>
         <p> Note that angles are neither degrees nor radians. They are <i>just angles</i> and can be
-            specified or displayed using either notation. If, however, a plan number is given, it will be
+            specified or displayed using either notation. If, however, a plain number is given, it will be
             interpreted as radians. Compare <code>sin(45 degree)</code>, <code>sin(pi/4*radian)</code>
             and <code>sin(pi/4)</code>. 
         <h2> Unit Conversions </h2>
@@ -521,9 +521,9 @@
             Unfortunately, <code>pi/4 radian</code> means <code>pi / (4 radian)</code>; it's just
             one of those things.
         <p> How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>.
-            How long does it take sunlight to reach the Earth> <code>au/c</code>
-            What is a gigabyte per meter in kilometers? <code>GB/m|km</code>,
-            yes it can get rather silly.
+            How long does it take sunlight to reach the Earth? <code>au/c</code>
+            What is a gigabyte per meter in kilometers? <code>GB/m|km</code>.
+            Yes, it can get rather silly.
         <p> As an exercise (click the code that follows), suppose an elephant weighs
             <code>elephantWeight=8000lbf</code>
             (for convenience, I've used <i>pounds of force</i>) and an elephant's foot is about
@@ -594,7 +594,7 @@
         <h2> Built-In Constants and Units </h2>
         <p> This table is generated automatically from internal system data.
             It may not be pretty, but at least it's comprehensive.
-        <p> Symbols that are reserved (cannot be redefined) are noted.
+        <p> Symbols that are reserved (that is, cannot be redefined) are noted.
         <p>
         <table class="stuff example2">
           <thead>
@@ -834,12 +834,11 @@
             desc: "US ton" },
         tonne: { type: 'num', dim: { M: 1 }, val: 1000*KG,
             desc: "metric ton" },
-        carat: { type: 'num', dim: { M: 1 }, val: 200*MG, desc: "gram" },
+        carat: { type: 'num', dim: { M: 1 }, val: 200*MG },
         ug: { type: 'num', dim: { M: 1 }, val: UG, desc: "microgram" },
-        mg: { type: 'num', dim: { M: 1 }, val: MG, desc: "miligramgram" },
+        mg: { type: 'num', dim: { M: 1 }, val: MG, desc: "milligram" },
         gm: { type: 'num', dim: { M: 1 }, val: GM, reserved: true, desc: "gram" },
         kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, desc: "kilogram" },
-        carat: { type: 'num', dim: { M: 1 }, val: 200*MG, desc: "gram" },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27*KG },
 
         // Force (L M T^-2)
