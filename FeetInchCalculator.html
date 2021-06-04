@@ -489,24 +489,24 @@
             <td> Cube root
         </table>
         <h2> Unit Conversions </h2>
-          <p> To force the display in terms of specific units, follow an expression by <code>|</code>
-              then a unit.
-              For instance, <code>100 km/hr|mi</code> displays the speed in miles/minute.
-              <code>100 km/hr|hr</code> displays the speed in terms of miles/hour.
-          <p> How many watts in 100 horsepower? <code>100 horsepower|W</code>.
-              How many tablespoons in a cup? <code>cup|tbsp</code>.
-              <a href="https://www.britannica.com/science/atmospheric-pressure">
-                Sea-level air pressure</a>
-              in PSI? <code>atm|PSI</code>.
-              What <i>is</i> 20000 leagues anyway? <code>20000 league|mi</code>.
-              How far away is the Sun? <code>au|mi</code>.
-              How much does a gallon of water weigh in pounds? <code>kg/liter*gallon|lb</code>.
-          <p> As an exercise (click the code that follows), suppose an elephant weighs
-              <code>elephantWeight=8000lbf</code>
-              (for convenience, I've used <i>pounds of force</i>) and an elephant's foot is about
-              <code>elephantFoot=45cm</code> across, and it's standing evenly on four legs.
-              Then the pressure under its feet, expressed in pounds per square inch, is
-              <code>elephantWeight/(pi*(elephantFoot/2)^2)/4 | PSI</code>, about 8 PSI.
+        <p> To display results in terms of specific units, follow an expression by <code>|</code>
+            then a unit.
+            For instance, <code>100 km/hr | mi</code> displays the speed in miles/minute.
+            <code>100 km/hr | hr</code> displays the speed in terms of miles/hour.
+        <p> How many watts in 100 horsepower? <code>100 horsepower|W</code>.
+            How many tablespoons in a cup? <code>cup|tbsp</code>.
+            <a href="https://www.britannica.com/science/atmospheric-pressure">
+              Sea-level air pressure</a>
+            in PSI? <code>atm|PSI</code>.
+            What <i>is</i> 20000 leagues anyway? <code>20000 league|mi</code>.
+            How far away is the Sun? <code>au|mi</code>.
+            How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>.
+        <p> As an exercise (click the code that follows), suppose an elephant weighs
+            <code>elephantWeight=8000lbf</code>
+            (for convenience, I've used <i>pounds of force</i>) and an elephant's foot is about
+            <code>elephantFoot=45cm</code> across, and it's standing evenly on four legs.
+            Then the pressure under its feet, expressed in pounds per square inch, is
+            <code>elephantWeight/(pi*(elephantFoot/2)^2)/4 | PSI</code>, about 8 PSI.
         <h2> Saved Definitions </h2>
         <p> User-defined variables and functions are saved between sessions in local
             storage.
@@ -756,6 +756,7 @@
         hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2,
             desc: "100 meters \u00D7 100 meters" },
         are: { type: 'num', dim: { L: 2 }, val: (10*M)**2, desc: "10 meters \u00D7 10 meters" },
+        barn: { type: 'num', dim: { L: 2 }, val: 10e-28*M**2 }, // Nuclear physicist in the house?
 
         // Volume (L^3)
         //    Sadly, there's ambiguity in units between liquid volume, dry volume, and mass
@@ -787,7 +788,7 @@
         week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, desc: "7 days", uscu: true },
         fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, desc: "2 weeks", uscu: true },
 
-        // Velocity (L T-1)
+        // Velocity (L T^-1)
         knot: { type: 'num', dim: { L: 1, T: -1 }, val: NMI/HR, uscu: true,
             desc: "nautical mile per hour" },
 
@@ -1089,8 +1090,17 @@
                 if (b.newVal >= 1 && a.newVal < 1)
                   return 1;
 
-                // Smaller values beat larger
-                return a.newVal - b.newVal;
+                // Values closer to 1 win
+                let va = Math.abs(Math.log(Math.abs(a.newVal)));
+                let vb = Math.abs(Math.log(Math.abs(b.newVal)));
+                if (!isFinite(va) || !isFinite(vb)) {
+                  if (isFinite(va))
+                    return -1;
+                  if (isFinite(vb))
+                    return 1;
+                  return 0;
+                }
+                return va - vb;
               }
               // ensure comparitor is well-behaved
               let res = cmp(a,b), rev = cmp(b,a);
@@ -2030,6 +2040,8 @@
         // items were added. Otherwise, function definitions might fail
         // due to their variable references being unsatisfied.
         for (const sym in userSymbols) {
+          if (userSymbols[sym].native)
+            continue;
           let symStr = symString(userSymbols[sym], { saveMode: true });
           if (symStr) {
             wad.defs.push(symStr);
