@@ -926,10 +926,11 @@
             desc: "Fahrenheit" },
 
         // Angles
-        //   A steradian can be thought of as a square degree because 2pi radians covers
-        //   a circle and 4pi steradians covers a sphere.
+        //   A steradian can be thought of as a square radian because 2pi radians covers
+        //   a circle and 4pi steradians covers a sphere. Even if not completely
+        //   sound, there are no operations on it that are harmed by the assumption.
         radian: { type: 'num', dim: { RAD: 1 }, val: RADIAN },
-        steradian: { type: 'num', dim: { RAD: 2 }, val: RADIAN**2 },
+        sr: { type: 'num', dim: { RAD: 2 }, val: RADIAN**2, desc: "steradian" },
         degree: { type: 'num', dim: { RAD: 1 }, val: DEGREE },
 
         // Luminosity
@@ -1001,7 +1002,7 @@
         },
 
         // Some trig functions that are valid over their whole domain, are somewhat useful,
-        // and illustrate some interesting things about dimensional analysis.
+        // and illustrate interesting things about dimensional analysis.
         sin: function TrigonmetricSine(...params) {
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
@@ -1158,13 +1159,15 @@
           .filter(val => val.type === 'num' && val.val && !Dim.isScalar(val.dim));
       }
 
+      // The first unit listed is prefered over later units with the same
+      // favorability. So it's important to have 'sr' before 'radian', for exmple.
       const commonUnits = [ // Ensure a covering basis of units in all cases
         's', 'K',
         'A', 'mA', 'uA', 'V', 'kV', 'mV','uV',
         'ohm', 'kohm', 'F', 'mF', 'uF', 'nF', 'pF', 
         'bit', 'byte', 'baud',
         'KB',  'MB',  'GB',  'TB',  'PB',  'EB',
-        'steradian', 'radian', 'cd', 'lx', 'lm' ];
+        'sr', 'radian', 'cd', 'lx', 'lm' ];
       const commonMetricUnits = [
         'joule', 'N', 'Pa', 'kPa', 'W', 'kW', 'mW' ];
       const candidateUnits = filterUnits([
