@@ -500,6 +500,8 @@
             in PSI? <code>atm|PSI</code>.
             What <i>is</i> 20000 leagues anyway? <code>20000 league|mi</code>.
             How far away is the Sun? <code>au|mi</code>.
+            What's the current with <code>5V</code> across a <code>2000 ohm</code> resister?
+            <code>5V / 2000 ohm</code>
             How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>.
             What is a gigabyte per meter in kilometers? <code>GB/m|km</code>,
             yes it can get rather silly.
@@ -1165,9 +1167,9 @@
             // things like "km cg" instead of "m gm"
             if (uscu)
               allowedCandidateUnits = candidateUnitsUSCU;
-            else if (unitsSystem == 'mks' || opts?.saveMode)
+            else if (unitsSystem === 'mks' || opts?.saveMode)
               allowedCandidateUnits = candidateUnitsMKS;
-            else if (unitsSystem == 'cgs')
+            else if (unitsSystem === 'cgs')
               allowedCandidateUnits = candidateUnitsCGS;
           }
           // Find best units to express the value in
@@ -1470,8 +1472,7 @@
       // Parse a value, which is either a plain number (n) or a sequesnce of
       // number-fractions (nf) each followed by a unit:
       //    n
-      //    nf unit
-      //    nf unit [ nf [ '/'? unit ['^' n]? ]+ ]*
+      //    [ '-'? nf [ '/'? unit ['^' n]? ]+ ]*
           
       function parseValue(opts) {
         const backtrack1 = parsePos;
@@ -1483,6 +1484,7 @@
         // Otherwise, someone could enter 2'3' when they meant 2'3"
 
         while (true) {  // additive chunks [nf unit unit unit]*
+          let negate = take('-');   // have to handle negation here for afine units (celsius, etc.)
           let chunkVal = parseNumFrac(opts);
           if (chunkVal === null)
             break;
@@ -1530,7 +1532,9 @@
                 chunkVal /= symVal;
               else
                 chunkVal *= symVal;
-              chunkVal += origin;   // XXX
+              if (negate)   // for afine units
+                chunkVal = -chunkVal;
+              chunkVal += origin;
               if (sym.uscu)
                 uscu = true;
               gotUnit = true;
@@ -1572,6 +1576,16 @@
         return null;
       }
 
+      // Look ahead for a possibly negative number number
+      function peekNum() {
+        const backtrack = parsePos;
+        const negate = take('-');
+        let num = parseNum();
+        if (num && negate)
+          num = -num;
+        parsePos = backtrack;
+      }
+
       // Parse a term, which is either a unary expression, a
       // parenthesized expression, a function call, a value or a word (variable)
       //    '+' term
@@ -1593,7 +1607,7 @@
           parsePos = backtrack;
           return null;
         }
-        if (take('-')) {
+        if ((opts?.noUnits || peekNum() === null) && take('-')) {  // defer - to parseValue for affine units
           let val = parseTerm(opts);
           if (val !== null) {
             if (val.type === 'fn') throw new ChattyError("Can't negate functions");
