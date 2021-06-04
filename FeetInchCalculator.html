@@ -730,7 +730,7 @@
       const SEC = 1, MIN = 60*SEC, HR = 60*MIN; 
       const MG = 1000, GM = 1000*MG, KG = 1000*GM;
       const GAL = 231*IN**3, LBM = 453.59237*GM, LBF = 4.448222*KG*M/(SEC*SEC);
-      const AMP = 1000000, KELVIN = 1000000;
+      const AMP = 1000000, KELVIN = 9000000;
       const BIT = 1000000, BYTE = 8*BIT;
       const DEGREE = 60*60*1000, RADIAN = 180*DEGREE/Math.PI;
       const CANDLE = 1000000;
@@ -888,6 +888,10 @@
 
         // Temperature
         K: { type: 'num', dim: { Q: 1 }, val: KELVIN, desc: "kelvin" },
+        celsius: { type: 'num', dim: { Q: 1 }, val: KELVIN, origin: 273.15*KELVIN,
+            desc: "Celsius" },
+        fahrenheit: { type: 'num', dim: { Q: 1 }, val: 5*KELVIN/9, origin: (273.15-32*5/9)*KELVIN,
+            desc: "Fahrenheit" },
 
         // Angles
         radian: { type: 'num', dim: { RAD: 1 }, val: RADIAN },
@@ -1018,7 +1022,7 @@
       const userSymbols = {};
       let environment = {};
 
-      function getSymbol(symName) {
+      function getSymbol(symName, opts) {
         let val = environment[symName];
         if (val === undefined)
           val = userSymbols[symName];
@@ -1042,6 +1046,8 @@
         }
         if (val && !val.sym)
           val.sym = symName;
+        if (val && val.origin && !opts?.keepOrigin) // can't use as an ordinary value
+          return undefined;
         return val;
       }
 
@@ -1147,8 +1153,9 @@
               const [exp, reduced] = Dim.reduce(dim, unit.dim);
               let posExp = 0, negExp = 0;
               if (exp) {
+                let origin = unit.origin ?? 0;
                 let unitVal = Math.pow(unit.val, exp);
-                let newVal = val / unitVal
+                let newVal = (val-origin) / unitVal
                 for (const measure in unit.dim) {
                   let dim = unit.dim[measure];
                   if (!dim)
@@ -1299,7 +1306,7 @@
         "abcdefghijklmnopqrstuvwxyz" +
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       const ALPHANUM = ALPHA + DIGITS;
-      const NOSKIP = { noSkip: true };
+      const NOSKIP = { noSkip: true }, KEEPORIGIN = { keepOrigin: true };
 
       function peekc() {
         if (parsePos < parseStr.length)
@@ -1478,9 +1485,10 @@
                 parsePos = backtrack2;
                 break;
               }
-              const sym = getSymbol(word);
+              const sym = getSymbol(word, KEEPORIGIN);
               if (!sym)
                 throw new ChattyError(`Unknown unit: "${word}"`);
+              const origin = sym.origin ?? 0;
               if (Dim.isScalar(sym.dim) || !sym.val)
                 throw new ChattyError(`Not a unit: "${word}"`);
               let symVal = sym.val;
@@ -1495,6 +1503,7 @@
                 chunkVal /= symVal;
               else
                 chunkVal *= symVal;
+              chunkVal += origin;   // XXX
               if (sym.uscu)
                 uscu = true;
               gotUnit = true;
@@ -1841,7 +1850,7 @@
         if (val && take('|')) {
            let word = parseWord();
            if (word) {
-             let leadingTerm = getSymbol(word);
+             let leadingTerm = getSymbol(word, KEEPORIGIN);
              if (leadingTerm && leadingTerm.type === 'num' && !Dim.isScalar(leadingTerm.dim))
                return { ...val, leadingTerm };
              throw new ChattyError(`Not a unit: ${word}`);
