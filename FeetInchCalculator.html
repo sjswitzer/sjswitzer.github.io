@@ -487,7 +487,21 @@
           <tr>
             <td> cbrt(x) 
             <td> Cube root
+          <tr>
+            <td> sin(angle) 
+            <td> Sine of an <i>angle</i> (must be units of radian or degree)
+          <tr>
+            <td> cos(angle) 
+            <td> Cosine of an <i>angle</i> (must be units of radian or degree)
+          <tr>
+            <td> atan2(y, x) 
+            <td> Returns the <i>angle</i> corresponding to the slope y/x, even when x is zero.
+                 More formally, it's the angle from the x-axis of the vector (x,y).
         </table>
+        <p> Note that angles are neither degrees notrradians. They are <i>just</i> angles, that can be
+            specified or displayed using either notation. If, however, a plan number is given, it will be
+            interpreted as radians. Compare <code>sin(45 degree)</code>, <code>sin(pi/4*radian)</code>
+            and <code>sin(pi/4)</code>. 
         <h2> Unit Conversions </h2>
         <p> To display results in terms of specific units, follow an expression by <code>|</code>
             then a unit.
@@ -750,6 +764,7 @@
             desc: "nautical mile" },
         league: { type: 'num', dim: { L: 1 }, val: 5.556*KM, uscu: true,
             desc: "nautical league" },
+        um: { type: 'num', dim: { L: 1 }, val: UM, desc: "micrometer" },
         mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter" },
         cm: { type: 'num', dim: { L: 1 }, val: CM, desc: "centimeter", reserved: true },
         m:  { type: 'num', dim: { L: 1 }, val: M, desc: "meter", reserved: true },
@@ -856,8 +871,7 @@
         //   http://www.ebyte.it/library/educards/sidimensions/SiDimensionsAlfaList.html
         A: { type: 'num', dim: { A: 1 }, val: AMP, reserved: true, desc: "ampere" },
         mA: { type: 'num', dim: { A: 1 }, val: MAMP, desc: "milliampere" },
-        uA: { type: 'num', dim: { A: 1 }, val: UAMP/1000**2, desc: "microampere" },
-        // kg.m2.s-3.A-1
+        uA: { type: 'num', dim: { A: 1 }, val: UAMP, desc: "microampere" },
         V: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG * M**2 / SEC**3 / AMP,
             desc: "volt" },
         kV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: 1000*KG * M**2 / SEC**3 / AMP,
@@ -1001,6 +1015,8 @@
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
+          if (Dim.isScalar(val.dim))
+            return { type: 'num', val: Math.sin(numVal(val)), dim: {} };
           if (!Dim.equal(val.dim, { RAD: 1 })) throw `${this.sym}(x): Parameter must be an angle`;
           return { type: 'num', val: Math.sin(numVal(val)/RADIAN), dim: {} };
         },
@@ -1009,6 +1025,8 @@
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
+          if (Dim.isScalar(val.dim))
+            return { type: 'num', val: Math.cos(numVal(val)), dim: {} };
           if (!Dim.equal(val.dim, { RAD: 1 })) throw `${this.sym}(x): Parameter must be an angle`;
           return { type: 'num', val: Math.cos(numVal(val)/RADIAN), dim: {} };
         },
