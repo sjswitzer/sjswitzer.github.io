@@ -503,7 +503,10 @@
             How far away is the Sun in miles? <code>au|mi</code>.
             What's the current with <code>5V</code> across a <code>2000 ohm</code> resister?
             <code>5V / 2000 ohm</code>
-            How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>.
+            What is <code>pi/4</code> radians in degrees? <code>pi/4 * radian | degree</code>.
+            Unfortunately, <code>pi/4 radian</code> means <code>pi / (4 radian)</code>; it's just
+            one of those things.
+        <p> How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>.
             How long does it take sunlight to reach the Earth> <code>au/c</code>
             What is a gigabyte per meter in kilometers? <code>GB/m|km</code>,
             yes it can get rather silly.
@@ -995,6 +998,31 @@
           let newDim = Dim.div(val.dim, 3);
           if (!newDim) throw `${this.sym}(x): parameter must have even units`;
           return { type: 'num', dim: newDim, val: Math.cbrt(numVal(val)), uscu: val.uscu };
+        },
+
+        // Some trig functions that are valid over their whole domain, are somewhat useful,
+        // and illustrate some interesting things about dimensional analysis.
+        sin: function TrigonmetricSine(...params) {
+          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
+          let val = params[0];
+          if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
+          if (!Dim.equal(val.dim, { RAD: 1 })) throw `${this.sym}(x): Parameter must be an angle`;
+          return { type: 'num', val: Math.sin(numVal(val)/RADIAN), dim: {} };
+        },
+
+        cos: function TrigonmetricCosine(...params) {
+          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
+          let val = params[0];
+          if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
+          if (!Dim.equal(val.dim, { RAD: 1 })) throw `${this.sym}(x): Parameter must be an angle`;
+          return { type: 'num', val: Math.cos(numVal(val)/RADIAN), dim: {} };
+        },
+
+        atan2: function TrigonmetricArctangentOfRatio(...params) {
+          if (params.length !== 2) throw `${this.sym}(): Needs two parameters`;
+          let val1 = params[0], val2 = params[1];
+          if (!Dim.equal(val1.dim, val2.dim)) throw `${this.sym}(): Parameter types incompatible`;
+          return { type: 'num', val: Math.atan2(numVal(val1), numVal(val2))*RADIAN, dim: { RAD: 1 } };
         },
 
         mean: function(...params) {
