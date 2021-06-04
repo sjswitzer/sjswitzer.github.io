@@ -493,16 +493,17 @@
             then a unit.
             For instance, <code>100 km/hr | mi</code> displays the speed in miles/minute.
             <code>100 km/hr | hr</code> displays the speed in terms of miles/hour.
-        <p> How many watts in 100 horsepower? <code>100 horsepower|W</code>.
+        <p> How many watts in 10 horsepower? <code>10 horsepower|W</code>.
             How many tablespoons in a cup? <code>cup|tbsp</code>.
             <a href="https://www.britannica.com/science/atmospheric-pressure">
               Sea-level air pressure</a>
             in PSI? <code>atm|PSI</code>.
             What <i>is</i> 20000 leagues anyway? <code>20000 league|mi</code>.
-            How far away is the Sun? <code>au|mi</code>.
+            How far away is the Sun in miles? <code>au|mi</code>.
             What's the current with <code>5V</code> across a <code>2000 ohm</code> resister?
             <code>5V / 2000 ohm</code>
             How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>.
+            How long does it take sunlight to reach the Earth> <code>au/c</code>
             What is a gigabyte per meter in kilometers? <code>GB/m|km</code>,
             yes it can get rather silly.
         <p> As an exercise (click the code that follows), suppose an elephant weighs
@@ -759,9 +760,12 @@
         m:  { type: 'num', dim: { L: 1 }, val: M, desc: "meter", reserved: true },
         km: { type: 'num', dim: { L: 1 }, val: KM, desc: "kilometer", reserved: true },
         au:  { type: 'num', dim: { L: 1 }, val: 149597870700*M, desc: "astronomical unit" },
+        parsec:  { type: 'num', dim: { L: 1 }, val: 149597870700*M * 648000/Math.PI,
+           desc: "astronomy, parallax of one arcsecond" },
         
         // Area (L^2)
-        acre: { type: 'num', dim: { L: 2 }, val: 66*FT * 660*FT, reserved: true, uscu: true },
+        acre: { type: 'num', dim: { L: 2 }, val: 66*FT * 660*FT, reserved: true, uscu: true,
+            desc: "66' \u00D7 660'" },
         township: { type: 'num', dim: { L: 2 }, val: (6*MI)**2, uscu: true },
         hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2,
             desc: "100 meters \u00D7 100 meters" },
@@ -940,6 +944,8 @@
         tau: { type: 'num', dim: {}, val: 2*Math.PI },  // :)
         dozen: { type: 'num', dim: {}, val: 12 },  // :)
         mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number" },
+        boltz: { type: 'num', dim: { L: 2, M: 1, T:-2, Q: -1 }, val: 1.380649e-23*KG*M*M/(SEC*SEC)/KELVIN,
+            desc: "Boltzmann constant" },
         g: { type: 'num', dim: { L: 1, T:-2 }, val: 9.80665*M/(SEC*SEC)/10000000,
              desc: "standard gravity (earth)"},
         G: { type: 'num', dim: { L: 3, M: -1, T:-2 }, val: 6.674e-11*M*M*M/(KG*SEC*SEC),
@@ -1133,7 +1139,7 @@
         'KB',  'MB',  'GB',  'TB',  'PB',  'EB',
         'steradian', 'radian', 'cd', 'lx', 'lm' ];
       const commonMetricUnits = [
-        'N', 'Pa', 'kPa', 'W', 'kW', 'mW' ];
+        'joule', 'N', 'Pa', 'kPa', 'W', 'kW', 'mW' ];
       const candidateUnits = filterUnits([
         'N', ...commonUnits, ... commonMetricUnits,
         'in', 'ft', 'mi', 'acre',
