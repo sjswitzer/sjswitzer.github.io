@@ -1969,9 +1969,11 @@
                   name = `${name} (${symVal.desc})`;
                 throw `Cannot redefine reserved symbol ${name}`;
               }
+              val = { ...val };         // copy, because we're about to modify it
               showAssignResult(val);
               delete val.defined;       // removes the flag that forces the definition
               delete val.desc;          // removes description
+              delete val.reserved;      // removes "reserved" designation
               userSymbols[sym] = val;
               showUserSymbols();
             } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.leadingTerm) {
