@@ -652,7 +652,7 @@
         }
 
         // If a dimension can be evenly divided, the new dimension, else null
-        // We don't do fractal dimensions here.
+        // We don't allow fractal dimensions in this town.
         static div(dim = {}, n) { 
         let ret = {};
           for (const measure in dim) {
@@ -682,7 +682,7 @@
                continue;
             let ratio = exp1 / exp2;
             if (exp1 === 0 || ratio !== Math.trunc(ratio))
-               return [ 0, dim ];
+               return [ 0, dim1 ];
             if (exp === null || Math.abs(ratio) < Math.abs(exp))
                exp = ratio;
           }
@@ -994,9 +994,9 @@
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
-          let newDim = Dim.div(val.dim, 2);
-          if (!newDim) throw `${this.sym}(x): parameter must have even units`;
-          return { type: 'num', dim: newDim, val: Math.sqrt(numVal(val)), uscu: val.uscu };
+          let dim = Dim.div(val.dim, 2);
+          if (!dim) throw `${this.sym}(x): parameter must have even units`;
+          return { type: 'num', dim, val: Math.sqrt(numVal(val)), uscu: val.uscu };
         },
 
         // Cube root
@@ -1004,14 +1004,14 @@
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
-          let newDim = Dim.div(val.dim, 3);
-          if (!newDim) throw `${this.sym}(x): parameter must have even units`;
-          return { type: 'num', dim: newDim, val: Math.cbrt(numVal(val)), uscu: val.uscu };
+          let dim = Dim.div(val.dim, 3);
+          if (! dim) throw `${this.sym}(x): parameter must have even units`;
+          return { type: 'num', dim, val: Math.cbrt(numVal(val)), uscu: val.uscu };
         },
 
         // Some trig functions that are valid over their whole domain, are somewhat useful,
         // and illustrate interesting things about dimensional analysis.
-        sin: function TrigonmetricSine(...params) {
+        sin: function Sine(...params) {
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
@@ -1021,7 +1021,7 @@
           return { type: 'num', val: Math.sin(numVal(val)/RADIAN), dim: {} };
         },
 
-        cos: function TrigonmetricCosine(...params) {
+        cos: function Cosine(...params) {
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
@@ -1031,7 +1031,7 @@
           return { type: 'num', val: Math.cos(numVal(val)/RADIAN), dim: {} };
         },
 
-        atan2: function TrigonmetricArctangentOfRatio(...params) {
+        atan2: function ArctangentOfRatio(...params) {
           if (params.length !== 2) throw `${this.sym}(): Needs two parameters`;
           let val1 = params[0], val2 = params[1];
           if (!Dim.equal(val1.dim, val2.dim)) throw `${this.sym}(): Parameter types incompatible`;
@@ -1179,7 +1179,7 @@
           let dim = val.dim;
           val = numVal(val);
           let allowedCandidateUnits = candidateUnits;
-          if (dim.L && dim.M || dim.A) {
+          if (dim.L && dim.M || dim.A || dim.DC) {
             // Things get weird when both mass and length are in a value. It's best
             // to revert to barebones CGS, MKS, or basic USCS units. Otherwise you get
             // things like "km cg" instead of "m gm"
