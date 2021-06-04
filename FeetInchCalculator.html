@@ -493,17 +493,24 @@
               then a unit.
               For instance, <code>100 km/hr|mi</code> displays the speed in miles/minute.
               <code>100 km/hr|hr</code> displays the speed in terms of miles/hour.
-              How many watts in 100 horsepower? <code>100 horsepower|W</code>.
-              How many tablespoons in a cup? <code>cup | tbsp</code>.
-              <a href="https://www.britannica.com/science/atmospheric-pressure">Sea-level air pressure</a>
-              in PSI? <code>atm | PSI</code>.
+          <p> How many watts in 100 horsepower? <code>100 horsepower|W</code>.
+              How many tablespoons in a cup? <code>cup|tbsp</code>.
+              <a href="https://www.britannica.com/science/atmospheric-pressure">
+                Sea-level air pressure</a>
+              in PSI? <code>atm|PSI</code>.
               What <i>is</i> 20000 leagues anyway? <code>20000 league|mi</code>.
               How far away is the Sun? <code>au|mi</code>.
               How much does a gallon of water weigh in pounds? <code>kg/liter*gallon|lb</code>.
+          <p> As an exercise (click the code that follows), suppose an elephant weighs
+              <code>elephantWeight=8000lbf</code>
+              (for convenience, I've used <i>pounds of force</i>) and an elephant's foot is about
+              <code>elephantFoot=45cm</code> across, and it's standing evenly on four legs.
+              Then the pressure under its feet, expressed in pounds per square inch, is
+              <code>elephantWeight/(pi*(elephantFoot/2)^2)/4 | PSI</code>, about 8 PSI.
         <h2> Saved Definitions </h2>
         <p> User-defined variables and functions are saved between sessions in local
             storage.
-        <h2> Odds And Ends </h2>
+        <h2> Odds & Ends </h2>
         <p> <span class="linklike" onclick="showHelp('help-boring')">Boring details</span>
             if you're interested.
       </div>
@@ -650,27 +657,30 @@
           // Dimensions are reduced if at least one dimension can be
           // reduced to zero exponent. Partial reductions are not
           // allowed or you end up with things like hectare kilometers.
-          let measures = {}, ret = {}, reduced = false;
+          // A little linear algebra would go a long way here, but whatever.
+          let measures = {}, exp = null, dim = {};
           for (const measure in dim1)
             measures[measure] = true;
           for (const measure in dim2)
             measures[measure] = true;
-          let exp = 0;
           for (const measure in measures) {
             let exp1 = dim1[measure]??0, exp2 = dim2[measure]??0;
-            if (exp2 === 0) {
-              ret[measure] = exp1;
-              continue;
-            }
-            let thisExp = exp1/exp2;
-            if (thisExp !== Math.trunc(thisExp))
-              return [ 0, {} ];
-            if (exp && exp !== thisExp)
-              return [ 0, {} ];
-            exp = thisExp;
-            ret[measure] = 0;
+            if (exp2 === 0)
+               continue;
+            let ratio = exp1 / exp2;
+            if (exp1 === 0 || ratio !== Math.trunc(ratio))
+               return [ 0, dim ];
+            if (exp === null || Math.abs(ratio) < Math.abs(exp))
+               exp = ratio;
           }
-          return [ exp, ret ];
+          if (exp === null) throw "Reduce failed"
+          for (const measure in measures) {
+            let exp1 = dim1[measure]??0, exp2 = dim2[measure]??0;
+            let reduced = exp1 - exp*exp2;
+            if (reduced !== 0)
+              dim[measure] = reduced;
+          }
+          return [ exp, dim ];
         }
 
         static add(dim1 = {}, dim2 ={}, factor = 1) {
@@ -1088,8 +1098,8 @@
                 throw "bad comparitor";
               return res;
             });
-            if (logLevel > 0)
-               console.log("======== " + parseStr + " ========\n" +
+            if (logLevel > 1)
+               console.log("======== " + parseStr + " unit candidates ========\n" +
                  JSON.stringify(unitDescs, null, 2));
             if (unitDescs.length < 1) {
               if (leadingTerm) throw `Unit "${leadingTerm.sym}" does not reduce expression`;
@@ -1097,6 +1107,9 @@
             }
             leadingTerm = undefined;
             const unitDesc = unitDescs[0];
+            if (logLevel > 0)
+               console.log("======== " + parseStr + " reduction of " + JSON.stringify(dim) + "\n" +
+                 JSON.stringify(unitDesc, null, 2));
             let str = " ";
             let displayExp = unitDesc.exp;
             if (displayExp < 0) {
