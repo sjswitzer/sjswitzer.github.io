@@ -730,6 +730,8 @@
       const MG = 1000, GM = 1000*MG, KG = 1000*GM;
       const GAL = 231*IN**3, LBM = 453.59237*GM, LBF = 4.448222*KG*M/(SEC*SEC);
 
+      const AMP = 1000000;
+
       let unitsSystem = 'mks';  // can also be 'cgs'
 
       const systemSymbols = {
@@ -789,6 +791,7 @@
         day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: true },
         week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, desc: "7 days", uscu: true },
         fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, desc: "2 weeks", uscu: true },
+        hz: { type: 'num', dim: { T: -1 }, val: SEC, desc: "second", desc: "hertz" },
 
         // Velocity (L T^-1)
         knot: { type: 'num', dim: { L: 1, T: -1 }, val: NMI/HR, uscu: true,
@@ -803,7 +806,7 @@
         hundredweight: { type: 'num', dim: { M: 1 }, val: 112*LBM, uscu: true,
             desc: "UK hundredweight" },  // in the US it's 100lb, but nobody uses it so...
         longton: { type: 'num', dim: { M: 1 }, val: 2240*LBM, uscu: true,
-            desc: "UK (long) ton" },
+            desc: "UK long ton" },
         ton: { type: 'num', dim: { M: 1 }, val: 2000*LBM, uscu: true,
             desc: "US ton" },
         tonne: { type: 'num', dim: { M: 1 }, val: 1000*KG,
@@ -839,16 +842,28 @@
             desc: "atmosphere" },
         bar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 100000*KG/(M*SEC*SEC) },
 
+        // Electricity
+        //   http://www.ebyte.it/library/educards/sidimensions/SiDimensionsAlfaList.html
+        A: { type: 'num', dim: { A: 1 }, val: AMP, desc: "ampere" },
+        // kg.m2.s-3.A-1
+        V: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG * M**2 / SEC**3 / AMP,
+            desc: "volt" },
+        ohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: KG * M**2 / SEC**3 / AMP**2 },
+        S: { type: 'num', dim: { M: -1, L: -2, T: 3, A: 2 }, val: SEC**3 * AMP**2 / KG / M**2,
+            desc: "siemens" },
+        C: { type: 'num', dim: { T: 1, A: 1 }, val: SEC*AMP, desc: "coulomb" },
+        F: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: SEC**4 * AMP**2 / KG / M**2,
+            desc: "farad" },
+
         // Interesting constants (various)
-        pi: { type: 'num', val: Math.PI },
-        dozen: { type: 'num', val: 12 },  // :)
-        mol: { type: 'num', val: 6.02214076e23, desc: "Avogadro's number" },
+        pi: { type: 'num', dim: {}, val: Math.PI },
+        dozen: { type: 'num', dim: {}, val: 12 },  // :)
+        mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number" },
         g: { type: 'num', dim: { L: 1, T:-2 }, val: 9.80665*M/(SEC*SEC)/10000000,
              desc: "standard gravity (earth)"},
         G: { type: 'num', dim: { L: 3, M: -1, T:-2 }, val: 6.674e-11*M*M*M/(KG*SEC*SEC),
              desc: "universal gravitational constant" },
         c: { type: 'num', dim: { L: 1, T:-1 }, val: 299792458*M/SEC, desc: "speed of light"},
-        
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
@@ -1024,18 +1039,19 @@
       // fetch unit values and filter out any non-units (user may have redefined some)
       const filterUnits = unitSyms => unitSyms.map(sym => getSymbol(sym))
         .filter(val => val.type === 'num' && val.val && !Dim.isScalar(val.dim));
+      const commonUnits = [ 'A', 'V', 'ohm', 'F' ];
       const candidateUnits = filterUnits([
-        'N',
+        'N', ...commonUnits,
         'in', 'ft', 'mi', 'acre',
         'tsp', 'tbsp', 'cup', 'pint', 'quart', 'gallon',
         'oz', 'lb',
         'mm', 'cm', 'm', 'km', 'hectare', 'ml', 'liter',
         'gm', 'kg',
-        's', 'min', 'hr'
+        'A', 's', 'min', 'hr'
       ]);
-      const candidateUnitsMKS = filterUnits(['N', 'kg', 'm', 's']);
-      const candidateUnitsCGS = filterUnits(['N', 'gm', 'cm', 's']);
-      const candidateUnitsUSCU = filterUnits(['ft', 'lb', 's']);
+      const candidateUnitsMKS = filterUnits(['N', ...commonUnits, 'W', 'kW', 'kg', 'm', 'A', 's']);
+      const candidateUnitsCGS = filterUnits(['N', ...commonUnits, 'W', 'kW', 'gm', 'cm', 'A', 's']);
+      const candidateUnitsUSCU = filterUnits(['ft', 'lb', 'A', 's', ...commonUnits]);
 
       function val2str(val, opts) {
         let descStr = "", leadingTerm = val.leadingTerm;
@@ -1051,7 +1067,7 @@
           let dim = val.dim;
           val = val.val;
           let allowedCandidateUnits = candidateUnits;
-          if (dim.L && dim.M) {
+          if (dim.L && dim.M || dim.A) {
             // Things get weird when both mass and length are in a value. It's best
             // to revert to barebones CGS, MKS, or basic USCS units. Otherwise you get
             // things like "km cg" instead of "m gm"
