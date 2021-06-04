@@ -498,6 +498,7 @@
             <a href="https://www.britannica.com/science/atmospheric-pressure">
               Sea-level air pressure</a>
             in PSI? <code>atm|PSI</code>.
+            What is 20 degrees celsius in fahrenheit? <code>20 celsius|fahrenheit</code>.
             What <i>is</i> 20000 leagues anyway? <code>20000 league|mi</code>.
             How far away is the Sun in miles? <code>au|mi</code>.
             What's the current with <code>5V</code> across a <code>2000 ohm</code> resister?
@@ -961,11 +962,11 @@
           let uscu = val.uscu;
           let accum = 0;
           while (true) {
-            if (val.val !== 0) {
+            if (numVal(val) !== 0) {
               if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
               if (!Dim.equal(val.dim, dim))
                 if (accum !== 0) throw `${this.sym}(): Parameter types incompatible`;
-              accum += val.val * val.val;
+              accum += numVal(val) * numVal(val);
               if (val.uscu)
                 uscu = true;
             }
@@ -983,7 +984,7 @@
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
           let newDim = Dim.div(val.dim, 2);
           if (!newDim) throw `${this.sym}(x): parameter must have even units`;
-          return { type: 'num', dim: newDim, val: Math.sqrt(val.val), uscu: val.uscu };
+          return { type: 'num', dim: newDim, val: Math.sqrt(numVal(val)), uscu: val.uscu };
         },
 
         // Cube root
@@ -993,7 +994,7 @@
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
           let newDim = Dim.div(val.dim, 3);
           if (!newDim) throw `${this.sym}(x): parameter must have even units`;
-          return { type: 'num', dim: newDim, val: Math.cbrt(val.val), uscu: val.uscu };
+          return { type: 'num', dim: newDim, val: Math.cbrt(numVal(val)), uscu: val.uscu };
         },
 
         mean: function(...params) {
@@ -1004,12 +1005,12 @@
           let accum = 0, n = 0;
           while (true) {
             if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
-            if (val.val === 0) {
+            if (numVal(val) === 0) {
               n += 1;
             } else {
               if (!Dim.equal(val.dim, dim))
                 if (accum !== 0) throw `${this.sym}(): Parameter types incompatible`;
-              accum += val.val;
+              accum += numVal(val);
               n += 1;
               if (val.uscu)
                 uscu = true;
@@ -1045,9 +1046,9 @@
         Logging: function SetLogLevel(...params) {
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
           let val = params[0];
-          if (val.type !== 'num' || !Dim.isScalar(val.dim) || val.val < 0 ) throw `${this.sym}(x): Illegal parameter`;
+          if (val.type !== 'num' || !Dim.isScalar(val.dim) || numVal(val) < 0 ) throw `${this.sym}(x): Illegal parameter`;
           let oldLevel = logLevel;
-          logLevel = val.val;
+          logLevel = numVal(val);
           return { type: 'num', dim: {}, val: oldLevel };
         },
       };
@@ -1072,15 +1073,13 @@
             let exp = Number(match[2]);
             if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim && exp > 1) {
               let desc = val2.desc && `${val2.desc ?? match[1]}^${String(exp)}`;
-              return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(val2.val, exp),
+              return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(numVal(val2), exp),
                 desc, reserved: val2.reserved, uscu: val2.uscu };
             }
           }
         }
         if (val && !val.sym)
           val.sym = symName;
-        if (val && val.origin && !opts?.keepOrigin) // can't use as an ordinary value
-          return undefined;
         return val;
       }
 
@@ -1165,7 +1164,7 @@
             descStr = "";
           }
           let dim = val.dim;
-          val = val.val;
+          val = numVal(val);
           let allowedCandidateUnits = candidateUnits;
           if (dim.L && dim.M || dim.A) {
             // Things get weird when both mass and length are in a value. It's best
@@ -1341,7 +1340,7 @@
         "abcdefghijklmnopqrstuvwxyz" +
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
       const ALPHANUM = ALPHA + DIGITS;
-      const NOSKIP = { noSkip: true }, KEEPORIGIN = { keepOrigin: true };
+      const NOSKIP = { noSkip: true };
 
       function peekc() {
         if (parsePos < parseStr.length)
@@ -1475,14 +1474,20 @@
         return val;
       }
 
+      function numVal(val) {
+        if (val?.origin)   // collapse afine values
+          return val.val + val.origin;
+        return val.val;
+      }
+
       // Parse a value, which is either a plain number (n) or a sequesnce of
       // number-fractions (nf) each followed by a unit:
       //    n
-      //    [ '-'? nf [ '/'? unit ['^' n]? ]+ ]*
+      //    [ nf [ '/'? unit ['^' n]? ]+ ]*
           
       function parseValue(opts) {
         const backtrack1 = parsePos;
-        let num = 0, dim;
+        let num = 0, dim, origin;
         let lastUnitVal = Number.POSITIVE_INFINITY;
         let uscu = false;   // consider it metric unless we encounter any non-metric unit
 
@@ -1490,7 +1495,6 @@
         // Otherwise, someone could enter 2'3' when they meant 2'3"
 
         while (true) {  // additive chunks [nf unit unit unit]*
-          let negate = take('-');   // have to handle negation here for afine units (celsius, etc.)
           let chunkVal = parseNumFrac(opts);
           if (chunkVal === null)
             break;
@@ -1520,10 +1524,15 @@
                 parsePos = backtrack2;
                 break;
               }
-              const sym = getSymbol(word, KEEPORIGIN);
+              const sym = getSymbol(word);
               if (!sym)
                 throw new ChattyError(`Unknown unit: "${word}"`);
-              const origin = sym.origin ?? 0;
+              if (sym.origin) {
+                if (origin)
+                  origin += sym.origin;
+                else
+                  origin = sym.origin;
+              }
               if (Dim.isScalar(sym.dim) || !sym.val)
                 throw new ChattyError(`Not a unit: "${word}"`);
               let symVal = sym.val;
@@ -1538,9 +1547,6 @@
                 chunkVal /= symVal;
               else
                 chunkVal *= symVal;
-              if (negate)   // for afine units
-                chunkVal = -chunkVal;
-              chunkVal += origin;
               if (sym.uscu)
                 uscu = true;
               gotUnit = true;
@@ -1558,7 +1564,7 @@
           num += chunkVal;
         }
         if (dim)
-          return { type: 'num', dim, val: num, uscu };
+          return { type: 'num', dim, val: num, origin, uscu };
         parsePos = backtrack1;
         num = parseNum(opts);
         if (num !== null)
@@ -1582,16 +1588,6 @@
         return null;
       }
 
-      // Look ahead for a possibly negative number number
-      function peekNum() {
-        const backtrack = parsePos;
-        const negate = take('-');
-        let num = parseNum();
-        if (num && negate)
-          num = -num;
-        parsePos = backtrack;
-      }
-
       // Parse a term, which is either a unary expression, a
       // parenthesized expression, a function call, a value or a word (variable)
       //    '+' term
@@ -1613,13 +1609,16 @@
           parsePos = backtrack;
           return null;
         }
-        if ((opts?.noUnits || peekNum() === null) && take('-')) {  // defer - to parseValue for affine units
+        if (take('-')) {
           let val = parseTerm(opts);
           if (val !== null) {
             if (val.type === 'fn') throw new ChattyError("Can't negate functions");
             if (val.type === 'parse')
               return { type: 'parse', op: 'neg', expr: val };
-            return { type: val.type, dim: val.dim, val: -val.val, uscu: val.uscu };
+            let resVal = - val.val;
+            if (val.origin)   // special negation of afine values: don't nehate the origin value
+              resVal += val.origin
+            return { type: val.type, dim: val.dim, val: resVal, uscu: val.uscu };
           }
           parsePos = backtrack;
           return null;
@@ -1630,7 +1629,7 @@
             if (val.type === 'fn') throw new ChattyError("can't divide functions");
             if (val.type === 'parse')
               return { type: 'parse', op: 'recip', expr: val };
-            const q = 1/val.val;
+            const q = 1/numVal(val);
             if (!isFinite(q)) throw "Divide by zero";
             return { type: val.type, dim: Dim.mul(val.dim, -1), val: q, uscu: val.uscu };
           }
@@ -1720,10 +1719,10 @@
             return { type: 'parse', op: 'exp', expr1: val, expr2: exp };
           if (!Dim.isScalar(exp.dim))
             throw "Must exponentiate with a scalar";
-          if (!Dim.isScalar(val.dim) && exp.val !== Math.trunc(exp.val))
+          if (!Dim.isScalar(val.dim) && numVal(exp) !== Math.trunc(numVal(exp)))
             throw "Cannot exponentiate non-scalars by non-integers";
           return { type: 'num', dim: Dim.mul(val.dim, exp.val),
-            val: Math.pow(val.val, exp.val), uscu: val.uscu };
+            val: Math.pow(numVal(val), numVal(exp)), uscu: val.uscu };
         }
         return val;
       }
@@ -1749,7 +1748,7 @@
             if (val.type === 'parse' || val2.type === 'parse')
               val = { type: 'parse', op: '*', expr1: val, expr2: val2 };
             else if (val.type === 'num' && val2.type === 'num')
-              val = { type: 'num', dim: Dim.add(val.dim, val2.dim), val: val.val * val2.val,
+              val = { type: 'num', dim: Dim.add(val.dim, val2.dim), val: numVal(val) * numVal(val2),
                 uscu: val.uscu || val2.uscu };
             else
               throw "Unknown value type";
@@ -1764,7 +1763,7 @@
             if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '/', expr1: val, expr2: val2 };
             } else if (val.type === 'num' && val2.type === 'num') {
-              const q = val.val / val2.val;
+              const q = numVal (val) / numVal(val2);
               if (!isFinite(q)) throw "Divide by zero";
               val = { type: 'num', dim: Dim.sub(val.dim, val2.dim), val: q,
                 uscu: val.uscu || val2.uscu };
@@ -1798,13 +1797,13 @@
               throw new ChattyError("Can't add functions");
             if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '+', expr1: val, expr2: val2 };
-            } else if (val2.val === 0) {
+            } else if (numVal(val2) === 0) {
               // special case for adding 0; keep first val
-            } else if (val.val === 0) {
+            } else if (numVal(val) === 0) {
               val = val2;  // special case for adding 0; take second val
             } else if (val.type === 'num' && val2.type === 'num') {
               if (Dim.equal(val.dim, val2.dim)) 
-                val = { type: 'num', dim: val.dim, val: val.val + val2.val,
+                val = { type: 'num', dim: val.dim, val: numVal(val) + numVal(val2),
                   uscu: val.uscu || val2.uscu };
               else
                 throw new ChattyError("Cannot add different unit types")
@@ -1821,11 +1820,11 @@
               throw "Can't subtract functions";
             if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '-', expr1: val, expr2: val2 };
-            } else if (val2.val === 0) {
+            } else if (numVal(val2) === 0) {
               // special case for subtracting 0; take first val
             } else if (val.type === 'num' && val2.type === 'num') {
               if (Dim.equal(val.dim, val2.dim))
-                val = { type: 'num', dim: val.dim, val: val.val - val2.val,
+                val = { type: 'num', dim: val.dim, val: numVal(val) - numVal(val2),
                   uscu: val.uscu && val2.uscu };
               else
                 throw new ChattyError("Cannot subtract different unit types")
@@ -1897,7 +1896,7 @@
         if (val && take('|')) {
            let word = parseWord();
            if (word) {
-             let leadingTerm = getSymbol(word, KEEPORIGIN);
+             let leadingTerm = getSymbol(word);
              if (leadingTerm && leadingTerm.type === 'num' && !Dim.isScalar(leadingTerm.dim))
                return { ...val, leadingTerm };
              throw new ChattyError(`Not a unit: ${word}`);
@@ -1949,7 +1948,7 @@
               userSymbols[sym] = val;
               showUserSymbols();
             } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.leadingTerm) {
-              showFeetInchesResult(val.val);
+              showFeetInchesResult(numVal(val));
             } else if (val.type === 'num') {
               showResult(val);
             } else if (val.type === 'fn' && !val.defined) {
@@ -2018,8 +2017,8 @@
       }
 
       function symString(val, opts) {
-        if (Dim.equal(val.dim, { um: 1 }) && !opts?.saveMode) {
-          let [ftStr, inStr, delta] = unitsToUSStringReps(val.val);
+        if (Dim.equal(val.dim, { L: 1 }) && !opts?.saveMode) {   // XXX
+          let [ftStr, inStr, delta] = unitsToUSStringReps(numVal(val));
           return `${val.sym} = ${ftStr}${delta}`;
         }
         if (val.type === 'num') {
@@ -2191,8 +2190,8 @@
         // items were added. Otherwise, function definitions might fail
         // due to their variable references being unsatisfied.
         for (const sym in userSymbols) {
-          if (userSymbols[sym].native)
-            continue;
+          if (userSymbols[sym].native || userSymbols[sym].origin)
+            continue;  // can't save these types now
           let symStr = symString(userSymbols[sym], { saveMode: true });
           if (symStr) {
             wad.defs.push(symStr);
@@ -2218,7 +2217,7 @@
             if (action.trim() === "stuff-text") {
               let text = event.target.textContent.trim();
               // special handling for units that have offsets
-              let sym = getSymbol(text, KEEPORIGIN);
+              let sym = getSymbol(text);
               if (sym?.origin)
                 text = "0 " + text;
               document.getElementById('expr').value = text.trim();
