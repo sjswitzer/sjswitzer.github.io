@@ -604,7 +604,7 @@
           if (!dim)
             return true;
           for (const measure in dim)
-            if (dim[measure] != 0)
+            if (dim[measure] !== 0)
               return false;
           return true;
         }
@@ -729,6 +729,8 @@
       const SEC = 1, MIN = 60*SEC, HR = 60*MIN; 
       const MG = 1000, GM = 1000*MG, KG = 1000*GM;
       const GAL = 231*IN**3, LBM = 453.59237*GM, LBF = 4.448222*KG*M/(SEC*SEC);
+
+      let unitsSystem = 'mks';  // can also be 'cgs'
 
       const systemSymbols = {
         // Length (L)
@@ -933,6 +935,10 @@
           return { ...val, uscu: true };
         },
 
+        // Sets MKS or CGS preference
+        MKS: function SetMKS() { unitsSystem = 'mks'; return { type: 'num', dim: {}, val: 0}; },
+        CGS: function SetCGS() { unitsSystem = 'cgs'; return { type: 'num', dim: {}, val: 0}; },
+
         // Set logging level
         Logging: function SetLogLevel(...params) {
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
@@ -1015,7 +1021,10 @@
 
       const DIGITS_PRECISION = 10, EPSILON = Math.pow(10, -DIGITS_PRECISION);
 
-      const candidateUnits = [
+      // fetch unit values and filter out any non-units (user may have redefined some)
+      const filterUnits = unitSyms => unitSyms.map(sym => getSymbol(sym))
+        .filter(val => val.type === 'num' && val.val && !Dim.isScalar(val.dim));
+      const candidateUnits = filterUnits([
         'N',
         'in', 'ft', 'mi', 'acre',
         'tsp', 'tbsp', 'cup', 'pint', 'quart', 'gallon',
@@ -1023,8 +1032,10 @@
         'mm', 'cm', 'm', 'km', 'hectare', 'ml', 'liter',
         'gm', 'kg',
         's', 'min', 'hr'
-      ].map(sym => getSymbol(sym))   // filter out any non-units (user may have redefined some)
-             .filter(val => val.type === 'num' && val.val && !Dim.isScalar(val.dim));
+      ]);
+      const candidateUnitsMKS = filterUnits(['N', 'kg', 'm', 's']);
+      const candidateUnitsCGS = filterUnits(['N', 'gm', 'cm', 's']);
+      const candidateUnitsUSCU = filterUnits(['ft', 'lb', 's']);
 
       function val2str(val, opts) {
         let descStr = "", leadingTerm = val.leadingTerm;
@@ -1032,20 +1043,32 @@
           descStr = ` (${val.desc})`;
         let unitsStr = "", invUnitsStr = "";
         if (val.val !== undefined) {
-          let dim = val.dim;
           let uscu = !!val.uscu;
           if (leadingTerm) {
             uscu = leadingTerm.uscu;
             descStr = "";
           }
+          let dim = val.dim;
           val = val.val;
+          let allowedCandidateUnits = candidateUnits;
+          if (dim.L && dim.M) {
+            // Things get weird when both mass and length are in a value. It's best
+            // to revert to barebones CGS, MKS, or basic USCS units. Otherwise you get
+            // things like "km cg" instead of "m gm"
+            if (uscu)
+              allowedCandidateUnits = candidateUnitsUSCU;
+            else if (unitsSystem == 'mks')
+              allowedCandidateUnits = candidateUnitsMKS;
+            else if (unitsSystem == 'cgs')
+              allowedCandidateUnits = candidateUnitsCGS;
+          }
           // Find best units to express the value in
           let iterations = 0;
           while (!Dim.isScalar(dim)) {
             if (++iterations > 100)
               throw "Failed to reduce units";
             let unitDescs = [];
-            let candidates = candidateUnits;
+            let candidates = allowedCandidateUnits;
             if (leadingTerm)
               candidates = [leadingTerm];
             for (const unit of candidates) {
