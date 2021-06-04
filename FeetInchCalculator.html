@@ -518,7 +518,8 @@
             <code>elephantWeight/(pi*(elephantFoot/2)^2)/4 | PSI</code>, about 8 PSI.
         <h2> Saved Definitions </h2>
         <p> User-defined variables and functions are saved between sessions in local
-            storage.
+            storage. (For debugging purposes you can
+            <span class="linklike" onclick="saveUserSymbols()">save now.</span>)
         <h2> Odds & Ends </h2>
         <p> <span class="linklike" onclick="showHelp('help-boring')">Boring details</span>
             if you're interested.
@@ -618,17 +619,6 @@
           return true;
         }
 
-        static basis(dim) {
-          let res = null;
-          for (const measure in dim)
-            if (dim[measure] !== 0) {
-              if (res)
-                return null;
-              res = measure;
-            }
-          return res;
-        }
-
         static equal(dim1 = {}, dim2 = {}) {
           for (const measure in dim1) {
             if ((dim1[measure]??0) !== (dim2[measure]??0))
@@ -726,8 +716,9 @@
       // But why not go further? Decimal fractions suffer in binary
       // representations. Many exact values in decimal must be approximated in binary.
       // But if you pick a small enough base unit, all integral values greater that
-      // can be exact. For angles, pick a power of ten of 60*60 so that decimal angles
+      // can be exact. For angles, pick a power of ten times 60*60 so that decimal angles
       // can be exact down to seconds because radians are never going to be exact anyway.
+      // The unit for KELVIN is a multiple of 9 so that farenheight can be represented exactly.
       //
       // If an expression contains any US units, the results will be displayed in
       // those units. If an expression contains only metric units, the results
@@ -735,10 +726,10 @@
 
       const UM = 1000, MM = 1000*UM, CM = 10*MM, M  = 1000*MM, KM = 1000*M;
       const IN = 25400*UM, FT = 12*IN, MI = 5280*FT, NMI = 1852*M;
-      const SEC = 1, MIN = 60*SEC, HR = 60*MIN; 
-      const MG = 1000, GM = 1000*MG, KG = 1000*GM;
+      const US = 1000, MS = 1000, SEC = 1000*MS, MIN = 60*SEC, HR = 60*MIN; 
+      const UG = 1000, MG = 1000*UG, GM = 1000*MG, KG = 1000*GM;
       const GAL = 231*IN**3, LBM = 453.59237*GM, LBF = 4.448222*KG*M/(SEC*SEC);
-      const AMP = 1000000, KELVIN = 9000000;
+      const UAMP = 1000, MAMP = 1000*UAMP, AMP = 1000*MAMP, KELVIN = 9000000;
       const BIT = 1000000, BYTE = 8*BIT;
       const DEGREE = 60*60*1000, RADIAN = 180*DEGREE/Math.PI;
       const CANDLE = 1000000;
@@ -755,14 +746,14 @@
         chain: { type: 'num', dim: { L: 1 }, val: 66*FT, desc: "surveyor's chain", uscu: true },
         furlong: { type: 'num', dim: { L: 1 }, val: 660*FT, uscu: true },
         mi: { type: 'num', dim: { L: 1 }, val: MI, desc: "mile", reserved: true, uscu: true },
-        nml: { type: 'num', dim: { L: 1 }, val: NMI, reserved: true, uscu: true,
+        nml: { type: 'num', dim: { L: 1 }, val: NMI, uscu: true,
             desc: "nautical mile" },
-        league: { type: 'num', dim: { L: 1 }, val: 5.556*KM, reserved: true, uscu: true,
+        league: { type: 'num', dim: { L: 1 }, val: 5.556*KM, uscu: true,
             desc: "nautical league" },
-        mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter", reserved: true },
+        mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter" },
         cm: { type: 'num', dim: { L: 1 }, val: CM, desc: "centimeter", reserved: true },
         m:  { type: 'num', dim: { L: 1 }, val: M, desc: "meter", reserved: true },
-        km: { type: 'num', dim: { L: 1 }, val: KM, desc: "kilometer", reserved: true },
+        km: { type: 'num', dim: { L: 1 }, val: KM, desc: "kilometer" },
         au:  { type: 'num', dim: { L: 1 }, val: 149597870700*M, desc: "astronomical unit" },
         parsec:  { type: 'num', dim: { L: 1 }, val: 149597870700*M * 648000/Math.PI,
            desc: "astronomy, parallax of one arcsecond" },
@@ -797,10 +788,12 @@
         ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, desc: "milliliter" },
         // (dry)
         cc : { type: 'num', dim: { L: 3 }, val: CM**3, desc: "cubic centimeter" },
-        cord : { type: 'num', dim: { L: 3 }, val: 128*FT**3, uscu: true },
+        cord : { type: 'num', dim: { L: 3 }, val: 128*FT**3, desc: "cord of wood", uscu: true },
 
         // Time (T)
-        s: { type: 'num', dim: { T: 1 }, val: SEC, desc: "second", uscu: null },
+        us: { type: 'num', dim: { T: 1 }, val: US, desc: "microsecond", uscu: null },
+        ms: { type: 'num', dim: { T: 1 }, val: MS, desc: "millisecond", uscu: null },
+        s: { type: 'num', dim: { T: 1 }, val: SEC, desc: "second", reserved: true, uscu: null },
         min: { type: 'num', dim: { T: 1 }, val: MIN, desc: "minute", uscu: true },
         hr: { type: 'num', dim: { T: 1 }, val: HR, desc: "hour", uscu: true },
         day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: true },
@@ -827,9 +820,10 @@
         tonne: { type: 'num', dim: { M: 1 }, val: 1000*KG,
             desc: "metric ton" },
         carat: { type: 'num', dim: { M: 1 }, val: 200*MG, desc: "gram" },
-        mg: { type: 'num', dim: { M: 1 }, val: MG, desc: "gram" },
-        gm: { type: 'num', dim: { M: 1 }, val: GM, desc: "gram" },
-        kg: { type: 'num', dim: { M: 1 }, val: KG, desc: "kilogram" },
+        ug: { type: 'num', dim: { M: 1 }, val: UG, desc: "microgram" },
+        mg: { type: 'num', dim: { M: 1 }, val: MG, desc: "miligramgram" },
+        gm: { type: 'num', dim: { M: 1 }, val: GM, reserved: true, desc: "gram" },
+        kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, desc: "kilogram" },
         carat: { type: 'num', dim: { M: 1 }, val: 200*MG, desc: "gram" },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27*KG },
 
@@ -860,9 +854,9 @@
 
         // Electricity
         //   http://www.ebyte.it/library/educards/sidimensions/SiDimensionsAlfaList.html
-        A: { type: 'num', dim: { A: 1 }, val: AMP, desc: "ampere" },
-        mA: { type: 'num', dim: { A: 1 }, val: AMP/1000, desc: "milliampere" },
-        uA: { type: 'num', dim: { A: 1 }, val: AMP/1000**2, desc: "microampere" },
+        A: { type: 'num', dim: { A: 1 }, val: AMP, reserved: true, desc: "ampere" },
+        mA: { type: 'num', dim: { A: 1 }, val: MAMP, desc: "milliampere" },
+        uA: { type: 'num', dim: { A: 1 }, val: UAMP/1000**2, desc: "microampere" },
         // kg.m2.s-3.A-1
         V: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG * M**2 / SEC**3 / AMP,
             desc: "volt" },
@@ -898,10 +892,10 @@
             desc: "henry, mutual inductance " },
 
         // Information
-        bit: { type: 'num', dim: { BIT: 1 }, val: BIT },
+        bit: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BIT },
         baud: { type: 'num', dim: { BIT: 1, T: -1 }, val: BIT/SEC },
         kbaud: { type: 'num', dim: { BIT: 1, T: -1 }, val: 1000*BIT/SEC, desc: "kilobaud" },
-        byte: { type: 'num', dim: { BIT: 1 }, val: BYTE },
+        byte: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BYTE },
         // I personally find this offensive, but the consensus is that the well-named
         // units here are powers of 10 and the stupidly-named ones are powers of 2.
         //   https://www.ibm.com/docs/en/storage-insights?topic=overview-units-measurement-storage-data
@@ -919,7 +913,7 @@
         EiB: { type: 'num', dim: { BIT: 1 }, val: 2**60 * BYTE, desc: "exbibyte" },
 
         // Temperature
-        K: { type: 'num', dim: { Q: 1 }, val: KELVIN, desc: "kelvin" },
+        K: { type: 'num', dim: { Q: 1 }, val: KELVIN, reserved: true, desc: "kelvin" },
         celsius: { type: 'num', dim: { Q: 1 }, val: KELVIN, origin: 273.15*KELVIN,
             desc: "Celsius" },
         fahrenheit: { type: 'num', dim: { Q: 1 }, val: 5*KELVIN/9, origin: (273.15-32*5/9)*KELVIN,
@@ -929,12 +923,12 @@
         //   A steradian can be thought of as a square radian because 2pi radians covers
         //   a circle and 4pi steradians covers a sphere. Even if not completely
         //   sound, there are no operations on it that are harmed by the assumption.
-        radian: { type: 'num', dim: { RAD: 1 }, val: RADIAN },
+        radian: { type: 'num', dim: { RAD: 1 }, reserved: true, val: RADIAN },
         sr: { type: 'num', dim: { RAD: 2 }, val: RADIAN**2, desc: "steradian" },
         degree: { type: 'num', dim: { RAD: 1 }, val: DEGREE },
 
         // Luminosity
-        cd: { type: 'num', dim: { CD: 1 }, val: CANDLE, desc: "candle, luminous intensity" },
+        cd: { type: 'num', dim: { CD: 1 }, val: CANDLE, reserved: true, desc: "candle, luminous intensity" },
         lx: { type: 'num', dim: { CD: 1, RAD: 2, L: -2 }, val: CANDLE * RADIAN**2 / M**2,
             desc: "lux, luminous emittance" },
         lm: { type: 'num', dim: { CD: 1, RAD: 2 }, val: CANDLE * RADIAN**2,
@@ -946,7 +940,7 @@
 
         // Interesting constants (various)
         pi: { type: 'num', dim: {}, val: Math.PI },
-        tau: { type: 'num', dim: {}, val: 2*Math.PI },  // :)
+        tau: { type: 'num', dim: {}, val: 2*Math.PI, desc: "2 \u00D7 pi" },  // :)
         dozen: { type: 'num', dim: {}, val: 12 },  // :)
         mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number" },
         boltz: { type: 'num', dim: { L: 2, M: 1, T:-2, Q: -1 }, val: 1.380649e-23*KG*M*M/(SEC*SEC)/KELVIN,
@@ -966,8 +960,8 @@
           let uscu = val.uscu;
           let accum = 0;
           while (true) {
+            if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
             if (numVal(val) !== 0) {
-              if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
               if (!Dim.equal(val.dim, dim))
                 if (accum !== 0) throw `${this.sym}(): Parameter types incompatible`;
               accum += numVal(val) * numVal(val);
@@ -1051,22 +1045,6 @@
           return { type: 'num', dim, val: accum/n, uscu };
         },
 
-        // Force metric units
-        Metric: function ForceMetricUnits(...params) {
-          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
-          let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
-          return { ...val, uscu: false };
-        },
-
-        // Force US Customary Units
-        US: function ForceUSCustomaryUnits(...params) {
-          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
-          let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(x): illegal parameter`;
-          return { ...val, uscu: true };
-        },
-
         // Sets MKS or CGS preference
         MKS: function SetMKS() { unitsSystem = 'mks'; return { type: 'num', dim: {}, val: 0}; },
         CGS: function SetCGS() { unitsSystem = 'cgs'; return { type: 'num', dim: {}, val: 0}; },
@@ -1100,7 +1078,7 @@
           if (match) {
             let val2 = getSymbol(match[1]);
             let exp = Number(match[2]);
-            if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim && exp > 1) {
+            if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim &&!val2.origin && exp > 1) {
               let desc = val2.desc && `${val2.desc ?? match[1]}^${String(exp)}`;
               return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(numVal(val2), exp),
                 desc, reserved: val2.reserved, uscu: val2.uscu };
@@ -1135,20 +1113,6 @@
           parseStr = saveParseStr;
           parsePos = saveParsePos;
         }
-      }
-
-      //
-      // Simple interface for common operations
-      //
-
-      function getField(name, def) {
-        document.getElementById(name).style.color = '';
-        let val = document.getElementById(name).value.trim();
-        if (val === "") return def;
-        val = parseFloat(val);
-        if (isNaN(val) || (val === 0 && def !== 0))
-          document.getElementById(name).style.color = 'red';
-        return val;
       }
 
       const DIGITS_PRECISION = 10, EPSILON = Math.pow(10, -DIGITS_PRECISION);
@@ -1323,6 +1287,20 @@
             val = val.substr(0, val.length-1);
           return val + unitsStr + invUnitsStr + descStr;
         }
+      }
+
+      //
+      // Simple interface for common operations
+      //
+
+      function getField(name, def) {
+        document.getElementById(name).style.color = '';
+        let val = document.getElementById(name).value.trim();
+        if (val === "") return def;
+        val = parseFloat(val);
+        if (isNaN(val) || (val === 0 && def !== 0))
+          document.getElementById(name).style.color = 'red';
+        return val;
       }
 
       function updateResult() {
@@ -1872,7 +1850,7 @@
 
       // Parse a statement:
       //    expr
-      //    expr '\' '/'? word
+      //    expr '|'  word
       //    word '=' expr
       //    word '(' [ word [ ',' word ]* ]? ')' '=' expr
 
@@ -2034,10 +2012,10 @@
         // it's nice to list them in the reverse order of definition
         let keys = Object.keys(userSymbols).reverse();
         for (const sym of keys) {
-          let symStr = symString(userSymbols[sym]);
+          let symStr = symString(userSymbols[sym], { html: true });
           if (symStr)
             str += `<p class="user-def"><span class="delete-button" onclick="deleteDef('${sym}')"></span>
-              ${escapeHTML(symStr)}</p>`;
+              ${symStr}</p>`;
         }
         document.getElementById('symdefs').innerHTML = str;
       }
@@ -2048,28 +2026,38 @@
       }
 
       function symString(val, opts) {
-        if (Dim.equal(val.dim, { L: 1 }) && !opts?.saveMode) {   // XXX
+        if (Dim.equal(val.dim, { L: 1 }) && !opts?.saveMode) {
           let [ftStr, inStr, delta] = unitsToUSStringReps(numVal(val));
-          return `${val.sym} = ${ftStr}${delta}`;
+          let str = `${val.sym} = ${ftStr}${delta}`;
+          if (opts?.html)
+            return escapeHTML(str);
+          return str;
         }
         if (val.type === 'num') {
-          return `${val.sym} = ${val2str(val, opts)}`;
+          if (opts?.html)
+            return `${escapeHTML(val.sym)} = ${val2str(val, opts)}`;
+          if (opts?.html)
+            return escapeHTML(str);
+          return escapeHTML(`${val.sym} = ${val2str(val, opts)}`);
         }
         if (val.type === 'fn') {
-          return `${val.sym}(${val.params.join(", ")}) = ${val.body}`;
+          let str = `${val.sym}(${val.params.join(", ")}) = ${val.body}`;
+          if (opts?.html)
+            return escapeHTML(str);
+          return str;
         }
         return undefined;
       }
 
       function showAssignResult(val) {
-        let str = symString(val);
+        let str = symString(val, { html: true });
         if (!str)
           return;
         document.getElementById('results').style.display = 'none';
         document.getElementById('numberResults').style.display = '';
         document.getElementById('error').style.display = 'none';
         document.getElementById('numberResults').style.color = '';
-        document.getElementById('numberResultsDetail').textContent = str;
+        document.getElementById('numberResultsDetail').innerHTML = str;
       }
 
       function showFeetInchesResult(totalUnits, opts) {
