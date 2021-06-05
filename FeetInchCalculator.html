@@ -515,7 +515,7 @@
             in PSI? <code>atm | PSI</code>.
             What is 20 degrees celsius in fahrenheit? <code>20 celsius | fahrenheit</code>.
             What <i>is</i> 20000 leagues anyway? <code>20000 league | mi</code>.
-            How far away is the Sun in miles? <code>au|mi</code>.
+            How far away is the Sun in miles? <code>au | mi</code>.
             What's the current with <code>5V</code> across a <code>2000 ohm</code> resister?
             <code>5V / 2000 ohm</code>
             What is <code>pi/4</code> radians in degrees? <code>pi/4 * radian | degree</code>.
@@ -815,7 +815,7 @@
         day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: true },
         week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, desc: "7 days", uscu: true },
         fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, desc: "2 weeks", uscu: true },
-        hz: { type: 'num', dim: { T: -1 }, val: SEC, desc: "second", desc: "hertz" },
+        hz: { type: 'num', dim: { T: -1 }, val: 1/SEC, desc: "second", desc: "hertz" },
 
         // Velocity (L T^-1)
         knot: { type: 'num', dim: { L: 1, T: -1 }, val: NMI/HR, uscu: true,
