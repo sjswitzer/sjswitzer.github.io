@@ -1472,8 +1472,11 @@
             }
           }
           parsePos = backtrack2;
-          if (nDigits > 0)
-            return val/div; 
+          if (nDigits > 0) {
+            if (opts?.preciceDecimal)
+              return [ val, div ];
+            return val/div;
+          }
           parsePos = backtrack;    
         }
         return null;
@@ -1495,6 +1498,10 @@
             parsePos = backtrack;
             return val;
           }
+          if (opts?.preciceDecimal) {
+            if (div === 0)  throw "Divide by zero";
+            return [ val, div ];
+          }
           const q = val/denom;
           if (!isFinite(q)) throw "Divide by zero";
           return q;
@@ -1505,6 +1512,10 @@
         if (take('/'), NOSKIP) {
           let denom = parseNum({ noSkip: true, intOnly: true });
           if (denom !== null) {
+            if (opts?.preciceDecimal) {
+              if (denom == 0) throw "Divide by zero";
+              return [ val[0] + num*val[1]*num/denom, val[1] ];
+            }
             const q = num/denom;
             if (!isFinite(q)) throw "Divide by zero";
             return val + q;
@@ -1535,7 +1546,11 @@
         // Otherwise, someone could enter 2'3' when they meant 2'3"
 
         while (true) {  // additive chunks [nf unit unit unit]*
-          let chunkVal = parseNumFrac(opts);
+          // chunkVal is [ num, denom ] to try to preserve decimal precision.
+          // The idea is tha decimals like "0.1" can't be represented exactly but
+          // the units have factors of ten in them so first multiply the unit
+          // then divide by the denom so that the value remains a clean integer when possible.
+          let chunkVal = parseNumFrac({ ...opts, preciceDecimal: true });
           if (chunkVal === null)
             break;
           let chunkDim = {};
@@ -1544,14 +1559,14 @@
             if (FT >= lastUnitVal) throw "Implausible units";
             lastUnitVal = FT;
             chunkDim.L = 1;
-            chunkVal *= FT;
+            chunkVal = [ chunkVal[0]*FT, chunkVal[1] ];
             uscu = true;
             gotUnit = true;
           } else if (take('"')) {
             if (IN >= lastUnitVal) throw "Implausible units";
             lastUnitVal = 1;
             chunkDim.L = 1;
-            chunkVal *= IN;
+            chunkVal = [ chunkVal[0]*IN, chunkVal[1] ];
             uscu = true;
             gotUnit = true;
           } else {
@@ -1584,9 +1599,9 @@
               else
                 chunkDim = Dim.add(chunkDim, sym.dim);
               if (hasSlash)
-                chunkVal /= symVal;
+                chunkVal = [ chunkVal[0]/symVal, chunkVal[1] ];
               else
-                chunkVal *= symVal;
+                chunkVal = [ chunkVal[0]*symVal, chunkVal[1] ];
               if (sym.uscu)
                 uscu = true;
               gotUnit = true;
@@ -1601,7 +1616,8 @@
             dim = chunkDim;
           else if (!Dim.equal(dim, chunkDim))
             throw new ChattyError("Implausible units");
-          num += chunkVal;
+          num += chunkVal[0] / chunkVal[1];
+          if (!isFinite(num)) throw "Divide by zero";
         }
         if (dim)
           return { type: 'num', dim, val: num, origin, uscu };
