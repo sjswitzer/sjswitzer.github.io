@@ -447,7 +447,7 @@
             <code>1/ 2 in</code> means one over 2 inches. Just avoid putting spaces around
             the slash in a fractional unit and you'll be fine.
         <h2> Variables </h2>
-        <p> To define Define variables type <code class="abstract">name = expression</code>
+        <p> To define variables type <code class="abstract">name = expression</code>
             then hit &ldquo;enter.&rdquo;
             For instance, <code>frontage = 45'4 3/4"</code>. You can then use those values
             in later expressions, e.g. <code>frontage/3</code>.
@@ -1205,14 +1205,10 @@
                 let origin = unit.origin ?? 0;
                 let unitVal = Math.pow(unit.val, exp);
                 let newVal = (val-origin) / unitVal
-                let expScore = 0;
-                for (const measure in unit.dim) {
-                  let dim = unit.dim[measure];
-                  if (!dim)
-                    continue;
-                  expScore += Math.abs(dim*  exp);
-                }
-                unitDescs.push({unit, exp, newVal, expScore, reduced});
+                let reducedExp = 0;
+                for (const measure in reduced)
+                  reducedExp += Math.abs(reduced[measure]);
+                unitDescs.push({unit, exp, newVal, reducedExp, reduced});
               }
             }
             unitDescs.sort((a,b) => {  // Note that we're sorting from best to worst
@@ -1226,10 +1222,10 @@
                   return 1;
                 }
 
-                // The more the exponents are reduced, the better
-                let expDiff = b.expScore - a.expScore;
-                if (expDiff !== 0)
-                  return expDiff;
+                // The lower the total exponents are, the better
+                let diff = a.reducedExp - b.reducedExp;
+                if (diff !== 0)
+                  return diff;
 
                 // Values greater than 1 beat values less than one.
                 //   + EPSILON is to catch the .999999 cases that crop up very occasionally
