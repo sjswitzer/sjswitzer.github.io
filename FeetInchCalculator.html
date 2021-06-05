@@ -531,10 +531,6 @@
             <code>elephantFoot = 45cm</code> across, and it's standing evenly on four legs.
             Then the pressure under its feet, expressed in pounds per square inch, is
             <code>elephantWeight/(pi*(elephantFoot/2)^2)/4 | PSI</code>, about 8 PSI.
-        <h2> Saved Definitions </h2>
-        <p> User-defined variables and functions are saved between sessions in local
-            storage. (For debugging purposes you can
-            <span class="linklike" onclick="saveUserSymbols()">save now.</span>)
         <h2> Odds & Ends </h2>
         <p> <span class="linklike" onclick="showHelp('help-boring')">Boring details</span>
             if you're interested.
@@ -1066,6 +1062,10 @@
         // Sets MKS or CGS preference
         MKS: function SetMKS() { unitsSystem = 'mks'; return { type: 'num', dim: {}, val: 0}; },
         CGS: function SetCGS() { unitsSystem = 'cgs'; return { type: 'num', dim: {}, val: 0}; },
+
+        // For debugging, call saveUserSymbols.
+        //    (it's hard to debug when the window is closing) 
+        SAVE: function DebugSaveSyms() { saveUserSymbols(); return { type: 'num', dim: {}, val: 0}; },
 
         // Set logging level
         Logging: function SetLogLevel(...params) {
