@@ -632,11 +632,11 @@
 
         static equal(dim1 = {}, dim2 = {}) {
           for (const measure in dim1) {
-            if ((dim1[measure]??0) !== (dim2[measure]??0))
+            if ((dim1[measure] ?? 0) !== (dim2[measure] ?? 0))
               return false;
           }
           for (const measure in dim2)
-            if ((dim1[measure]??0) !== (dim2[measure]??0))
+            if ((dim1[measure] ?? 0) !== (dim2[measure] ?? 0))
               return false;
           return true;
         }
@@ -668,29 +668,29 @@
           // reduced to zero exponent. Partial reductions are not
           // allowed or you end up with things like hectare kilometers.
           // A little linear algebra would go a long way here, but whatever.
-          let measures = {}, exp = null, dim = {};
+          let measures = {}, sign = 0, divisors = [];
           for (const measure in dim1)
             measures[measure] = true;
           for (const measure in dim2)
             measures[measure] = true;
           for (const measure in measures) {
-            let exp1 = dim1[measure]??0, exp2 = dim2[measure]??0;
+            let exp1 = dim1[measure] ?? 0, exp2 = dim2[measure] ?? 0;
             if (exp2 === 0)
                continue;
             let ratio = exp1 / exp2;
-            if (exp1 === 0 || ratio !== Math.trunc(ratio))
-               return [ 0, dim1 ];
-            if (exp === null || Math.abs(ratio) < Math.abs(exp))
-               exp = ratio;
+            if (exp1 === 0 || ratio !== Math.trunc(ratio)) // must be integral
+              return [ 0, dim1 ];
+            if (sign !== 0 && sign !== Math.sign(ratio))   // must all be zero or have the same sign
+              return [ 0, dim1 ];
+            sign = Math.sign(ratio);
+            divisors.push(ratio);
           }
-          if (exp === null) throw "Reduce failed"
-          for (const measure in measures) {
-            let exp1 = dim1[measure]??0, exp2 = dim2[measure]??0;
-            let reduced = exp1 - exp*exp2;
-            if (reduced !== 0)
-              dim[measure] = reduced;
-          }
-          return [ exp, dim ];
+          if (sign === 0 )
+            return [ 0, dim1 ];
+          if (sign < 0)
+            divisors = divisors.map(x => -x);
+          let exp = sign * gcd(...divisors);
+          return [ exp, Dim.add(dim1, dim2, -exp) ];
         }
 
         static add(dim1 = {}, dim2 ={}, factor = 1) {
@@ -700,12 +700,9 @@
           for (const measure in dim2)
             measures[measure] = true;
           for (const measure in measures) {
-            if (!dim1[measure])
-              ret[measure] = factor * dim2[measure];
-            else if (!dim2[measure])
-              ret[measure] = dim1[measure];
-            else
-              ret[measure] = dim1[measure] + factor * dim2[measure];
+            let exp = (dim1[measure] ?? 0) + factor*(dim2[measure] ?? 0);
+            if (exp)
+              ret[measure] = exp;
           }
           return ret;
         }
@@ -713,6 +710,25 @@
         static sub(dim1, dim2, factor = 1) {
           return Dim.add(dim1, dim2, -factor);
         }
+      }
+
+      function gcd(...nums) {
+        if (nums.length < 1) return undefined;
+        let a = nums.pop();
+        if (a <= 0 || a !== Math.trunc(a))
+          return undefined;
+        while (nums.length > 0) {
+          let b = nums.pop();
+          if (b <= 0 || b !== Math.trunc(b))
+            return undefined;
+          while (a !== b) {
+            if (b > a)
+              b -= a;
+            else
+              a -= b;
+          }
+        }
+        return a; 
       }
 
       // A curious thing worth noting: It turns out that fractions of the form
@@ -1144,11 +1160,13 @@
       // The first unit listed is prefered over later units with the same
       // favorability. So it's important to have 'sr' before 'radian', for example.
       const commonUnits = [ // Ensure a covering basis of units in all cases
-        's', 'K',
         'A', 'mA', 'uA', 'V', 'kV', 'mV','uV',
         'ohm', 'kohm', 'F', 'mF', 'uF', 'nF', 'pF', 
         'bit', 'byte', 'baud',
         'KB',  'MB',  'GB',  'TB',  'PB',  'EB',
+        // seconds come after electrical and information units so that a coulomb
+        // is an "A s", not an "s A"
+        's', 'K',
         'sr', 'radian', 'cd', 'lx', 'lm' ];
       const commonMetricUnits = [
         'joule', 'N', 'Pa', 'kPa', 'W', 'kW', 'mW' ];
@@ -1234,7 +1252,6 @@
                   return -1;
                 if (bb >= 1 && aa < 1)
                   return 1;
-
                 // Values closer to 1 win
                 let va = Math.abs(Math.log(Math.abs(a.newVal)));
                 let vb = Math.abs(Math.log(Math.abs(b.newVal)));
