@@ -695,11 +695,8 @@
         static reduce(dim1, dim2) {
           // If dim1 can be reduced by a power of dim2,
           // returns [ exp, reducedDim]. Exp is zero if not reduced.
-          // Dimensions are reduced if at least one dimension can be
-          // reduced to zero exponent. Partial reductions are not
-          // allowed or you end up with things like hectare kilometers.
           // A little linear algebra would go a long way here, but whatever.
-          let measures = {}, sign = 0, divisors = [];
+          let measures = {}, divisors = [];
           for (const measure in dim1)
             measures[measure] = true;
           for (const measure in dim2)
@@ -711,15 +708,16 @@
             let ratio = exp1 / exp2;
             if (exp1 === 0 || ratio !== Math.trunc(ratio)) // must be integral
               return [ 0, dim1 ];
-            if (sign !== 0 && sign !== Math.sign(ratio))   // must all be zero or have the same sign
-              return [ 0, dim1 ];
-            sign = Math.sign(ratio);
             divisors.push(ratio);
           }
-          if (sign === 0 )
-            return [ 0, dim1 ];
-          if (sign < 0)
-            divisors = divisors.map(x => -x);
+          // Some of the divisors are positive and some negative.
+          // Pick an exponent sign so they units don't mostly flip signs.
+          let netPositive = 0;
+          for (const div of divisors)
+             netPositive += Math.sign(div);
+          const sign = netPositive >= 0 ? 1 : -1;
+
+          divisors = divisors.map(x => Math.abs(x));
           let exp = sign * gcd(...divisors);
           return [ exp, Dim.add(dim1, dim2, -exp) ];
         }
@@ -940,7 +938,7 @@
         uV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG/1000**2 * M**2 / SEC**3 / AMP,
             desc: "microvolt", display: "\u00B5V" },
         ohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: KG * M**2 / SEC**3 / AMP**2,
-            display: "\u03A9" },
+            desc: "ohm", display: "\u03A9" },
         kohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: 1000*KG * M**2 / SEC**3 / AMP**2,
             desc: "kiloohm", display: "k\u03A9" },  // sp?
         S: { type: 'num', dim: { M: -1, L: -2, T: 3, A: 2 }, val: SEC**3 * AMP**2 / KG / M**2,
@@ -1246,14 +1244,14 @@
         'N', ...commonUnits, ... commonMetricUnits,
         'in', 'ft', 'mi', 'acre',
         'tsp', 'tbsp', 'floz', 'cup', 'pint', 'quart', 'gallon',
-        'oz', 'lb',
+        'lbf', 'oz', 'lb',
         'um', 'mm', 'cm', 'm', 'km', 'ml', 'liter',
         'gm', 'kg',
         'min', 'hr', // 'us', 'ms' -- don't include or you get m/s as um/us!
       ]);
       const candidateUnitsMKS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'kg', 'm' ]);
       const candidateUnitsCGS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'gm', 'cm' ]);
-      const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'ft', 'lb' ]);
+      const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'lbf', 'ft', 'lb' ]);
 
       function val2str(val, opts) {
         let descStr = "", leadingTerm = val.leadingTerm;
