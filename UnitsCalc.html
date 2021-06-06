@@ -37,6 +37,10 @@
         width: 35em;
       }
 
+      body:not([data-protocol="file:"]) .local-only {
+        display: none;
+      }
+
       /* Spiff up input fields */
       input[type="text"] {
         font-size: 13pt;
@@ -581,7 +585,10 @@
             <a href="https://www.google.com/search?q=5%27+6+3%2F8%22+%2F+3">
             Google will do that for you too</a>.
         <p> Oh well, it was a good excuse to spiff up my HTML, CSS, and JavaScript skills.
-            Not bad for a weekend project that got way out of hand.
+            Not bad for a weekend project that got <i>way</i> out of hand.
+        <p class="local-only"> You can also
+            <a href="https://htmlpreview.github.io/?https://gist.githubusercontent.com/sjswitzer/77288511a213dd0d973d99a941ac909e/raw/3bb0a24fde4abea24fe639799b6556fb8d28e251/UnitsCalc.html">
+              run this from the web</a>.
         <p> A-B-C. A-Always. B-Be. C-Coding.
         <p> Copyright &copy; 2021, Stan Switzer
         <div style="float: left; margin: 0em .5em 4.5em 0em">
@@ -1110,9 +1117,6 @@
         // For debugging, call saveUserSymbols.
         //    (it's hard to debug when the window is closing) 
         SAVE: function DebugSaveSyms() { saveUserSymbols(); return { type: 'num', dim: {}, val: 0}; },
-
-        // Toggle legacy mode
-        LEGACY: function ToggleLegacyMode() { toggleLegacyMode(); return { type: 'num', dim: {}, val: 0}; },
 
         // Set logging level
         Logging: function SetLogLevel(...params) {
@@ -2347,6 +2351,7 @@
 
       if (window.location.href.match(/inch[^/]*$/i))
         toggleLegacyMode(true);
+      document.body.setAttribute('data-protocol', window.location.protocol);
 
       function addBuiltinSymbolsHelp() {
         let html = "";
