@@ -496,6 +496,12 @@
             <td> hyp(x,y,&hellip;) 
             <td> The hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
           <tr>
+            <td> min(x,y,&hellip;) 
+            <td> The minimum of the arguments
+          <tr>
+            <td> max(x,y,&hellip;) 
+            <td> The maximun of the arguments
+          <tr>
             <td> sqrt(x) 
             <td> Square root
           <tr>
@@ -1021,24 +1027,38 @@
         hyp: function Hypotenuse(...params) {
           if (params.length < 1)	
             return { type: 'num', dim: {}, val: 0 };
-          let val = params.pop();
-          let dim = val.dim;
-          let uscu = val.uscu;
-          let accum = 0;
-          while (true) {
-            if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
-            if (numVal(val) !== 0) {
-              if (!Dim.equal(val.dim, dim))
-                if (accum !== 0) throw `${this.sym}(): Parameter types incompatible`;
-              accum += numVal(val) * numVal(val);
-              if (val.uscu)
-                uscu = true;
-            }
-            val = params.pop();
-            if (!val)
-              break;
-          }
-          return { type: 'num', dim, val: Math.sqrt(accum), uscu };
+          let res = reduceParamVals(this.sym, 0, params, (accum, val) => accum += val*val);
+          return { ...res, val: Math.sqrt(res.val) };
+        },
+
+        mean: function(...params) {
+          if (params.length < 1) throw `${this.sym}(): No parameters`;
+          let res = reduceParamVals(this.sym, 0, params, (accum, val) => accum += val);
+          return { ...res, val: res.val/params.length };
+        },
+
+        min: function(...params) {
+          if (params.length < 1) throw `${this.sym}(): No parameters`;
+          return reduceParamVals(this.sym, Number.MAX_VALUE, params, (accum, val) => Math.min(accum, val));
+        },
+
+        max: function(...params) {
+          if (params.length < 1) throw `${this.sym}(): No parameters`;
+          return reduceParamVals(this.sym, Number.MIN_VALUE, params, (accum, val) => Math.max(accum, val));
+        },
+
+        abs: function AbsoluteValue(...params) {
+          if (params.length !== 1) throw `${this.sym}(): Requires one parameter`;
+          let val = params[0];
+          if (val.type !== 'num') throw `${this.sym}(): Requires numeric parameter`;
+          return { ...val, val: Math.abs(val.val) };
+        },
+
+        sign: function Sign(...params) {
+          if (params.length !== 1) throw `${this.sym}(): Requires one parameter`;
+          let val = params[0];
+          if (val.type !== 'num') throw `${this.sym}(): Requires numeric parameter`;
+          return { ...val, val: Math.sign(val.val), dim:{} };
         },
 
         // Square root
@@ -1090,31 +1110,6 @@
           return { type: 'num', val: Math.atan2(numVal(val1), numVal(val2))*RADIAN, dim: { RAD: 1 } };
         },
 
-        mean: function(...params) {
-          if (params.length < 1) throw `${this.sym}(): No parameters`;
-          let val = params.pop();
-          let dim = val.dim;
-          let uscu = val.uscu;
-          let accum = 0, n = 0;
-          while (true) {
-            if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
-            if (numVal(val) === 0) {
-              n += 1;
-            } else {
-              if (!Dim.equal(val.dim, dim))
-                if (accum !== 0) throw `${this.sym}(): Parameter types incompatible`;
-              accum += numVal(val);
-              n += 1;
-              if (val.uscu)
-                uscu = true;
-            }
-            val = params.pop();
-            if (!val)
-              break;
-          }
-          return { type: 'num', dim, val: accum/n, uscu };
-        },
-
         // Sets MKS or CGS preference
         MKS: function SetMKS() { unitsSystem = 'mks'; return { type: 'num', dim: {}, val: 0}; },
         CGS: function SetCGS() { unitsSystem = 'cgs'; return { type: 'num', dim: {}, val: 0}; },
@@ -1140,6 +1135,25 @@
             systemSymbols[alt] = { ...sym, altOf: name, alt: undefined };
         if (sym.display)
         systemSymbols[sym.display] = { ...sym, altOf: name, display: undefined };
+      }
+
+      function reduceParamVals(name, accum, params, fn) {  // fn => (accum, val) => val
+        let dim;
+        let uscu = false;
+        for (const val of params) {
+          if (val.type !== 'num') throw `${name}(): Illegal parameter`;
+          const value = numVal(val);
+          if (value !== 0) {
+            if (dim && !Dim.equal(val.dim, dim))
+              throw new ChattyError(`${name}(): Parameter types incompatible`);
+            dim = val.dim;
+            accum = fn(accum, value);
+            uscu ||= val.uscu;
+          }
+        }
+        if (!dim)
+          dim = {}
+        return { type: 'num', dim, val: accum, uscu };
       }
 
       const userSymbols = {};
