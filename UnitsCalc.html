@@ -1148,7 +1148,7 @@
               throw new ChattyError(`${name}(): Parameter types incompatible`);
             dim = val.dim;
             accum = fn(accum, value);
-            uscu ||= val.uscu;
+            uscu = uscu || val.uscu;
           }
         }
         if (!dim)
