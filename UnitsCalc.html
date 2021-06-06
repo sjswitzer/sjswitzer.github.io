@@ -580,6 +580,10 @@
             Google will do it for you</a> if you ask it nicely. But I couldn't
             help myself, so I got carried away and ended up implementing a fairly
             general dimensional units calculator.
+        <p> Verious interesting problems came up along the way, including issues of
+            special-purpose language design, and maintaining full decimal precision
+            in various units while using floating-point arithmetic (remember that 0.1
+            can't be represented exactly in binary floating point).
         <p> Still, the main distinction of this tool is that it deals naturally with notations
             typically used with feet and inches. But, <i>sigh</i>,
             <a href="https://www.google.com/search?q=5%27+6+3%2F8%22+%2F+3">
@@ -1706,15 +1710,17 @@
         // Deal with unary first
         if (take('+')) {
           let val = parseTerm(opts);
-          if (val !== null)
+          if (val !== null) {
+            if (val.type === 'fn') throw new ChattyError("Must be numeric");
             return val;
+          }
           parsePos = backtrack;
           return null;
         }
         if (take('-')) {
           let val = parseTerm(opts);
           if (val !== null) {
-            if (val.type === 'fn') throw new ChattyError("Can't negate functions");
+            if (val.type === 'fn') throw new ChattyError("Must be numeric");
             if (val.type === 'parse')
               return { type: 'parse', op: 'neg', expr: val };
             let resVal = - val.val;
