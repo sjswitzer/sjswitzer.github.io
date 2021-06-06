@@ -373,10 +373,10 @@
             <td> hyp(3', 4')
             <td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
           <tr>
-            <td> 1/4 mi2 / acre
+            <td> 1/4 mi2 / acres
             <td> The number of acres in a quarter of a square mile
         </table>
-        <p> Just for fun, try <code>furlong/fortnight</code> or <code>gallon/cup</code>.
+        <p> Just for fun, try <code>furlongs/fortnight</code> or <code>gallon/cup</code>.
         <h2> Terms </h2>
         <p> Expressions are built up out of <i>terms</i> which are either
           <ul>
@@ -809,7 +809,8 @@
         mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter" },
         cm: { type: 'num', dim: { L: 1 }, val: CM, desc: "centimeter", reserved: true },
         m:  { type: 'num', dim: { L: 1 }, val: M, desc: "meter", reserved: true, alt: ["meter", "meters"] },
-        km: { type: 'num', dim: { L: 1 }, val: KM, desc: "kilometer" },
+        km: { type: 'num', dim: { L: 1 }, val: KM, desc: "kilometer",
+            alt: ["kilometer", "kilometers"] },
         au:  { type: 'num', dim: { L: 1 }, val: 149597870700*M, desc: "astronomical unit" },
         parsec:  { type: 'num', dim: { L: 1 }, val: 149597870700*M * 648000/Math.PI,
             desc: "astronomy, parallax of one arcsecond", alt: ["parsecs"] },
@@ -877,11 +878,13 @@
             desc: "US ton" },
         tonne: { type: 'num', dim: { M: 1 }, val: 1000*KG, alt: ["tonnes"],
             desc: "metric ton" },
-        carat: { type: 'num', dim: { M: 1 }, val: 200*MG },
+        carat: { type: 'num', dim: { M: 1 }, val: 200*MG, alt: ["carats"] },
         ug: { type: 'num', dim: { M: 1 }, val: UG, desc: "microgram", display: "\u00B5g" },
         mg: { type: 'num', dim: { M: 1 }, val: MG, desc: "milligram" },
-        gm: { type: 'num', dim: { M: 1 }, val: GM, reserved: true, desc: "gram" },
-        kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, desc: "kilogram" },
+        gm: { type: 'num', dim: { M: 1 }, val: GM, reserved: true, desc: "gram",
+            alt: ["gram", "grams"] },
+        kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, desc: "kilogram",
+            alt: ["kilogram", "kilograms"] },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27*KG },
 
         // Force (L M T^-2)
