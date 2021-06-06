@@ -2357,16 +2357,21 @@
       function addExampleStuffs() {
         for (const help of document.querySelectorAll("div.help")) {
           help.addEventListener("click", function(event) {
-            let styles = window.getComputedStyle(event.target);
-            let action = styles.getPropertyValue("--click-action");
-            if (action.trim() === "stuff-text") {
-              let text = event.target.textContent.trim();
-              // special handling for units that have offsets
-              let sym = getSymbol(text);
-              if (sym?.origin)
-                text = "0 " + text;
-              document.getElementById('expr').value = text.trim();
-              updateParse(true);
+            let element = event.target;
+            while (element) {
+              let styles = window.getComputedStyle(element);
+              let action = styles.getPropertyValue("--click-action");
+              if (action.trim() === "stuff-text") {
+                let text = event.target.textContent.trim();
+                // special handling for units that have offsets
+                let sym = getSymbol(text);
+                if (sym?.origin)
+                  text = "0 " + text;
+                document.getElementById('expr').value = text.trim();
+                updateParse(true);
+                return;
+              }
+              element = element.parentElement;
             }
           });
         }
