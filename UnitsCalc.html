@@ -939,9 +939,10 @@
             desc: "millivolt" },
         uV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG/1000**2 * M**2 / SEC**3 / AMP,
             desc: "microvolt", display: "\u00B5V" },
-        ohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: KG * M**2 / SEC**3 / AMP**2 },
+        ohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: KG * M**2 / SEC**3 / AMP**2,
+            display: "\u03A9" },
         kohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: 1000*KG * M**2 / SEC**3 / AMP**2,
-            desc: "kiloohm" },  // sp?
+            desc: "kiloohm", display: "k\u03A9" },  // sp?
         S: { type: 'num', dim: { M: -1, L: -2, T: 3, A: 2 }, val: SEC**3 * AMP**2 / KG / M**2,
             desc: "siemens" },
         C: { type: 'num', dim: { T: 1, A: 1 }, val: SEC*AMP, desc: "coulomb" },
@@ -1452,7 +1453,7 @@
       const DIGITS = "0123456789";
       const ALPHA =
         "abcdefghijklmnopqrstuvwxyz" +
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "\u00B5";  // include micro
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "\u00B5\u03A9";  // include micro & omega
       const ALPHANUM = ALPHA + DIGITS;
       const NOSKIP = { noSkip: true };
 
