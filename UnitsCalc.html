@@ -493,6 +493,9 @@
             <td> mean(x,y,&hellip;) 
             <td> The average of a set of numbers or lengths
           <tr>
+            <td> sum(x,y,&hellip;) 
+            <td> The average of a set of numbers or lengths
+          <tr><
             <td> hyp(x,y,&hellip;) 
             <td> The hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
           <tr>
@@ -922,7 +925,7 @@
         millibar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 100*KG/(M*SEC*SEC),
             alt: ["millibars"] },
 
-        // Electricity
+        // Electricity (A ...)
         //   http://www.ebyte.it/library/educards/sidimensions/SiDimensionsAlfaList.html
         A: { type: 'num', dim: { A: 1 }, val: AMP, reserved: true, desc: "ampere",
             alt: ["ampere", "amperes", "amp", "amps"]  },
@@ -982,7 +985,7 @@
         PiB: { type: 'num', dim: { BIT: 1 }, val: 2**50 * BYTE, desc: "pebibyte" },
         EiB: { type: 'num', dim: { BIT: 1 }, val: 2**60 * BYTE, desc: "exbibyte" },
 
-        // Temperature
+        // Temperature (Q)
         K: { type: 'num', dim: { Q: 1 }, val: KELVIN, reserved: true, desc: "kelvin",
             alt: ["kelvin", "kelvins"] },
         celsius: { type: 'num', dim: { Q: 1 }, val: KELVIN, origin: 273.15*KELVIN,
@@ -999,7 +1002,7 @@
             alt: ["steradian", "steradians"] },
         degree: { type: 'num', dim: { RAD: 1 }, val: DEGREE, alt: ["degrees"] },
 
-        // Luminosity
+        // Luminosity (CD...)
         cd: { type: 'num', dim: { CD: 1 }, val: CANDLE, reserved: true, desc: "candle, luminous intensity" },
         lx: { type: 'num', dim: { CD: 1, RAD: 2, L: -2 }, val: CANDLE * RADIAN**2 / M**2,
             desc: "lux, luminous emittance" },
@@ -1027,14 +1030,20 @@
         hyp: function Hypotenuse(...params) {
           if (params.length < 1)	
             return { type: 'num', dim: {}, val: 0 };
-          let res = reduceParamVals(this.sym, 0, params, (accum, val) => accum += val*val);
+          let res = reduceParamVals(this.sym, 0, params, (accum, val) => accum + val*val);
           return { ...res, val: Math.sqrt(res.val) };
         },
 
         mean: function(...params) {
           if (params.length < 1) throw `${this.sym}(): No parameters`;
-          let res = reduceParamVals(this.sym, 0, params, (accum, val) => accum += val);
+          let res = reduceParamVals(this.sym, 0, params, (accum, val) => accum + val);
           return { ...res, val: res.val/params.length };
+        },
+
+        sum: function(...params) {
+          if (params.length < 1) throw `${this.sym}(): No parameters`;
+          let res = reduceParamVals(this.sym, 0, params, (accum, val) => accum + val);
+          return { ...res, val: res.val };
         },
 
         min: function(...params) {
@@ -1054,7 +1063,7 @@
           return { ...val, val: Math.abs(val.val) };
         },
 
-        sign: function Sign(...params) {
+        sign: function(...params) {
           if (params.length !== 1) throw `${this.sym}(): Requires one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(): Requires numeric parameter`;
@@ -2285,7 +2294,7 @@
       }
 
       const GUID = "ad1f9c32-ed69-457d-89a0-f966c81424bd";
-      const LOCAL_STORAGE_KEY = "FeetInchCalculator-" + GUID;
+      const LOCAL_STORAGE_KEY = "UnitsCalculator-" + GUID;
       const MAJOR = 1, MINOR = 0, PATCH = 0;
 
       function loadUserSymbols() {
