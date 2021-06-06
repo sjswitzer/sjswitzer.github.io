@@ -1220,7 +1220,7 @@
         'oz', 'lb',
         'um', 'mm', 'cm', 'm', 'km', 'ml', 'liter',
         'gm', 'kg',
-        'min', 'hr'
+        'min', 'hr', // 'us', 'ms' -- don't include or you get m/s as um/us!
       ]);
       const candidateUnitsMKS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'kg', 'm' ]);
       const candidateUnitsCGS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'gm', 'cm' ]);
