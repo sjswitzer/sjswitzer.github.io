@@ -531,9 +531,7 @@
             How far away is the Sun in miles? <code>au | mi</code>.
             What's the current with <code>5V</code> across a <code>2000 ohm</code> resister?
             <code>5V / 2000 ohm</code>
-            What is <code>pi/4</code> radians in degrees? <code>pi/4 * radian | degrees</code>.
-            Unfortunately, <code>pi/4 radian</code> means <code>pi / (4 radian)</code>; it's just
-            one of those things.
+            What is <code>pi/4</code> radians in degrees? <code>pi/4 radianw | degrees</code>.
         <p> How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>.
             How long does it take sunlight to reach the Earth? <code>au/c</code>
             What is a gigabyte per meter in kilometers? <code>GB/m | km</code>.
@@ -1536,14 +1534,21 @@
       }
 
       // Parse a number or a number followed by fraction or a fraction:
-      //    n
+      //    n | word 
       //    n n/n
-      //    n/n
+      //    (n|word)/n
+      // -- word must be a dimensionless number, mostly in service of saying "pi/4 radians"
 
       function parseNumFrac(opts) {
         let val = parseNum(opts);
-        if (val === null)
-          return null;
+        if (val === null) {
+          let word = parseWord(), sym = word && getSymbol(word);
+          if (!sym || sym.type != 'num' || !Dim.isScalar(sym.dim))
+             return null;
+          val = sym.val;
+          if (opts?.preciceDecimal)
+            val = [ val, 1 ];
+        }
         const backtrack = parsePos;
         if (take('/', NOSKIP)) {
           let denom = parseNum({ noSkip: true, intOnly: true });
@@ -1714,7 +1719,9 @@
         if (take('+')) {
           let val = parseTerm(opts);
           if (val !== null) {
-            if (val.type === 'fn') throw new ChattyError("Must be numeric");
+            if (val.type === 'parse')
+              return val;
+            if (val.type !== 'num') throw new ChattyError("Must be numeric");
             return val;
           }
           parsePos = backtrack;
@@ -1723,9 +1730,9 @@
         if (take('-')) {
           let val = parseTerm(opts);
           if (val !== null) {
-            if (val.type === 'fn') throw new ChattyError("Must be numeric");
             if (val.type === 'parse')
               return { type: 'parse', op: 'neg', expr: val };
+            if (val.type !== 'num') throw new ChattyError("Must be numeric");
             let resVal = - val.val;
             if (val.origin)   // special negation of afine values: don't nehate the origin value
               resVal += val.origin
@@ -1756,25 +1763,26 @@
             val = val1;
           }
         } else {
-          const word = parseWord(opts);
-          if (word !== null) {
-            let val1 = getSymbol(word);
-            skipSpaces();
-            // As a special case, a function of no arguments can be used as a constant
-            if (peekc() !== '('
-                && val1 instanceof Object && val1.type === 'fn' && val1.params.length === 0)
-              val = invokeFunction(val1, []);
-            else if (!(val1 instanceof Object && val1.type))
-              throw new ChattyError(`Unknown variable: "${word}"`);
-            else
-              val = val1;
+          if (opts?.noUnits) {
+            val = parseNum(opts);
+            if (val !== null)
+              val = { type: 'num', dim: {}, val: val };
           } else {
-            if (opts?.noUnits) {
-              val = parseNum(opts);
-              if (val !== null)
-                val = { type: 'num', dim: {}, val: val };
-            } else {
-              val = parseValue(opts);
+            val = parseValue(opts);
+          }
+          if (val === null) {
+            const word = parseWord(opts);
+            if (word !== null) {
+              let val1 = getSymbol(word);
+              skipSpaces();
+              // As a special case, a function of no arguments can be used as a constant
+              if (peekc() !== '('
+                  && val1 instanceof Object && val1.type === 'fn' && val1.params.length === 0)
+                val = invokeFunction(val1, []);
+              else if (!(val1 instanceof Object && val1.type))
+                throw new ChattyError(`Unknown variable: "${word}"`);
+              else
+                val = val1;
             }
           }
         }
