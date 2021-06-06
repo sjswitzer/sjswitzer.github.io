@@ -6,8 +6,14 @@
 
   Synopsis:
 
-    A simple tool for doing calculations with US customary units
-    of length. It also does a bunch of other stuff too.
+    A calculator originaly designed to do inconvenient math with expressions in
+    feet and inches such as dividing 5' 6 3/8" by 3. Hence, its grammar supports
+    these conventional notations and favors the display of feet and inches
+    results when applicable. But it now supports fairly general dimensional calculations
+    in units of length, mass, time, information, electrical units, etc.
+
+    If the final component of the file/URL contains "inch", it will display the original
+    user interface, otherwise the interface will be simplified.
 -->
 <html>
   <head>
@@ -21,6 +27,14 @@
         font-family: caption, sans-serif;
         font-size: 12pt;
         background-color: #f8f8f8;
+      }
+
+      body:not([data-presentation-mode="legacy"]) .legacy {
+        display: none;
+      }
+
+      body:not([data-presentation-mode="legacy"]) #outerWrapper {
+        width: 35em;
       }
 
       /* Spiff up input fields */
@@ -40,7 +54,7 @@
       div.layout-column > div {
         margin: 4px 0px;
       }
-      body > div.layout-column {
+      div.layout-column {
         height: 100%;
       }
       div.layout-row {
@@ -224,8 +238,8 @@
     </style>
   </head>
   <body>
-    <div class="layout-column shrink-wrap">
-      <div class="force-width">
+    <div id="outerWrapper" class="layout-column shrink-wrap">
+      <div class="force-width legacy">
         <input type="text" style="text-align: right;"
           oninput="updateResult()" size="4" id="ft" value="5"> feet &nbsp;
         <input type="text" style="text-align: right;"
@@ -266,7 +280,7 @@
       </div>
       <div class="layout-row expands">
         <div class="sym-defs" id="symdefs"></div>
-        <div><span class="button" onclick="showHelp('help-tips')">Help</span></div>
+        <div><span class="button legacy" onclick="showHelp('help-tips')">Help</span></div>
       </div>
     </div>
     <div class="help" id="help-tips">
@@ -279,16 +293,9 @@
           <li> A value like five and a half feet can be entered as 5.5 feet or as 5 feet 6 inches.
           <li> A value like six and a quarter inches can be entered as 6.25 inches or
                as 6 inches and 1/4.
-          <li> A &ldquo;metric foot&rdquo; is a convention used by the construction industry in metric
-               countries where a foot is taken to be exactly 30cm instead of 30.48cm. It's an
-               <a href="https://en.wikipedia.org/wiki/ISO_2848#Metric_foot">
-                 international standard</a>!
           <li> You can type a fairly general expression into the text box. Click the
                <span class="button" onclick="showHelp('help-expr')">?</span> button
                for more information.
-          <li> In these help boxes most sample expressions, like
-               <code>11'4"/2</code>, can be clicked to evaluate
-               the expression.
         </ul>
       </div>
     </div>
@@ -309,6 +316,8 @@
             The results box will be grayed out while that happens.
             It would be too noisy to alert each of these errors, but if you don't 
             know why it's grayed out, you can hit &ldquo;enter&rdquo; to see an error message.
+        <p> In these help boxes, most sample expressions, like
+            <code>11'4"/2</code>, can be clicked to evaluate the expression.
         </p>
         <table class="stuff example">
           <tr>
@@ -531,8 +540,14 @@
             <code>elephantFoot = 45cm</code> across, and it's standing evenly on four legs,
             then the pressure under its feet, expressed in pounds per square inch, is
             <code>elephantWeight/(pi*(elephantFoot/2)^2)/4 | PSI</code>, about 8 PSI.
+        <h2> Metric Feet </h2>
+        <p> Results presented in feet an inches show an alternate interpretetion assuming measurements
+            are in "metric feet." A &ldquo;metric foot&rdquo; is a convention used by the construction
+            industry in metric countries where a foot is taken to be exactly 30cm instead of 30.48cm.
+            It's an
+            <a href="https://en.wikipedia.org/wiki/ISO_2848#Metric_foot">international standard</a>.
         <h2> Odds & Ends </h2>
-        <p> <span class="linklike" onclick="showHelp('help-boring')">Boring details</span>
+        <p> <span class="linklike" onclick="showHelp('help-boring')">Boring details</span>,
             if you're interested.
       </div>
     </div>
@@ -543,26 +558,24 @@
         <p> This program started out as a quick and dirty tool to easily divide
             lengths given in feet and inches into equal parts, a common task
             in the construction industry and quite tedious to work out by hand.
-            The vestiges of that are seen in the top line of the current
-            user interface.
+        <p> If the file name or last URL element contains the string "inch" (any case),
+            you'll see the original user interface. If you're curoius, you can
+            <span class="linklike" onclick="toggleLegacyMode()">switch</code> the UI.
         <p> But I started to think of it as a <i>calculator</i> and wondered
-            if it could be generalized to do arbitrary math with lengths. The result
-            is what you see here. It's not clear how useful any of that functionality
-            is but it was a good excuse to tinker.
-        <p> It's possible to add two lengths,
+            if it could be generalized to do arbitrary math with lengths.
+            It's possible to add two lengths,
             resulting in another length, or to multiply or divide a length by a number.
             But you can't add a length and a number.
             You can divide a length by a length to get a number (the ratio of lengths).
             Can you multiply two lengths? Yes, but the result is an <i>area</i>.
         <p> This line of thinking leads to
             <a href="https://en.wikipedia.org/wiki/Dimensional_analysis">dimensional analysis</a>,
-            and there are already some very good programs out there for that including the
-            legendary
+            and there are already some very good programs out there for that including the legendary
             <a href="https://linux.die.net/man/1/units">Unix "units" command</a>.
             Hell, <a href="https://www.google.com/search?q=12+acres+%2F+100+feet">
             Google will do it for you</a> if you ask it nicely. But I couldn't
             help myself, so I got carried away and ended up implementing a fairly
-            broad slice of dimensional arithmetic.
+            general dimensional units calculator.
         <p> Still, the main distinction of this tool is that it deals naturally with notations
             typically used with feet and inches. But, <i>sigh</i>,
             <a href="https://www.google.com/search?q=5%27+6+3%2F8%22+%2F+3">
@@ -1083,6 +1096,9 @@
         //    (it's hard to debug when the window is closing) 
         SAVE: function DebugSaveSyms() { saveUserSymbols(); return { type: 'num', dim: {}, val: 0}; },
 
+        // Toggle legacy mode
+        LEGACY: function ToggleLegacyMode() { toggleLegacyMode(); return { type: 'num', dim: {}, val: 0}; },
+
         // Set logging level
         Logging: function SetLogLevel(...params) {
           if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
@@ -1499,8 +1515,8 @@
             return val;
           }
           if (opts?.preciceDecimal) {
-            if (div === 0)  throw "Divide by zero";
-            return [ val, div ];
+            if (denom === 0)  throw "Divide by zero";
+            return [ val[0], denom*val[1] ];
           }
           const q = val/denom;
           if (!isFinite(q)) throw "Divide by zero";
@@ -2295,6 +2311,17 @@
         }
       }
 
+      function toggleLegacyMode(legacy) {
+        const attr = 'data-presentation-mode';
+        if (legacy || !document.body.getAttribute(attr))
+          document.body.setAttribute(attr, 'legacy');
+        else
+          document.body.removeAttribute(attr);
+      }
+
+      if (window.location.href.match(/inch[^/]*$/i))
+        toggleLegacyMode(true);
+
       function addBuiltinSymbolsHelp() {
         let html = "";
         for (const sym in systemSymbols) {
@@ -2313,7 +2340,7 @@
         loadUserSymbols();
         updateResult();
         addExampleStuffs();
-        addBuiltinSymbolsHelp()
+        addBuiltinSymbolsHelp();
       });
 
       window.addEventListener("beforeunload", function(evt) {
