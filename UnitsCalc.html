@@ -797,7 +797,7 @@
         // Volume (L^3)
         //    Sadly, there's ambiguity in units between liquid volume, dry volume, and mass
         //    and, further, differences between the US and Imperial systems.
-        //    when in conflict, I've chosen liquid volumes and US units.
+        //    When in conflict, I've chosen liquid volumes and US units.
         // (liquid)
         gallon : { type: 'num', dim: { L: 3 }, val: GAL, uscu: true, alt: ["gallons"] },
         quart : { type: 'num', dim: { L: 3 }, val: GAL/4, uscu: true, alt: ["quarts"] },
@@ -928,12 +928,12 @@
         H: { type: 'num', dim: { M: 1, L: 2, T: -2, A: -2 }, val: KG * M**2 / SEC**2 / AMP**2,
             desc: "henry, mutual inductance " },
 
-        // Information
+        // Information (BIT)
         bit: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BIT, alt: ["bits"] },
         baud: { type: 'num', dim: { BIT: 1, T: -1 }, val: BIT/SEC },
         kbaud: { type: 'num', dim: { BIT: 1, T: -1 }, val: 1000*BIT/SEC, desc: "kilobaud" },
         byte: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BYTE, alt: ["bytes"] },
-        // I personally find this offensive, but the consensus is that the well-named
+        // I personally find this offensive, but the modern consensus is that the well-named
         // units here are powers of 10 and the stupidly-named ones are powers of 2.
         //   https://www.ibm.com/docs/en/storage-insights?topic=overview-units-measurement-storage-data
         KB: { type: 'num', dim: { BIT: 1 }, val: 10**3 * BYTE, desc: "kilobyte" },
@@ -957,7 +957,7 @@
         fahrenheit: { type: 'num', dim: { Q: 1 }, val: 5*KELVIN/9, origin: (273.15-32*5/9)*KELVIN,
             desc: "Fahrenheit" },
 
-        // Angles
+        // Angles (RAD)
         //   A steradian can be thought of as a square radian because 2pi radians covers
         //   a circle and 4pi steradians covers a sphere. Even if not completely
         //   sound, there are no operations on it that are harmed by the assumption.
@@ -1199,7 +1199,7 @@
       // The first unit listed is prefered over later units with the same
       // favorability. So it's important to have 'sr' before 'radian', for example.
       const commonUnits = [ // Ensure a covering basis of units in all cases
-        'A', 'mA', 'uA', 'V', 'kV', 'mV','uV',
+        'A', 'mA', 'uA', 'V', 'kV', 'mV','uV', 'Wb',
         'ohm', 'kohm', 'F', 'mF', 'uF', 'nF', 'pF', 
         'bit', 'byte', 'baud',
         'KB',  'MB',  'GB',  'TB',  'PB',  'EB',
@@ -1211,7 +1211,6 @@
         'joule', 'N', 'Pa', 'kPa', 'W', 'kW', 'mW' ];
       const candidateUnits = filterUnits([
         ...commonUnits, ... commonMetricUnits,
-        'N', 'Wb',
         'in', 'ft', 'mi', 'acre',
         'tsp', 'tbsp', 'floz', 'cup', 'pint', 'quart', 'gallon',
         'lbf', 'oz', 'lb',
@@ -1279,10 +1278,11 @@
                 if (ue)
                   unitExp += ue;
               const reduced = Dim.add(dim, unit.dim, -exp);
+              const reducedDims = Object.keys(reduced).length;
               let origin = unit.origin ?? 0;
               let unitVal = Math.pow(unit.val, exp);   // xxx mul or div depending
               let newVal = (val-origin) / unitVal
-              unitDescs.push({unit, exp, unitExp, newVal, normSquared, reduced});
+              unitDescs.push({unit, exp, unitExp, newVal, normSquared, reduced, reducedDims});
             }
             unitDescs.sort((a,b) => {  // Note that we're sorting from best to worst
               function cmp(a,b) {
@@ -1294,6 +1294,11 @@
                     return -1;
                   return 1;
                 }
+
+                // The fewer independend dimensions the better
+                let dimDiff = a.reducedDims - b.reducedDims;
+                if (dimDiff !== 0)
+                  return dimDiff;
 
                 // The closer to scalar the better
                 let normDiff = a.normSquared - b.normSquared;
