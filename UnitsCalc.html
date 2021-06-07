@@ -959,6 +959,8 @@
             desc: "weber, magnetic flux" },
         T: { type: 'num', dim: { M: 1, T: -2, A: -1 }, val: KG / SEC**2 / AMP,
             desc: "tesla, magnetic flux density" },
+        gauss: { type: 'num', dim: { M: 1, T: -2, A: -1 }, val: KG / SEC**2 / AMP / 10000,
+            desc: "gauss, magnetic flux density" },
         // kg.m2.s-2.A-2
         H: { type: 'num', dim: { M: 1, L: 2, T: -2, A: -2 }, val: KG * M**2 / SEC**2 / AMP**2,
             desc: "henry, mutual inductance " },
@@ -1251,7 +1253,7 @@
       ]);
       const candidateUnitsMKS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'kg', 'm' ]);
       const candidateUnitsCGS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'gm', 'cm' ]);
-      const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'lbf', 'ft', 'lb' ]);
+      const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'lbf', 'ft', 'in', 'lb' ]);
 
       function val2str(val, opts) {
         let descStr = "", leadingTerm = val.leadingTerm;
@@ -1341,17 +1343,14 @@
               return res;
             });
             if (logLevel > 1)
-               console.log("======== " + parseStr + " unit candidates ========\n" +
-                 JSON.stringify(unitDescs, null, 2));
+               console.log("======== " + parseStr + " unit candidates for " + val + " " +
+                 JSON.stringify(dim) + " ========\n" + JSON.stringify(unitDescs, null, 2));
             if (unitDescs.length < 1) {
               if (leadingTerm) throw `Unit "${leadingTerm.sym}" does not reduce expression`;
               throw "system error: insufficient basis units";
             }
             leadingTerm = undefined;
             const unitDesc = unitDescs[0];
-            if (logLevel > 0)
-               console.log("======== " + parseStr + " reduction of " + JSON.stringify(dim) + "\n" +
-                 JSON.stringify(unitDesc, null, 2));
             let str = " ";
             let displayExp = unitDesc.exp;
             if (displayExp < 0) {
