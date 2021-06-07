@@ -2386,10 +2386,14 @@
       }
 
       window.addEventListener('load', function onLoad(evt) {
-        loadUserSymbols();
-        updateResult();
-        addExampleStuffs();
-        addBuiltinSymbolsHelp();
+        try {  // xxx, temp, to debug iOS problem
+          loadUserSymbols();
+          updateResult();
+          addExampleStuffs();
+          addBuiltinSymbolsHelp();
+        } catch (e) {
+          showError(e);
+        }
       });
 
       window.addEventListener("beforeunload", function(evt) {
