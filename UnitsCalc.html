@@ -535,8 +535,8 @@
             What is <code>pi/4</code> radians in degrees? <code>pi/4 radians | degrees</code>.
         <p> How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>.
             How long does it take sunlight to reach the Earth? <code>au/c | min</code>
-            What is a gigabyte per meter in kilometers? <code>GB/m | km</code>.
-            Yes, it can get rather silly.
+            What is a kilobyts per meter in kilometers? <code>KB/m | km</code>.
+            It seems rather silly, but it might be a length of magnetic tape.
         <p> As an exercise (click the code that follows), suppose an elephant weighs
             <code>elephantWeight = 8000lbf</code>
             (for convenience, I've used <i>pounds of force</i>) and an elephant's foot is about
@@ -813,10 +813,10 @@
         us: { type: 'num', dim: { T: 1 }, val: US, desc: "microsecond", uscu: null, display: "\u00B5s" },
         ms: { type: 'num', dim: { T: 1 }, val: MS, desc: "millisecond", uscu: null },
         s: { type: 'num', dim: { T: 1 }, val: SEC, desc: "second", reserved: true, uscu: null,
-            alt: ["second", "seconds"] },
+            alt: ["second", "seconds", "sec", "secs"] },
         min: { type: 'num', dim: { T: 1 }, val: MIN, desc: "minute", uscu: true,
-            alt: ["minute", "minutes"] },
-        hr: { type: 'num', dim: { T: 1 }, val: HR, desc: "hour", uscu: true, alt: ["hour", "hours"] },
+            alt: ["minute", "minutes", "mins"] },
+        hr: { type: 'num', dim: { T: 1 }, val: HR, desc: "hour", uscu: true, alt: ["hour", "hours", "hrs"] },
         day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: true, alt: ["days"] },
         week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, desc: "7 days", uscu: true, alt: ["weeks"] },
         fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, desc: "2 weeks", uscu: true, alt: ["fortnights"] },
@@ -1262,8 +1262,11 @@
               const reduced = Dim.add(dim, unit.dim, -exp);
               const reducedDims = Object.keys(reduced).length;
               let origin = unit.origin ?? 0;
-              let unitVal = Math.pow(unit.val, exp);   // xxx mul or div depending
-              let newVal = (val-origin) / unitVal
+              let newVal;
+              if (exp >= 0) 
+                newVal = (val-origin) / Math.pow(unit.val, exp);
+              else
+                newVal = (val - origin) * Math.pow(unit.val, -exp);
               unitDescs.push({unit, exp, unitExp, newVal, normSquared, reduced, reducedDims});
             }
             unitDescs.sort((a,b) => {  // Note that we're sorting from best to worst
@@ -1301,8 +1304,8 @@
                 const aa = Math.abs(a.newVal), bb = Math.abs(b.newVal);
 
                 // Values closer to 1 win
-                let va = Math.abs(Math.log10(Math.abs(a.newVal))) - (aa >= 1 ? 4 : 0);
-                let vb = Math.abs(Math.log10(Math.abs(b.newVal))) - (bb >= 1 ? 4 : 0);
+                let va = Math.abs(Math.log10(Math.abs(a.newVal))) - (aa >= 1 ? 5 : 0);
+                let vb = Math.abs(Math.log10(Math.abs(b.newVal))) - (bb >= 1 ? 5 : 0);
                 if (!isFinite(va) || !isFinite(vb)) {
                   if (isFinite(va))
                     return -1;
@@ -2272,39 +2275,34 @@
       const MAJOR = 1, MINOR = 0, PATCH = 0;
 
       function loadUserSymbols() {
-        try {
-          const localStorage = window.localStorage;
-          if (!localStorage)
-            return false;
-          let json = localStorage.getItem(LOCAL_STORAGE_KEY);
-          if (!json)
-            return false;
-          let wad = JSON.parse(json);
-          if (!wad || !wad.major || wad.major > MAJOR)
-            return false;
-          if (!wad.defs)
-            return false;
-          for (const def of wad.defs) {
-            try {
-              let val = parseInputStatement(def);
-              skipSpaces();
-              if (val !== null && !peekc()) { // nothing left over at the end
-                let sym = val.sym;
-                if (systemSymbols[sym]?.reserved)
-                  next;
-                delete val.defined;
-                userSymbols[sym] = val;
-              }
-            }
-            catch (e) {
+        const localStorage = window.localStorage;
+        if (!localStorage)
+          return false;
+        let json = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (!json)
+          return false;
+        let wad = JSON.parse(json);
+        if (!wad || !wad.major || wad.major > MAJOR)
+          return false;
+        if (!wad.defs)
+          return false;
+        for (const def of wad.defs) {
+          try {
+            let val = parseInputStatement(def);
+            skipSpaces();
+            if (val !== null && !peekc()) { // nothing left over at the end
+              let sym = val.sym;
+              if (systemSymbols[sym]?.reserved)
+                next;
+              delete val.defined;
+              userSymbols[sym] = val;
             }
           }
-          showUserSymbols();
-          return true;
+          catch (e) {
+          }
         }
-        catch (e) {
-        }
-        return false;    
+        showUserSymbols();
+        return true;
       }
 
       function saveUserSymbols() {
@@ -2386,14 +2384,11 @@
       }
 
       window.addEventListener('load', function onLoad(evt) {
-        try {  // xxx, temp, to debug iOS problem
-          // loadUserSymbols();  // XXX
-          updateResult();
-          addExampleStuffs();
-          addBuiltinSymbolsHelp();
-        } catch (e) {
-          showError(e);
-        }
+        try { loadUserSymbols(); } // inconvenient to crash while loading
+        catch (e) {}
+        updateResult();
+        addExampleStuffs();
+        addBuiltinSymbolsHelp();
       });
 
       window.addEventListener("beforeunload", function(evt) {
