@@ -770,16 +770,8 @@
             alt: ["foot", "feet"] },
         yd: { type: 'num', dim: { L: 1 }, val: 3*FT, desc: "yard", uscu: true,
             alt: ["yard", "yards"] },
-        link: { type: 'num', dim: { L: 1 }, val: 66*FT/100, desc: "surveyor's link", uscu: true, alt: ["links"] },
-        rod: { type: 'num', dim: { L: 1 }, val: 66*FT/4, desc: "surveyor's rod", uscu: true, alt: ["rods"] },
-        chain: { type: 'num', dim: { L: 1 }, val: 66*FT, desc: "surveyor's chain", uscu: true, alt: ["chains"] },
-        furlong: { type: 'num', dim: { L: 1 }, val: 660*FT, uscu: true, alt: ["furlongs"] },
         mi: { type: 'num', dim: { L: 1 }, val: MI, desc: "mile", alt: ["mile", "miles"],
             reserved: true, uscu: true },
-        nml: { type: 'num', dim: { L: 1 }, val: NMI, uscu: true,
-            desc: "nautical mile" },
-        league: { type: 'num', dim: { L: 1 }, val: 5.556*KM, uscu: true, alt: ["leagues"],
-            desc: "nautical league" },
         nm: { type: 'num', dim: { L: 1 }, val: NM, desc: "nanometer" },
         um: { type: 'num', dim: { L: 1 }, val: UM, desc: "micrometer", display: "\u00B5m" },
         mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter" },
@@ -832,29 +824,10 @@
         min: { type: 'num', dim: { T: 1 }, val: MIN, desc: "minute", uscu: null,
             alt: ["minute", "minutes", "mins"] },
         hr: { type: 'num', dim: { T: 1 }, val: HR, desc: "hour", uscu: null, alt: ["hour", "hours", "hrs"] },
-        day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: null, alt: ["days"] },
-        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, desc: "7 days", uscu: null, alt: ["weeks"] },
-        fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, desc: "2 weeks", uscu: null, alt: ["fortnights"] },
-        hz: { type: 'num', dim: { T: -1 }, val: 1/SEC, desc: "second", desc: "hertz", uscu: null, alt: ["hertz"] },
-
-        // Velocity (L T^-1)
-        knot: { type: 'num', dim: { L: 1, T: -1 }, val: NMI/HR, uscu: true, alt: ["knots"],
-            desc: "nautical mile per hour" },
 
         // Mass (M)
         lb: { type: 'num', dim: { M: 1 }, val: LBM, desc: "pound mass", uscu: true, alt: ["lbs", "pound", "pounds"] },
         oz: { type: 'num', dim: { M: 1 }, val: LBM/16, desc: "ounce mass", uscu: true, alt: ["ounce", "ounces"]},
-        grain: { type: 'num', dim: { M: 1 }, val: LBM/7000, uscu: true },
-        stone: { type: 'num', dim: { M: 1 }, val: 14*LBM, uscu: true, desc: "UK stone" }, // no alt "stones"
-        hundredweight: { type: 'num', dim: { M: 1 }, val: 112*LBM, uscu: true,
-            desc: "UK hundredweight" },  // in the US it's 100lb, but nobody uses it so...
-        longton: { type: 'num', dim: { M: 1 }, val: 2240*LBM, uscu: true, alt: ["longtons"],
-            desc: "UK long ton" },
-        ton: { type: 'num', dim: { M: 1 }, val: 2000*LBM, uscu: true, alt: ["tons"],
-            desc: "US ton" },
-        tonne: { type: 'num', dim: { M: 1 }, val: 1000*KG, alt: ["tonnes"],
-            desc: "metric ton" },
-        carat: { type: 'num', dim: { M: 1 }, val: 200*MG, alt: ["carats"] },
         ug: { type: 'num', dim: { M: 1 }, val: UG, desc: "microgram", display: "\u00B5g" },
         mg: { type: 'num', dim: { M: 1 }, val: MG, desc: "milligram" },
         gm: { type: 'num', dim: { M: 1 }, val: GM, reserved: true, desc: "gram",
@@ -987,7 +960,6 @@
         // Interesting constants (various)
         pi: { type: 'num', dim: {}, val: Math.PI },
         tau: { type: 'num', dim: {}, val: 2*Math.PI, desc: "2 \u00D7 pi" },  // :)
-        dozen: { type: 'num', dim: {}, val: 12 },  // :)
         mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number" },
         boltz: { type: 'num', dim: { L: 2, M: 1, T:-2, Q: -1 }, val: 1.380649e-23*KG*M*M/(SEC*SEC)/KELVIN,
             desc: "Boltzmann constant" },
@@ -996,6 +968,37 @@
         G: { type: 'num', dim: { L: 3, M: -1, T:-2 }, val: 6.6743e-11*M*M*M/(KG*SEC*SEC),
              desc: "universal gravitational constant" },
         c: { type: 'num', dim: { L: 1, T:-1 }, val: 299792458*M/SEC, desc: "speed of light"},
+
+        // Anything!
+        thing: { type: 'num', dim: { THING: 1 }, val:1, alt: ["things"], display: null },
+
+        // Obscure/whimsical units
+        link: { type: 'num', dim: { L: 1 }, val: 66*FT/100, desc: "surveyor's link", uscu: true, alt: ["links"] },
+        rod: { type: 'num', dim: { L: 1 }, val: 66*FT/4, desc: "surveyor's rod", uscu: true, alt: ["rods"] },
+        chain: { type: 'num', dim: { L: 1 }, val: 66*FT, desc: "surveyor's chain", uscu: true, alt: ["chains"] },
+        furlong: { type: 'num', dim: { L: 1 }, val: 660*FT, uscu: true, alt: ["furlongs"] },
+        day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: null, alt: ["days"] },
+        week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, desc: "7 days", uscu: null, alt: ["weeks"] },
+        fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, desc: "2 weeks", uscu: null, alt: ["fortnights"] },
+        hz: { type: 'num', dim: { T: -1 }, val: 1/SEC, desc: "second", desc: "hertz", uscu: null, alt: ["hertz"] },
+        grain: { type: 'num', dim: { M: 1 }, val: LBM/7000, uscu: true },
+        stone: { type: 'num', dim: { M: 1 }, val: 14*LBM, uscu: true, desc: "UK stone" }, // no alt "stones"
+        hundredweight: { type: 'num', dim: { M: 1 }, val: 112*LBM, uscu: true,
+            desc: "UK hundredweight" },  // in the US it's 100lb, but nobody uses it so...
+        longton: { type: 'num', dim: { M: 1 }, val: 2240*LBM, uscu: true, alt: ["longtons"],
+            desc: "UK long ton" },
+        ton: { type: 'num', dim: { M: 1 }, val: 2000*LBM, uscu: true, alt: ["tons"],
+            desc: "US ton" },
+        tonne: { type: 'num', dim: { M: 1 }, val: 1000*KG, alt: ["tonnes"],
+            desc: "metric ton" },
+        carat: { type: 'num', dim: { M: 1 }, val: 200*MG, alt: ["carats"] },
+        league: { type: 'num', dim: { L: 1 }, val: 5.556*KM, uscu: true, alt: ["leagues"],
+            desc: "nautical league" },
+        nml: { type: 'num', dim: { L: 1 }, val: NMI, uscu: true,
+            desc: "nautical mile" },
+        knot: { type: 'num', dim: { L: 1, T: -1 }, val: NMI/HR, uscu: true, alt: ["knots"],
+            desc: "nautical mile per hour" },
+        dozen: { type: 'num', dim: {}, val: 12 },
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
@@ -1199,7 +1202,7 @@
         'A', 'mA', 'uA', 'V', 'kV', 'mV','uV', 'Wb',
         'ohm', 'kohm', 'F', 'mF', 'uF', 'nF', 'pF', 
         'bit', 'byte', 'baud',
-        'KB',  'MB',  'GB',  'TB',  'PB',  'EB',
+        'KB',  'MB',  'GB',  'TB',  'PB',  'EB', 'thing',
         // seconds come after electrical and information units so that a coulomb
         // is an "A s", not an "s A"
         's', 'K',
@@ -2091,11 +2094,9 @@
                   name = `${name} (${symVal.desc})`;
                 throw `Cannot redefine reserved symbol ${name}`;
               }
-              val = { ...val };         // copy, because we're about to modify it
               showAssignResult(val);
-              delete val.defined;       // removes the flag that forces the definition
-              delete val.desc;          // removes description
-              delete val.reserved;      // removes "reserved" designation
+              val = { ...val,
+                  defined: undefined, desc: undefined, display: undefined, reserved: undefined };         // copy, because we're about to modify it
               userSymbols[sym] = val;
               showUserSymbols();
             } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.leadingTerms) {
@@ -2406,7 +2407,7 @@
       function addBuiltinSymbolsHelp() {
         let html = "";
         for (const [name, sym] of Object.entries(systemSymbols)) {
-          if (sym.type !== 'num' || sym.altOf)
+          if (sym.type !== 'num' || sym.altOf || sym.display === null)
             continue;
           let desc = sym.desc ?? name;
           if (sym.reserved)
