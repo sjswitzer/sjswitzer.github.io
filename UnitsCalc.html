@@ -1365,18 +1365,22 @@
         if (opts?.saveMode) {
           // full precision value
           return String(val) + unitsStr + invUnitsStr;
-        } else if (Math.abs(val) < 10000 * EPSILON) {
-          return String(val) + unitsStr + invUnitsStr + descStr;
-        } else {
-          // Avoids display of nonsense like 2.5000...001 while
-          // maintaining accuracy to "DIGITS_PRECISION" decimal digits.
-          val = val.toFixed(DIGITS_PRECISION);
-          while (val.endsWith("0"))
-            val = val.substr(0, val.length-1);
-          if (val.endsWith("."))
-            val = val.substr(0, val.length-1);
-          return val + unitsStr + invUnitsStr + descStr;
         }
+        if (Math.abs(val) < 1) {
+          // We want to display things like 0.0000001 when possible, but not if
+          // signigicant digits are hanging out behind the truncation
+          let val2 = Math.abs(val) * 10**DIGITS_PRECISION;
+          if (val2 - Math.trunc(val2) > EPSILON)
+            return String(val) + unitsStr + invUnitsStr + descStr;
+        }
+        // Avoids display of nonsense like 2.5000...001 while
+        // maintaining accuracy to "DIGITS_PRECISION" decimal digits.
+        val = val.toFixed(DIGITS_PRECISION);
+        while (val.endsWith("0"))
+          val = val.substr(0, val.length-1);
+        if (val.endsWith("."))
+          val = val.substr(0, val.length-1);
+        return val + unitsStr + invUnitsStr + descStr;
       }
 
       //
