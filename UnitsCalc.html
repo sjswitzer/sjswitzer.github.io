@@ -499,12 +499,6 @@
             <td> hyp(x,y,&hellip;) 
             <td> The hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
           <tr>
-            <td> min(x,y,&hellip;) 
-            <td> The minimum of the arguments
-          <tr>
-            <td> max(x,y,&hellip;) 
-            <td> The maximun of the arguments
-          <tr>
             <td> sqrt(x) 
             <td> Square root
           <tr>
@@ -532,9 +526,7 @@
             <code>100 km/hr | hr</code> displays the speed in terms of miles/hour.
         <p> How many watts in 10 horsepower? <code>10 horsepower | W</code>.
             How many tablespoons in a cup? <code>cup | tbsp</code>.
-            <a href="https://www.britannica.com/science/atmospheric-pressure">
-              Sea-level air pressure</a>
-            in PSI? <code>atm | PSI</code>.
+            Sea-level air pressure in PSI? <code>atm | PSI</code>.
             What is 20 degrees celsius in fahrenheit? <code>20 celsius | fahrenheit</code>.
             What <i>is</i> 20000 leagues anyway? <code>20000 league | mi</code>.
             How far away is the Sun in miles? <code>au | mi</code>.
@@ -1010,16 +1002,6 @@
           return { ...res, val: res.val };
         },
 
-        min: function(...params) {
-          if (params.length < 1) throw `${this.sym}(): No parameters`;
-          return reduceParamVals(this.sym, Number.MAX_VALUE, params, (accum, val) => Math.min(accum, val));
-        },
-
-        max: function(...params) {
-          if (params.length < 1) throw `${this.sym}(): No parameters`;
-          return reduceParamVals(this.sym, Number.MIN_VALUE, params, (accum, val) => Math.max(accum, val));
-        },
-
         abs: function AbsoluteValue(...params) {
           if (params.length !== 1) throw `${this.sym}(): Requires one parameter`;
           let val = params[0];
@@ -1310,17 +1292,17 @@
                 if (expDiff !== 0)
                   return expDiff;
 
-                // Values greater than 1 beat values less than one.
-                //   + EPSILON is to catch the .999999 cases that crop up very occasionally
-                const aa = Math.abs(a.newVal) + EPSILON, bb = Math.abs(b.newVal) + EPSILON;
-                if (aa >= 1 && bb < 1)
-                  return -1;
-                if (bb >= 1 && aa < 1)
-                  return 1;
+                // Values greater than get a special bonus in the calculation below.
+                // The idea is that anything over a meter should be expressed in meters
+                // and less in lower units. But the inverse of cord (/cord) comes out
+                // to some ridiculous number of cubic miles and it really should be cubic feet.
+                // so being over 1 should give a bonus over the "distance from 1", but should
+                // not be absolute.
+                const aa = Math.abs(a.newVal), bb = Math.abs(b.newVal);
 
                 // Values closer to 1 win
-                let va = Math.abs(Math.log(Math.abs(a.newVal)));
-                let vb = Math.abs(Math.log(Math.abs(b.newVal)));
+                let va = Math.abs(Math.log10(Math.abs(a.newVal))) - (aa >= 1 ? 4 : 0);
+                let vb = Math.abs(Math.log10(Math.abs(b.newVal))) - (bb >= 1 ? 4 : 0);
                 if (!isFinite(va) || !isFinite(vb)) {
                   if (isFinite(va))
                     return -1;
