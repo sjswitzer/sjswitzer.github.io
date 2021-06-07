@@ -217,14 +217,9 @@
         background: #ff7777;
         font-weight: bold;
         border-radius: 5px;
+        margin-right: .5em;
         color: white;
         transition: 0.1s;     
-      }
-
-      @media (hover: hover) {
-        p.user-def > span.delete-button {
-          visibility: hidden;
-        }
       }
 
       p.user-def > span.delete-button:before {
@@ -279,7 +274,7 @@
       <div class="layout-row">
         <div class="expands">
           <input style="width: 100%;" type="text" id="expr" value=""
-            autocomplete="off" autocorrect="off" autocapitalize="none"
+            autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="none"
             oninput="updateParse()" onchange="updateParse(true)">
         </div>
         <span class="button" style="margin-left: .25em; font-size: 1.125em"
@@ -402,7 +397,7 @@
                  <code>3.14</code>, <code>.15</code>, etc.
             <li> A variable name, such as <code>pi</code>
             <li> A <i>length</i> which can be a number, a fraction, or a number
-                 and a fraction followed buy a <i>unit</i>
+                 and a fraction followed by a <i>unit</i>
             <li> Any sequence of the the previous length-unit combinations as long as
                  the units are of descending size
           </ul>
@@ -475,8 +470,8 @@
         <p><i>Beware that spaces can occasionally make a big difference.</i>
             <code>1/2 in</code> or <code>1/2in</code> means half an inch,
             but <code>1 / 2 in</code> or even
-            <code>1/ 2 in</code> means one over 2 inches. Just avoid putting spaces around
-            the slash in a fractional unit and you'll be fine.
+            <code>1/ 2 in</code> means one over 2 inches. <i>Just avoid putting spaces around
+            the slash in a fractional unit and you'll be fine.</i>
         <h2> Variables </h2>
         <p> To define variables type <code class="abstract">name = expression</code>
             then hit &ldquo;enter.&rdquo;
@@ -496,7 +491,7 @@
             then hitting &ldquo;enter.&rdquo; For instance, you can define a function to average to numbers
             or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
             <code>mean(&hellip;)</code> already does that, so&hellip;).
-        <p> Function bodies can use any of their parameters (<i>of course</i>) and variables
+        <p> Function bodies can use any of their parameters and variables
             that have already been defined. As a special case, a function with no parameters
             can be used as a &ldquo;dynamic variable.&rdquo; That is, assuming variables <code>a</code>
             and <code>b</code> are already defined, the function
@@ -2161,19 +2156,19 @@
         for (const sym of keys) {
           let symStr = symString(userSymbols[sym], { html: true });
           if (symStr)
-            str += `<p class="user-def"><span class="delete-button" onclick="deleteDef('${sym}')"></span>
-              ${symStr}</p>`;
+            str += `<p class="user-def">
+              <span class="delete-button" onclick="deleteDef('${sym}')"></span>${symStr}</p>`;
         }
         document.getElementById('symdefs').innerHTML = str;
       }
 
-      function deleteDef(sym) {
-        delete userSymbols[sym];
+      function deleteDef(symName) {
+        delete userSymbols[symName];
         showUserSymbols()
       }
 
       function symString(val, opts) {
-        if (Dim.equal(val.dim, { L: 1 }) && !opts?.saveMode) {
+        if (Dim.equal(val.dim, { L: 1 }) && val.uscu && !opts?.saveMode) {
           let [ftStr, inStr, delta] = unitsToUSStringReps(numVal(val));
           let str = `${val.sym} = ${ftStr}${delta}`;
           if (opts?.html)
@@ -2219,8 +2214,11 @@
 
         let [ftStr, inStr, delta] = unitsToUSStringReps(totalUnits);
         document.getElementById('resultFtDetail').textContent = ftStr + delta;
-        if (opts?.updateExpr)
-          document.getElementById('expr').value = ftStr + delta;
+        if (opts?.updateExpr) {
+          const exprField = document.getElementById('expr')
+          exprField.value = ftStr + delta;
+          exprField.focus();
+        }
 
         document.getElementById('resultInDetail').textContent = inStr + delta;
 
