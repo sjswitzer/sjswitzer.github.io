@@ -25,7 +25,8 @@
         box-sizing: border-box;
         margin: 0px 8px;
         font-family: caption, sans-serif;
-        font-size: 12pt;
+        xxxfont-size: 12pt;
+        font-size: 110%;
         background-color: #f8f8f8;
       }
 
@@ -43,7 +44,8 @@
 
       /* Spiff up input fields */
       input[type="text"] {
-        font-size: 13pt;
+        xxxfont-size: 13pt;
+        font-size: 120%;
         border-radius: 5px;
         padding: 1px 4px;
       }
@@ -98,7 +100,7 @@
         color: #888888;
         font-weight: bold;
         float: right;
-        font-size: 40px;
+        xxxfont-size: 40px;
         cursor: pointer;
         transition: 0.3s;
       }
@@ -207,8 +209,14 @@
         border-radius: 5px;
         color: white;
         transition: 0.1s;     
-        visibility: hidden;
       }
+
+      @media (hover: hover) {
+        p.user-def > span.delete-button {
+          visibility: hidden;
+        }
+      }
+
       p.user-def > span.delete-button:before {
         content: "\d7"; /* Unicode times character */
         /*
@@ -237,7 +245,7 @@
         margin: 12px 0px;
         padding: 0px 12px;
         border-radius: 5px;
-        font-size: 13pt;
+        xxxfont-size: 13pt;
       }
     </style>
   </head>
@@ -264,7 +272,7 @@
           <input style="width: 100%;" type="text" id="expr" value="" autocomplete="off"
             oninput="updateParse()" onchange="updateParse(true)">
         </div>
-        <span class="button" style="margin-left: .25em; font-size: 1.125em"
+        <span class="button" style="margin-left: .25em; xxxfont-size: 1.125em"
           onclick="showHelp('help-expr')">?</span>
       </div>
       <div class="results">
