@@ -49,9 +49,15 @@
 
       /* Spiff up input fields */
       input[type="text"] {
-        font-size: 120%;
+        font-size: 110%;
         border-radius: 5px;
         padding: 1px 4px;
+      }
+
+      @media (pointer: coarse) {
+        input[type="text"]: {
+          font-size: 150%;
+        }
       }
 
       /*
@@ -271,7 +277,7 @@
       </div>
       <div class="layout-row">
         <div class="expands">
-          <input style="width: 100%;" type="text" id="expr" value="" autocomplete="off"
+          <input style="width: 100%;" type="text" id="expr" value="" autocomplete="off" autocapitalize="none"
             oninput="updateParse()" onchange="updateParse(true)">
         </div>
         <span class="button" style="margin-left: .25em; font-size: 1.125em"
