@@ -780,9 +780,9 @@
       // those units. If an expression contains only metric units, the results
       // will be displayed in metric.
 
-      const UM = 1000, MM = 1000*UM, CM = 10*MM, M  = 1000*MM, KM = 1000*M;
+      const NM = 1000, UM = 1000*NM, MM = 1000*UM, CM = 10*MM, M  = 1000*MM, KM = 1000*M;
       const IN = 25400*UM, FT = 12*IN, MI = 5280*FT, NMI = 1852*M;
-      const US = 1000, MS = 1000*US, SEC = 1000*MS, MIN = 60*SEC, HR = 60*MIN; 
+      const US = 1, MS = 1000*US, SEC = 1000*MS, MIN = 60*SEC, HR = 60*MIN; 
       const UG = 1000, MG = 1000*UG, GM = 1000*MG, KG = 1000*GM;
       const GAL = 231*IN**3, LBM = 453.59237*GM, LBF = 4.448222*KG*M/(SEC*SEC);
       const UAMP = 1000, MAMP = 1000*UAMP, AMP = 1000*MAMP, KELVIN = 9000000;
@@ -810,6 +810,7 @@
             desc: "nautical mile" },
         league: { type: 'num', dim: { L: 1 }, val: 5.556*KM, uscu: true, alt: ["leagues"],
             desc: "nautical league" },
+        nm: { type: 'num', dim: { L: 1 }, val: NM, desc: "nanometer" },
         um: { type: 'num', dim: { L: 1 }, val: UM, desc: "micrometer", display: "\u00B5m" },
         mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter" },
         cm: { type: 'num', dim: { L: 1 }, val: CM, desc: "centimeter", reserved: true },
@@ -1180,10 +1181,14 @@
             body: `#BuiltinFunction-${val.name}#` };
         if (!val) {
           // special case to create pseudo-variables for exponentiated units
-          const match = /^([a-z]+)([0-9]+)$/i.exec(symName);
-          if (match) {
-            let val2 = getSymbol(match[1]);
-            let exp = Number(match[2]);
+          let pos = symName.length;
+          while (pos > 1 && DIGITS.includes(symName.charAt(pos-1)))
+            pos -= 1;
+          if (pos < symName.length) {
+            const symPrefix = symName.substr(0, pos);
+            const symSuffix = symName.substr(pos);
+            let val2 = getSymbol(symPrefix);
+            let exp = Number(symSuffix);
             if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim &&!val2.origin && exp > 1) {
               let desc = val2.desc && `${val2.desc ?? match[1]}^${String(exp)}`;
               return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(numVal(val2), exp),
