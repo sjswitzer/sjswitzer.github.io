@@ -539,9 +539,9 @@
             and <code>sin(pi/4)</code>. 
         <h2> Unit Conversions </h2>
         <p> To display results in terms of specific units, follow an expression by <code>|</code>
-            then a unit.
+            then a unit or series of units.
             For instance, <code>100 km/hr | mi</code> displays the speed in miles/minute.
-            <code>100 km/hr | hr</code> displays the speed in terms of miles/hour.
+            <code>100 km/hr | mi/hr</code> displays the speed in terms of miles/hour.
         <p> How many watts in 10 horsepower? <code>10 horsepower | W</code>.
             How many tablespoons in a cup? <code>cup | tbsp</code>.
             Sea-level air pressure in PSI? <code>atm | PSI</code>.
@@ -1225,16 +1225,15 @@
       const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'lbf', 'ft', 'lb' ]);
 
       function val2str(val, opts) {
-        let descStr = "", leadingTerm = val.leadingTerm;
+        let descStr = "", leadingTerms = val.leadingTerms ?? [];
         if (opts?.describe && val.desc)
           descStr = ` (${val.desc})`;
         let unitsStr = "", invUnitsStr = "";
         if (val.val !== undefined) {
           let uscu = !!val.uscu;
-          if (leadingTerm) {
-            uscu = leadingTerm.uscu;
-            descStr = "";
-          }
+          for (const leadingTerm of leadingTerms)
+            if (leadingTerm.uscu)
+              uscu = true;
           let dim = val.dim;
           val = numVal(val);
           let allowedCandidateUnits = candidateUnits;
@@ -1256,8 +1255,9 @@
               throw "Failed to reduce units";
             let unitDescs = [];
             let candidates = allowedCandidateUnits;
-            if (leadingTerm)
-              candidates = [leadingTerm];
+            let leadingTerm;
+            if (leadingTerms.length > 0)
+              candidates = [leadingTerm = leadingTerms.shift()];
             for (const unit of candidates) {
               let normSquared = Dim.normSquared(dim);
               let exp = 0, unitExp = 0;
@@ -1351,10 +1351,9 @@
                console.log("======== " + parseStr + " unit candidates for " + val + " " +
                  JSON.stringify(dim) + " ========\n" + JSON.stringify(unitDescs, null, 2));
             if (unitDescs.length < 1) {
-              if (leadingTerm) throw `Unit "${leadingTerm.sym}" does not reduce expression`;
+              if (leadingTerm) throw `Unit "${leadingTerm.sym}" does not simplify expression units`;
               throw "system error: insufficient basis units";
             }
-            leadingTerm = undefined;
             const unitDesc = unitDescs[0];
             let str = " ";
             let displayExp = unitDesc.exp;
@@ -1991,7 +1990,7 @@
 
       // Parse a statement:
       //    expr
-      //    expr '|'  word
+      //    expr '|' [ '/'? word ]*
       //    word '=' expr
       //    word '(' [ word [ ',' word ]* ]? ')' '=' expr
 
@@ -2044,15 +2043,20 @@
         }
         let val = parseExpr();
         if (val && take('|')) {
-           let word = parseWord();
-           if (word) {
-             let leadingTerm = getSymbol(word);
-             if (leadingTerm && leadingTerm.type === 'num' && !Dim.isScalar(leadingTerm.dim))
-               return { ...val, leadingTerm };
-             throw new ChattyError(`Not a unit: ${word}`);
-           }
-           parsePos = backtrack;
-           return null;
+          let leadingTerms = [];
+          while (true) {
+            take('/');  // ignored anyway
+            let word = parseWord();
+            if (!word)
+               break;
+            if (word) {
+              let leadingTerm = getSymbol(word);
+              if (!leadingTerm || leadingTerm.type !== 'num' || Dim.isScalar(leadingTerm.dim) || !leadingTerm.val)
+                throw new ChattyError(`Not a unit: ${word}`);
+              leadingTerms.push(leadingTerm);
+            }
+          }
+          return { ...val, leadingTerms };
         }
         return val;
       }
@@ -2099,7 +2103,7 @@
               delete val.reserved;      // removes "reserved" designation
               userSymbols[sym] = val;
               showUserSymbols();
-            } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.leadingTerm) {
+            } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.leadingTerms) {
               showFeetInchesResult(numVal(val));
             } else if (val.type === 'num') {
               showResult(val);
