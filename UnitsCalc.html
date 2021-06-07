@@ -645,17 +645,19 @@
 
       class Dim {
         static isScalar(dim) {
-          if (!dim)
-            return true;
+          return Dim.nDims(dim) === 0;
+        }
+
+        static nDims (dim) {
+          let n = 0;
           for (const measure in dim)
             if (dim[measure] !== 0)
-              return false;
-          return true;
+              n += 1;
+          return n;
         }
 
         static normSquared(dim) {
-          // Not sure if the name is right, but the idea is to see how far this dimension
-          // is from being scalar.
+          // How far this dimension is from being scalar.
           let n = 0
           for (const measure in dim) {
             const m = dim[measure];
@@ -1202,7 +1204,7 @@
       ]);
       const candidateUnitsMKS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'kg', 'm' ]);
       const candidateUnitsCGS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'gm', 'cm' ]);
-      const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'lbf', 'ft', 'in', 'lb' ]);
+      const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'lbf', 'ft', 'lb' ]);
 
       function val2str(val, opts) {
         let descStr = "", leadingTerm = val.leadingTerm;
@@ -1260,14 +1262,15 @@
                 if (ue)
                   unitExp += ue;
               const reduced = Dim.add(dim, unit.dim, -exp);
-              const reducedDims = Object.keys(reduced).length;
+              const reducedNDims = Dim.nDims(reduced);
+              const reducerNDims = Dim.nDims(unit.dim);
               let origin = unit.origin ?? 0;
               let newVal;
               if (exp >= 0) 
                 newVal = (val-origin) / Math.pow(unit.val, exp);
               else
                 newVal = (val - origin) * Math.pow(unit.val, -exp);
-              unitDescs.push({unit, exp, unitExp, newVal, normSquared, reduced, reducedDims});
+              unitDescs.push({unit, exp, unitExp, newVal, normSquared, reduced, reducedNDims, reducerNDims});
             }
             unitDescs.sort((a,b) => {  // Note that we're sorting from best to worst
               function cmp(a,b) {
@@ -1280,8 +1283,13 @@
                   return 1;
                 }
 
-                // The fewer independend dimensions the better
-                let dimDiff = a.reducedDims - b.reducedDims;
+                // The fewer independend dimensions remaining, the better
+                let dimDiff = a.reducedNDims - b.reducedNDims;
+                if (dimDiff !== 0)
+                  return dimDiff;
+
+                // The fewer dimensions in the reducer, the better
+                dimDiff = a.reducerNDims - b.reducerNDims;
                 if (dimDiff !== 0)
                   return dimDiff;
 
