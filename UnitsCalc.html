@@ -29,7 +29,7 @@
         background-color: #f8f8f8;
       }
 
-      @media (pointer: coarse) {
+      @media (hover: none) {
         body: {
           font-size: 125%;
         }
@@ -54,7 +54,7 @@
         padding: 1px 4px;
       }
 
-      @media (pointer: coarse) {
+      @media (hover: none) {
         input[type="text"]: {
           font-size: 150%;
         }
@@ -277,7 +277,8 @@
       </div>
       <div class="layout-row">
         <div class="expands">
-          <input style="width: 100%;" type="text" id="expr" value="" autocomplete="off" autocapitalize="none"
+          <input style="width: 100%;" type="text" id="expr" value=""
+            autocomplete="off" autocorrect="off" autocapitalize="none"
             oninput="updateParse()" onchange="updateParse(true)">
         </div>
         <span class="button" style="margin-left: .25em; font-size: 1.125em"
