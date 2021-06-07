@@ -661,6 +661,18 @@
           return true;
         }
 
+        static normSquared(dim) {
+          // Not sure if the name is right, but the idea is to see how far this dimension
+          // is from being scalar.
+          let n = 0
+          for (const measure in dim) {
+            const m = dim[measure];
+            if (m)
+              n += m * m;
+          }
+          return n;
+        }
+
         static equal(dim1 = {}, dim2 = {}) {
           for (const measure in dim1) {
             if ((dim1[measure] ?? 0) !== (dim2[measure] ?? 0))
@@ -692,36 +704,6 @@
           return ret;
         }
 
-        static reduce(dim1, dim2) {
-          // If dim1 can be reduced by a power of dim2,
-          // returns [ exp, reducedDim]. Exp is zero if not reduced.
-          // A little linear algebra would go a long way here, but whatever.
-          let measures = {}, divisors = [];
-          for (const measure in dim1)
-            measures[measure] = true;
-          for (const measure in dim2)
-            measures[measure] = true;
-          for (const measure in measures) {
-            let exp1 = dim1[measure] ?? 0, exp2 = dim2[measure] ?? 0;
-            if (exp2 === 0)
-               continue;
-            let ratio = exp1 / exp2;
-            if (exp1 === 0 || ratio !== Math.trunc(ratio)) // must be integral
-              return [ 0, dim1 ];
-            divisors.push(ratio);
-          }
-          // Some of the divisors are positive and some negative.
-          // Pick an exponent sign so they units don't mostly flip signs.
-          let netPositive = 0;
-          for (const div of divisors)
-             netPositive += Math.sign(div);
-          const sign = netPositive >= 0 ? 1 : -1;
-
-          divisors = divisors.map(x => Math.abs(x));
-          let exp = sign * gcd(...divisors);
-          return [ exp, Dim.add(dim1, dim2, -exp) ];
-        }
-
         static add(dim1 = {}, dim2 ={}, factor = 1) {
           let measures = {}, ret = {};
           for (const measure in dim1)
@@ -739,25 +721,6 @@
         static sub(dim1, dim2, factor = 1) {
           return Dim.add(dim1, dim2, -factor);
         }
-      }
-
-      function gcd(...nums) {
-        if (nums.length < 1) return undefined;
-        let a = nums.pop();
-        if (a <= 0 || a !== Math.trunc(a))
-          return undefined;
-        while (nums.length > 0) {
-          let b = nums.pop();
-          if (b <= 0 || b !== Math.trunc(b))
-            return undefined;
-          while (a !== b) {
-            if (b > a)
-              b -= a;
-            else
-              a -= b;
-          }
-        }
-        return a; 
       }
 
       // A curious thing worth noting: It turns out that fractions of the form
@@ -962,7 +925,6 @@
             desc: "tesla, magnetic flux density" },
         gauss: { type: 'num', dim: { M: 1, T: -2, A: -1 }, val: KG / SEC**2 / AMP / 10000,
             desc: "gauss, magnetic flux density" },
-        // kg.m2.s-2.A-2
         H: { type: 'num', dim: { M: 1, L: 2, T: -2, A: -2 }, val: KG * M**2 / SEC**2 / AMP**2,
             desc: "henry, mutual inductance " },
 
@@ -1248,7 +1210,8 @@
       const commonMetricUnits = [
         'joule', 'N', 'Pa', 'kPa', 'W', 'kW', 'mW' ];
       const candidateUnits = filterUnits([
-        'N', ...commonUnits, ... commonMetricUnits,
+        ...commonUnits, ... commonMetricUnits,
+        'N', 'Wb',
         'in', 'ft', 'mi', 'acre',
         'tsp', 'tbsp', 'floz', 'cup', 'pint', 'quart', 'gallon',
         'lbf', 'oz', 'lb',
@@ -1295,16 +1258,31 @@
             if (leadingTerm)
               candidates = [leadingTerm];
             for (const unit of candidates) {
-              const [exp, reduced] = Dim.reduce(dim, unit.dim);
-              if (exp) {
-                let origin = unit.origin ?? 0;
-                let unitVal = Math.pow(unit.val, exp);
-                let newVal = (val-origin) / unitVal
-                let reducedExp = 0;
-                for (const measure in reduced)
-                  reducedExp += Math.abs(reduced[measure]);
-                unitDescs.push({unit, exp, newVal, reducedExp, reduced});
+              let normSquared = Dim.normSquared(dim);
+              let exp = 0, unitExp = 0;
+              for (let i = 1; i < 100; ++i) {
+                let normSquaredPos = Dim.normSquared(Dim.add(dim, unit.dim, -i));
+                let normSquaredNeg = Dim.normSquared(Dim.add(dim, unit.dim, i));
+                if (normSquaredPos < normSquared) {
+                  normSquared = normSquaredPos;
+                  exp = i;
+                } else if (normSquaredNeg < normSquared) {
+                  normSquared = normSquaredNeg;
+                  exp = -i;
+                } else {
+                  break;
+                }
               }
+              if (exp === 0)
+                  continue;
+              for (const ue of Object.values(unit.dim))
+                if (ue)
+                  unitExp += ue;
+              const reduced = Dim.add(dim, unit.dim, -exp);
+              let origin = unit.origin ?? 0;
+              let unitVal = Math.pow(unit.val, exp);   // xxx mul or div depending
+              let newVal = (val-origin) / unitVal
+              unitDescs.push({unit, exp, unitExp, newVal, normSquared, reduced});
             }
             unitDescs.sort((a,b) => {  // Note that we're sorting from best to worst
               function cmp(a,b) {
@@ -1317,10 +1295,15 @@
                   return 1;
                 }
 
-                // The lower the total exponents are, the better
-                let diff = a.reducedExp - b.reducedExp;
-                if (diff !== 0)
-                  return diff;
+                // The closer to scalar the better
+                let normDiff = a.normSquared - b.normSquared;
+                if (normDiff !== 0)
+                  return normDiff;
+
+                // Favor units that reduce the denominator
+                let expDiff = Math.sign(a.exp * a.unitExp) - Math.sign(b.exp * b.unitExp);
+                if (expDiff !== 0)
+                  return expDiff;
 
                 // Values greater than 1 beat values less than one.
                 //   + EPSILON is to catch the .999999 cases that crop up very occasionally
@@ -1329,6 +1312,7 @@
                   return -1;
                 if (bb >= 1 && aa < 1)
                   return 1;
+
                 // Values closer to 1 win
                 let va = Math.abs(Math.log(Math.abs(a.newVal)));
                 let vb = Math.abs(Math.log(Math.abs(b.newVal)));
@@ -1569,7 +1553,7 @@
         let val = parseNum(opts);
         if (val === null) {
           let word = parseWord(), sym = word && getSymbol(word);
-          if (!sym || sym.type != 'num' || !Dim.isScalar(sym.dim))
+          if (!sym || sym.type !== 'num' || !Dim.isScalar(sym.dim))
              return null;
           val = sym.val;
           if (opts?.preciceDecimal)
@@ -1597,7 +1581,7 @@
           let denom = parseNum({ noSkip: true, intOnly: true });
           if (denom !== null) {
             if (opts?.preciceDecimal) {
-              if (denom == 0) throw "Divide by zero";
+              if (denom === 0) throw "Divide by zero";
               return [ val[0] + num*val[1]/denom, val[1] ];
             }
             const q = num/denom;
