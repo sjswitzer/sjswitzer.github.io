@@ -460,8 +460,9 @@
             (which is how it will display). <i>What</i> per square foot? Anything.
             Think &ldquo;ducks&rdquo; or &ldquo;pebbles&rdquo; and you'll be on the right track.
         <p> In fact, you can type <code>640 "ducks" / mi2</code> or <code>144 "pebble"/ft2</code>.
-            (Bear in mind that "pebble" is a different unit from "pebbles".) If there's some
-            unit this tool didn't anticipate, you can define it yourself,
+            (Bear in mind that "pebble" is a different unit from "pebbles".)
+            Try <code>2 "shoes"/person * 1000 people</code>.
+            If there's some unit this tool didn't anticipate, you can define it yourself,
             <code>bogosity = "bogosity"</code>, or just use <code>"bogosity'</code> inline
             (<code>20 bogosity</code>, assuming you've defined the variable,
             or just <code>20 "bogosity'</code>).
@@ -763,6 +764,7 @@
       const BIT = 1000000, BYTE = 8*BIT;
       const DEGREE = 60*60*1000, RADIAN = 180*DEGREE/Math.PI;
       const CANDLE = 10**12;
+      const PERSON = 10**15;
       const NONCE = 10**15;  // so that nonce units stand a chance in the units reduction battle
 
       const DIGITS = "0123456789";
@@ -787,7 +789,7 @@
         mi: { type: 'num', dim: { L: 1 }, val: MI, desc: "mile", alt: ["mile", "miles"],
             reserved: true, uscu: true },
         nm: { type: 'num', dim: { L: 1 }, val: NM, desc: "nanometer" },
-        um: { type: 'num', dim: { L: 1 }, val: UM, desc: "micrometer", display: "\u00B5m" },
+        um: { type: 'num', dim: { L: 1 }, val: UM, desc: "micrometer", display: MICROSYM+"m" },
         mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter" },
         cm: { type: 'num', dim: { L: 1 }, val: CM, desc: "centimeter", reserved: true },
         m:  { type: 'num', dim: { L: 1 }, val: M, desc: "meter", reserved: true, alt: ["meter", "meters"] },
@@ -831,7 +833,7 @@
         cord : { type: 'num', dim: { L: 3 }, val: 128*FT**3, desc: "cord of wood", uscu: true, alt: ["cords"] },
 
         // Time (T)
-        us: { type: 'num', dim: { T: 1 }, val: US, desc: "microsecond", uscu: null, display: "\u00B5s" },
+        us: { type: 'num', dim: { T: 1 }, val: US, desc: "microsecond", uscu: null, display: MICROSYM+"s" },
         ms: { type: 'num', dim: { T: 1 }, val: MS, desc: "millisecond", uscu: null },
         s: { type: 'num', dim: { T: 1 }, val: SEC, desc: "second", reserved: true, uscu: null,
             alt: ["second", "seconds", "sec", "secs"] },
@@ -842,8 +844,10 @@
         // Mass (M)
         lb: { type: 'num', dim: { M: 1 }, val: LBM, desc: "pound mass", uscu: true, alt: ["lbs", "pound", "pounds"] },
         oz: { type: 'num', dim: { M: 1 }, val: LBM/16, desc: "ounce mass", uscu: true, alt: ["ounce", "ounces"]},
-        ug: { type: 'num', dim: { M: 1 }, val: UG, desc: "microgram", display: "\u00B5g" },
-        mg: { type: 'num', dim: { M: 1 }, val: MG, desc: "milligram" },
+        ug: { type: 'num', dim: { M: 1 }, val: UG, desc: "microgram", display: MICROSYM+"g",
+            alt: ["microgram", "micrograms"] },
+        mg: { type: 'num', dim: { M: 1 }, val: MG, desc: "milligram",
+            alt: ["milligram", "milligrams"]  },
         gm: { type: 'num', dim: { M: 1 }, val: GM, reserved: true, desc: "gram",
             alt: ["gram", "grams"] },
         kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, desc: "kilogram",
@@ -886,7 +890,7 @@
         A: { type: 'num', dim: { A: 1 }, val: AMP, reserved: true, desc: "ampere",
             alt: ["ampere", "amperes", "amp", "amps"]  },
         mA: { type: 'num', dim: { A: 1 }, val: MAMP, desc: "milliampere" },
-        uA: { type: 'num', dim: { A: 1 }, val: UAMP, desc: "microampere", display: "\u00B5A" },
+        uA: { type: 'num', dim: { A: 1 }, val: UAMP, desc: "microampere", display: MICROSYM+"A" },
         V: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG * M**2 / SEC**3 / AMP,
             desc: "volt" },
         kV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: 1000*KG * M**2 / SEC**3 / AMP,
@@ -894,7 +898,7 @@
         mV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG/1000 * M**2 / SEC**3 / AMP,
             desc: "millivolt" },
         uV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG/1000**2 * M**2 / SEC**3 / AMP,
-            desc: "microvolt", display: "\u00B5V" },
+            desc: "microvolt", display: MICROSYM+"V" },
         ohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: KG * M**2 / SEC**3 / AMP**2,
             desc: "ohm", display: OHMSYM },
         kohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: 1000*KG * M**2 / SEC**3 / AMP**2,
@@ -908,7 +912,7 @@
         mF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: SEC**4 * AMP**2 / KG / M**2 / 1000,
             desc: "millifarad" },
         uF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: SEC**4 * AMP**2 / KG / M**2 / 1000**2,
-            desc: "microfarad", display: "\u00B5F" },
+            desc: "microfarad", display: MICROSYM+"F" },
         nF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: SEC**4 * AMP**2 / KG / M**2 / 1000**3,
             desc: "nanofarad" },
         pF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: SEC**4 * AMP**2 / KG / M**2 / 1000**4,
@@ -925,7 +929,7 @@
         // Information (BIT)
         bit: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BIT, alt: ["bits"] },
         baud: { type: 'num', dim: { BIT: 1, T: -1 }, val: BIT/SEC },
-        kilobaud: { type: 'num', dim: { BIT: 1, T: -1 }, val: 1000*BIT/SEC, alt: "kbaud" },
+        kilobaud: { type: 'num', dim: { BIT: 1, T: -1 }, val: 1000*BIT/SEC, alt: ["kbaud"] },
         byte: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BYTE, alt: ["bytes"] },
         // I personally find this offensive, but the modern consensus is that the well-named
         // units here are powers of 10 and the stupidly-named ones are powers of 2.
@@ -971,6 +975,11 @@
         reyl: { type: 'num', dim: { M: 1, L: -2, T: -1 }, val: KG / M**2 / SEC,
             desc: "reyl, acoustic reactance" },
 
+        // Population (PERSON)
+        person: { type: 'num', dim: { PERSON: 1 }, val: PERSON, reserved: true, uscu: null,
+            alt: [ "persons", "people", "capita" ] },
+        percapita: { type: 'num', dim: { PERSON: -1 }, val: 1/PERSON, uscu: null },
+
         // Interesting constants (various)
         pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
         tau: { type: 'num', dim: {}, val: 2*Math.PI, display: TAUSYM, desc: `${TAUSYM}, or 2${PISYM}` },
@@ -996,20 +1005,15 @@
         stone: { type: 'num', dim: { M: 1 }, val: 14*LBM, uscu: true, desc: "UK stone" }, // no alt "stones"
         hundredweight: { type: 'num', dim: { M: 1 }, val: 112*LBM, uscu: true,
             desc: "UK hundredweight" },  // in the US it's 100lb, but nobody uses it so...
-        longton: { type: 'num', dim: { M: 1 }, val: 2240*LBM, uscu: true, alt: ["longtons"],
-            desc: "UK long ton" },
-        ton: { type: 'num', dim: { M: 1 }, val: 2000*LBM, uscu: true, alt: ["tons"],
-            desc: "US ton" },
-        tonne: { type: 'num', dim: { M: 1 }, val: 1000*KG, alt: ["tonnes"],
-            desc: "metric ton" },
+        longton: { type: 'num', dim: { M: 1 }, val: 2240*LBM, uscu: true, alt: ["longtons"], desc: "UK long ton" },
+        ton: { type: 'num', dim: { M: 1 }, val: 2000*LBM, uscu: true, alt: ["tons"], desc: "US ton" },
+        tonne: { type: 'num', dim: { M: 1 }, val: 1000*KG, alt: ["tonnes"], desc: "metric ton" },
         carat: { type: 'num', dim: { M: 1 }, val: 200*MG, alt: ["carats"] },
-        league: { type: 'num', dim: { L: 1 }, val: 5.556*KM, uscu: true, alt: ["leagues"],
-            desc: "nautical league" },
-        nml: { type: 'num', dim: { L: 1 }, val: NMI, uscu: true,
-            desc: "nautical mile" },
-        knot: { type: 'num', dim: { L: 1, T: -1 }, val: NMI/HR, uscu: true, alt: ["knots"],
-            desc: "nautical mile per hour" },
+        league: { type: 'num', dim: { L: 1 }, val: 5.556*KM, uscu: true, alt: ["leagues"], desc: "nautical league" },
+        nml: { type: 'num', dim: { L: 1 }, val: NMI, uscu: true, desc: "nautical mile" },
+        knot: { type: 'num', dim: { L: 1, T: -1 }, val: NMI/HR, uscu: true, alt: ["knots"], desc: "nautical mile per hour" },
         dozen: { type: 'num', dim: {}, val: 12 },
+        bakersdozen: { type: 'num', dim: {}, val: 13, display: null },
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
@@ -1116,9 +1120,9 @@
       for (const [name, sym] of Object.entries(systemSymbols)) {
         if (sym.alt)
           for (const alt of sym.alt)
-            systemSymbols[alt] = { ...sym, altOf: name, alt: undefined };
+            systemSymbols[alt] = { ...sym, altOf: name, alt: undefined, reserved: false };
         if (sym.display)
-        systemSymbols[sym.display] = { ...sym, altOf: name, display: undefined };
+        systemSymbols[sym.display] = { ...sym, altOf: name, display: undefined, reserved: false };
       }
 
       function reduceParamVals(name, accum, params, fn) {  // fn => (accum, val) => val
@@ -1216,7 +1220,7 @@
         'KB',  'MB',  'GB',  'TB',  'PB',  'EB',
         // seconds come after electrical and information units so that a coulomb
         // is an "A s", not an "s A"
-        's', 'K',
+        's', 'K', 'person',
         'sr', 'radian', 'cd', 'lx', 'lm' ];
       const commonMetricUnits = [
         'joule', 'N', 'Pa', 'kPa', 'W', 'kW', 'mW' ];
@@ -1645,7 +1649,7 @@
         if (sym)
           return sym;
         const display = `"${name}"`;
-        sym = { sym: display, type: 'num', val: NONCE, dim: {}, display };
+        sym = { sym: display, type: 'num', val: NONCE, dim: {}, display, uscu: null };
         sym.dim['NONCE-'+name] = 1;
         nonceUnits[name] = sym;
         return sym;
@@ -2481,9 +2485,21 @@
         for (const [name, sym] of Object.entries(systemSymbols)) {
           if (sym.type !== 'num' || sym.altOf || sym.display === null)
             continue;
-          let desc = sym.desc ?? name;
+          let desc = sym.desc ?? sym.display ?? name;
+          let alts = sym.alt ?? [];
+          if (sym.display)
+            alts.unshift(sym.display);
+          alts = alts.filter(name => name !== desc);
           if (sym.reserved)
             desc += " <i>(reserved)</i>";
+          if (alts.length > 0) {
+            desc += ", also: ";
+            let comma = "";
+            for (const alt of alts) {
+              desc += comma + alt;
+              comma = ", ";
+            }
+          }
           html += `<tr><td>${name}<td>/${name}<td>${desc}`;
         }
         document.getElementById('builtin-symbols').innerHTML = html;
