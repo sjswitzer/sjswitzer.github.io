@@ -462,7 +462,11 @@
             (which is how it will display). <i>What</i> per square foot? Anything.
             Think &ldquo;ducks&rdquo; or &ldquo;pebbles&rdquo; and you'll be on the right track.
         <p> In fact, you can type <code>640 'ducks' / mi2</code> or <code>144 'pebble'/ft2</code>.
-            (Bear in mind that 'pebble' is a different nonce unit from 'pebbles'.)
+            (Bear in mind that 'pebble' is a different nonce unit from 'pebbles'.) If there's some
+            unit this tool didn't anticipate, you can define it yourself,
+            <code>bogosity = 'bogosity'</code>, or just use <code>'bogosity'</code> inline
+            (<code>20 bogosity</code>, assuming you've defined the variable,
+            or just <code>20 'bogosity'</code>).
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
             This is to prevent accidentally typing <code>12'3'</code> when you really
@@ -762,6 +766,15 @@
       const DEGREE = 60*60*1000, RADIAN = 180*DEGREE/Math.PI;
       const CANDLE = 1000000;
 
+      const DIGITS = "0123456789";
+      const MICROSYM = "\u00B5", OHMSYM = "\u2126", PISYM = "\uD835\uDF0B", TAUSYM = "\uD835\uDF0F";
+      const ALPHA =
+        "abcdefghijklmnopqrstuvwxyz" +
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + 
+        MICROSYM + OHMSYM + TAUSYM + PISYM;
+      const ALPHANUM = ALPHA + DIGITS;
+
+
       let unitsSystem = 'mks';  // can also be 'cgs'
 
       const systemSymbols = {
@@ -884,9 +897,9 @@
         uV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG/1000**2 * M**2 / SEC**3 / AMP,
             desc: "microvolt", display: "\u00B5V" },
         ohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: KG * M**2 / SEC**3 / AMP**2,
-            desc: "ohm", display: "\u03A9" },
+            desc: "ohm", display: OHMSYM },
         kohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: 1000*KG * M**2 / SEC**3 / AMP**2,
-            desc: "kiloohm", display: "k\u03A9" },  // sp?
+            desc: "kiloohm", display: "k" + OHMSYM },  // sp?
         S: { type: 'num', dim: { M: -1, L: -2, T: 3, A: 2 }, val: SEC**3 * AMP**2 / KG / M**2,
             desc: "siemens" },
         C: { type: 'num', dim: { T: 1, A: 1 }, val: SEC*AMP, desc: "coulomb" },
@@ -960,8 +973,8 @@
             desc: "reyl, acoustic reactance" },
 
         // Interesting constants (various)
-        pi: { type: 'num', dim: {}, val: Math.PI },
-        tau: { type: 'num', dim: {}, val: 2*Math.PI, desc: "2 \u00D7 pi" },  // :)
+        pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
+        tau: { type: 'num', dim: {}, val: 2*Math.PI, display: TAUSYM, desc: `${TAUSYM}, or 2${PISYM}` },
         mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number" },
         boltz: { type: 'num', dim: { L: 2, M: 1, T:-2, Q: -1 }, val: 1.380649e-23*KG*M*M/(SEC*SEC)/KELVIN,
             desc: "Boltzmann constant" },
@@ -1459,11 +1472,6 @@
 
       let parseStr = "", initialParseStr = "";
       let parsePos = 0, parseFurthest = 0;
-      const DIGITS = "0123456789";
-      const ALPHA =
-        "abcdefghijklmnopqrstuvwxyz" +
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "\u00B5\u03A9";  // include micro & omega
-      const ALPHANUM = ALPHA + DIGITS;
       const NOSKIP = { noSkip: true };
 
       function peekc() {
@@ -1629,8 +1637,8 @@
         if (sym)
           return sym;
         const display = `'${name}'`;
-        sym = { sym: display, type: 'num', val: 1, dim: {}, userMeasure: true, display };
-        sym.dim['UM-'+name] = 1;
+        sym = { sym: display, type: 'num', val: 1, dim: {}, display };
+        sym.dim['NONCE-'+name] = 1;
         nonceUnits[name] = sym;
         return sym;
       }
@@ -2140,7 +2148,7 @@
         let sym = val.sym;
         if (systemSymbols[sym]?.reserved)
           return;
-        val = { ...val, defined: undefined, desc: undefined, userMeasure: undefined,
+        val = { ...val, defined: undefined, desc: undefined,
                 display: undefined, reserved: undefined, alt: undefined };
         userSymbols[sym] = val;
       }
