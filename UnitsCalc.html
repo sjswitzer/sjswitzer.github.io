@@ -1249,7 +1249,7 @@
               allowedCandidateUnits = candidateUnitsCGS;
           }
           allowedCandidateUnits = [ ...allowedCandidateUnits ];
-          for (const sym of Object.values(userUnits))
+          for (const sym of Object.values(nonceUnits))
             allowedCandidateUnits.push(sym);
           // Find best units to express the value in
           let iterations = 0;
@@ -1622,17 +1622,44 @@
         return val.val;
       }
 
-      const userUnits = {};
+      const nonceUnits = {};
 
-      function getUserUnit(name) {
-        let sym = userUnits[name];
+      function getNonceUnit(name) {
+        let sym = nonceUnits[name];
         if (sym)
           return sym;
         const display = `'${name}'`;
         sym = { sym: display, type: 'num', val: 1, dim: {}, userMeasure: true, display };
         sym.dim['UM-'+name] = 1;
-        userUnits[name] = sym;
+        nonceUnits[name] = sym;
         return sym;
+      }
+
+      // Parse a nonce unit
+      //   '"' word '"' -- both kinds of quotes
+
+      function parseNonceUnit(opts) {
+        const backtrack = parsePos;
+        if (!opts?.noSkip)
+          skipSpaces();
+        let qchar = peekc();
+        if (qchar === '"' || qchar === "'") {
+          if (take(qchar, NOSKIP)) {
+            let word = parseWord(NOSKIP);
+            if (!word || !take(qchar, NOSKIP))
+              throw new ChattyError("Bad user unit");
+            let sym = getNonceUnit(word);
+            let exp = parseNum({ noSkip: true, intOnly: true });
+            if (exp !== null) {
+              if (exp < 2)
+                throw "Bad units exponent";
+              sym = { ... sym, dim: Dim.mul(sym.dim, exp), /* val is always 1 */ };
+            }
+            return sym;
+          }
+        }
+        parsePos = backtrack;
+        return null;
       }
 
       // Parse a value, which is either a plain number (n) or a sequesnce of
@@ -1683,22 +1710,8 @@
             while (true) {
               const backtrack2 = parsePos;
               let hasSlash = take('/');
-              let sym;
-              qchar = peekc();
-              if (!(qchar === '"' || qchar === "'"))
-                qchar = undefined;
-              if (qchar && take(qchar, { noSkip: hasSlash })) {
-                let word = parseWord(NOSKIP);
-                if (!word || !take(qchar, NOSKIP))
-                  throw new ChattyError("Bad user unit");
-                sym = getUserUnit(word);
-                let exp = parseNum({ noSkip: true, intOnly: true });
-                if (exp !== null) {
-                  if (exp < 2)
-                    throw "Bad units exponent";
-                  sym = { ... sym, dim: Dim.mul(sym.dim, exp), /* val is always 1 */ }
-                }
-              } else {
+              let sym = parseNonceUnit({ noSkip: hasSlash });
+              if (!sym) {
                 let word = parseWord({ ...opts, noSkip: hasSlash });
                 if (!word) {
                   parsePos = backtrack2;
@@ -1779,6 +1792,7 @@
       //    term [ '(' [ expr [ ',' expr ]* ]? ')' ]+
       //    value
       //    word
+      //    nonce-unit
 
       function parseTerm(opts) {
         const backtrack = parsePos;
@@ -1853,6 +1867,8 @@
                 val = val1;
             }
           }
+          if (val === null)
+            val = parseNonceUnit(opts);
         }
         if (val === null) {
           parsePos = backtrack;
