@@ -17,6 +17,8 @@
     <title>Units Calculator</title>
     <base target="_blank"> <!-- all links open in a new tab/page -->
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="apple-touch-icon" sizes="128x128" href="icon.png">
+    
     <style type="text/css">
       body {
         padding: 4px 12px;
@@ -26,9 +28,13 @@
       }
 
       body, table th, table td {
-        xxxfont: 110% caption, sans-serif;
-        font: 200% caption, sans-serif;
+        font: 110% caption, sans-serif;
       }
+      @media (hover: none) {
+        body, table th, table td {
+          font: 150% caption, sans-serif !important;
+        }
+     }
 
       body:not([data-presentation-mode="legacy"]) .legacy {
         display: none;
@@ -574,18 +580,26 @@
               run this from the web</a>.
         <p> A-B-C. A-Always. B-Be. C-Coding.
         <p> Copyright &copy; 2021, Stan Switzer
-        <div style="float: left; margin: 0em .5em 4.5em 0em">
-          <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
-            <img alt="Creative Commons License" style="border-width:0"
-              src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png">
-          </a>
+        <p> Icon made by <a href="https://www.freepik.com" title="Freepik">Freepik</a>
+            from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>
+        <div class="layout-row">
+          <div>
+            <div>
+              <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+                <img alt="Creative Commons License" style="border-width:0"
+                  src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png">
+              </a>
+            </div>
+          </div>
+          <div>
+            <p> This work is licensed under a
+              <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+                Creative Commons Attribution-ShareAlike 4.0 International License
+              </a>.
+            <br> Find source on
+              <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">GitHub</a>
+          </div>
         </div>
-        <p> This work is licensed under a
-          <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
-            Creative Commons Attribution-ShareAlike 4.0 International License
-          </a>.
-        <br> Find source on
-          <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">GitHub</a>
       </div>
     </div>
     <div class="help" id="help-builtin">
