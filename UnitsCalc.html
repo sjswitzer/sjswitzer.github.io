@@ -41,6 +41,12 @@
         width: 35em;
       }
 
+      @media (hover: none) {  /* not the best test, but use full width on mobile */
+        body:not([data-presentation-mode="legacy"]) > .layout-column {
+          width: 100% !important;
+        }
+      }
+
       body:not([data-protocol="file:"]) .local-only {
         display: none;
       }
@@ -156,14 +162,14 @@
         margin-left: 1em;
       }
       /* Testing affordance; example text can be stuffed into the expr box */
-      div.help code:hover,
+      div.help code:hover, div.help .stuff-text:hover,
       div.help table.stuff.example tr td:first-child:hover,
       div.help table.stuff.example2 tr td:nth-child(1):hover,
       div.help table.stuff.example2 tr td:nth-child(2):hover {
         cursor: pointer;
         color: #0000dd;
         text-decoration: underline;
-        --click-action: stuff-text
+        --click-action: stuff-text;
       }
 
       /*
@@ -401,51 +407,9 @@
           </ul>
         <h3> Units </h3>
         <p> Units are either the notations <code>'</code> and <code>"</code> for
-            feet and inches or these named units:
-        </p>
-        <table class="stuff example">
-          <tr>
-            <th> Unit
-            <th> Description
-          <tr>
-            <td> in
-            <td> Inch
-          <tr>
-            <td> ft
-            <td> Foot
-          <tr>
-            <td> yd
-            <td> Yard
-          <tr>
-            <td> mi
-            <td> Mile
-          <tr>
-            <td> acre
-            <td> Acre
-          <tr>
-            <td> mm
-            <td> Millimeter
-          <tr>
-            <td> cm
-            <td> Centimeter
-          <tr>
-            <td> m
-            <td> Meter
-          <tr>
-            <td> km
-            <td> Kilometer
-          <tr>
-            <td> hectare
-            <td> Hectare, or <code>100m &times; 100m</code>
-          <tr>
-            <td> litre
-            <td> A volume of <code>10cm &times; 10 cm &times; 10 cm</code>.
-        </table>
-        <p> Other less common units are also defined.
-            To see more, you can either
-            read this <span class="linklike" onclick="showHelp('help-builtin')">summary</span>
-            or look at
-            <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">the code</a>.
+            feet and inches or a named unit.
+            The  <span class="linklike" onclick="showHelp('help-builtin')">full list</span>
+            of predefined units and constants is too long to list here.
         <p> Any <i>variable</i> you define with a unit can be used as
             a unit itself.
             For example, if you enter <code>cubit = 1 1/2'</code>, you can then use
@@ -631,7 +595,6 @@
       <div>
         <h2> Built-In Constants and Units </h2>
         <p> This table is generated automatically from internal system data.
-            It may not be pretty, but at least it's comprehensive.
         <p> Symbols that are reserved (that is, cannot be redefined) are noted.
         <p>
         <table class="stuff example2">
@@ -787,10 +750,10 @@
             alt: ["yard", "yards"] },
         mi: { type: 'num', dim: { L: 1 }, val: MI, desc: "mile", alt: ["mile", "miles"],
             reserved: true, uscu: true },
-        nm: { type: 'num', dim: { L: 1 }, val: NM, desc: "nanometer" },
-        um: { type: 'num', dim: { L: 1 }, val: UM, desc: "micrometer", display: MICROSYM+"m" },
-        mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter" },
-        cm: { type: 'num', dim: { L: 1 }, val: CM, desc: "centimeter", reserved: true },
+        nm: { type: 'num', dim: { L: 1 }, val: NM, desc: "nanometer", alt: ["nanometer"] },
+        um: { type: 'num', dim: { L: 1 }, val: UM, desc: "micrometer", display: MICROSYM+"m", alt: ["micrometer"] },
+        mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter", alt: ["millimeter"] },
+        cm: { type: 'num', dim: { L: 1 }, val: CM, desc: "centimeter", reserved: true, alt: ["centimeter"] },
         m:  { type: 'num', dim: { L: 1 }, val: M, desc: "meter", reserved: true, alt: ["meter", "meters"] },
         km: { type: 'num', dim: { L: 1 }, val: KM, desc: "kilometer",
             alt: ["kilometer", "kilometers"] },
@@ -826,19 +789,22 @@
         tsp : { type: 'num', dim: { L: 3 }, val: GAL/768, desc: "teaspoon", uscu: true,
             alt: ["tsps", "teaspoon", "teaspoons"] },
         liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3, alt: ["liters", "litre", "litres"] },
-        ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, desc: "milliliter" },
+        ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, desc: "milliliter", alt: ["milliliter", "millilitre", "milliliters", "millilitres"] },
         // (dry)
         cc : { type: 'num', dim: { L: 3 }, val: CM**3, desc: "cubic centimeter" },
         cord : { type: 'num', dim: { L: 3 }, val: 128*FT**3, desc: "cord of wood", uscu: true, alt: ["cords"] },
 
         // Time (T)
-        us: { type: 'num', dim: { T: 1 }, val: US, desc: "microsecond", uscu: null, display: MICROSYM+"s" },
-        ms: { type: 'num', dim: { T: 1 }, val: MS, desc: "millisecond", uscu: null },
+        us: { type: 'num', dim: { T: 1 }, val: US, desc: "microsecond", uscu: null, display: MICROSYM+"s",
+           alt: ["microsecond", "microseconds"] },
+        ms: { type: 'num', dim: { T: 1 }, val: MS, desc: "millisecond", uscu: null,
+           alt: ["millisecond", "milliseconds"] },
         s: { type: 'num', dim: { T: 1 }, val: SEC, desc: "second", reserved: true, uscu: null,
             alt: ["second", "seconds", "sec", "secs"] },
         min: { type: 'num', dim: { T: 1 }, val: MIN, desc: "minute", uscu: null,
             alt: ["minute", "minutes", "mins"] },
         hr: { type: 'num', dim: { T: 1 }, val: HR, desc: "hour", uscu: null, alt: ["hour", "hours", "hrs"] },
+        hz: { type: 'num', dim: { T: -1 }, val: 1/SEC, desc: "second", desc: "hertz", uscu: null, alt: ["hertz"] },
 
         // Mass (M)
         lb: { type: 'num', dim: { M: 1 }, val: LBM, desc: "pound mass", uscu: true, alt: ["lbs", "pound", "pounds"] },
@@ -851,7 +817,6 @@
             alt: ["gram", "grams"] },
         kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, desc: "kilogram",
             alt: ["kilogram", "kilograms"] },
-        dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27*KG },
 
         // Force (L M T^-2)
         N: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC), desc: "newton",
@@ -868,14 +833,15 @@
             alt: ["watt", "watts"] },
         kW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 1000*KG*M*M/(SEC*SEC*SEC), desc: "kilowatt",
             alt: ["kilowatt", "killowatts"] },
-        mW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: KG*M*M/1000/(SEC*SEC*SEC), desc: "milliwatt" },
+        mW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: KG*M*M/1000/(SEC*SEC*SEC), desc: "milliwatt",
+            alt: ["milliwatt", "milliwatts"] },
         horsepower: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 550*FT*LBF/SEC, desc: "mechanical horsepower", uscu: true },
 
         // Pressure (L^-1 M T^-2)
         Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: KG/(M*SEC*SEC), desc: "pascal",
             alt: ["pascal", "pascals"] },
         kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 1000*KG/(M*SEC*SEC),
-            desc: "kilopascal" },
+            desc: "kilopascal", alt: ["kilopascal", "kilopascals"] },
         PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: LBF/(IN*IN),
             desc: "pounds per square inch", uscu: true },
         atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 101325*KG/(M*SEC*SEC),
@@ -888,20 +854,21 @@
         //   http://www.ebyte.it/library/educards/sidimensions/SiDimensionsAlfaList.html
         A: { type: 'num', dim: { A: 1 }, val: AMP, reserved: true, desc: "ampere",
             alt: ["ampere", "amperes", "amp", "amps"]  },
-        mA: { type: 'num', dim: { A: 1 }, val: MAMP, desc: "milliampere" },
-        uA: { type: 'num', dim: { A: 1 }, val: UAMP, desc: "microampere", display: MICROSYM+"A" },
+        mA: { type: 'num', dim: { A: 1 }, val: MAMP, desc: "milliampere", alt: ["milliampere", "milliamperes"] },
+        uA: { type: 'num', dim: { A: 1 }, val: UAMP, desc: "microampere", display: MICROSYM+"A",
+            alt: ["microampere", "microamperes"] },
         V: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG * M**2 / SEC**3 / AMP,
-            desc: "volt" },
+            desc: "volt", alt: ["volt", "volts"] },
         kV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: 1000*KG * M**2 / SEC**3 / AMP,
-            desc: "kilovolt" },
+            desc: "kilovolt", alt: ["kilovolt", "kilovolts"] },
         mV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG/1000 * M**2 / SEC**3 / AMP,
-            desc: "millivolt" },
+            desc: "millivolt", alt: ["millivolt", "millivolts"] },
         uV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG/1000**2 * M**2 / SEC**3 / AMP,
-            desc: "microvolt", display: MICROSYM+"V" },
+            desc: "microvolt", display: MICROSYM+"V", alt: ["microvolt", "microvolts"] },
         ohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: KG * M**2 / SEC**3 / AMP**2,
-            desc: "ohm", display: OHMSYM },
+            desc: "ohm", display: OHMSYM, alt: ["ohms"] },
         kohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: 1000*KG * M**2 / SEC**3 / AMP**2,
-            desc: "kiloohm", display: "k" + OHMSYM },  // sp?
+            desc: "kiloohm", display: "k" + OHMSYM, alt: ["kiloohm", "kiloohms", "kilohm", "kilohms"] },
         S: { type: 'num', dim: { M: -1, L: -2, T: 3, A: 2 }, val: SEC**3 * AMP**2 / KG / M**2,
             desc: "siemens" },
         C: { type: 'num', dim: { T: 1, A: 1 }, val: SEC*AMP, desc: "coulomb" },
@@ -979,16 +946,17 @@
             alt: [ "persons", "people", "capita" ] },
         percapita: { type: 'num', dim: { PERSON: -1 }, val: 1/PERSON, uscu: null },
 
-        // Interesting constants (various)
+        // Interesting constants and units (various)
         pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
         tau: { type: 'num', dim: {}, val: 2*Math.PI, display: TAUSYM, desc: `${TAUSYM}, or 2${PISYM}` },
         mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number" },
         boltz: { type: 'num', dim: { L: 2, M: 1, T:-2, Q: -1 }, val: 1.380649e-23*KG*M*M/(SEC*SEC)/KELVIN,
             desc: "Boltzmann constant" },
+        dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27*KG },
         g: { type: 'num', dim: { L: 1, T:-2 }, val: 9.80665*M/(SEC*SEC),
-             desc: "standard gravity (earth)"},
+            desc: "standard gravity (earth)"},
         G: { type: 'num', dim: { L: 3, M: -1, T:-2 }, val: 6.6743e-11*M*M*M/(KG*SEC*SEC),
-             desc: "universal gravitational constant" },
+            desc: "universal gravitational constant" },
         c: { type: 'num', dim: { L: 1, T:-1 }, val: 299792458*M/SEC, desc: "speed of light"},
 
         // Obscure/whimsical units
@@ -999,7 +967,6 @@
         day: { type: 'num', dim: { T: 1 }, val: 24*HR, uscu: null, alt: ["days"] },
         week: { type: 'num', dim: { T: 1 }, val: 24*7*HR, desc: "7 days", uscu: null, alt: ["weeks"] },
         fortnight: { type: 'num', dim: { T: 1 }, val: 24*14*HR, desc: "2 weeks", uscu: null, alt: ["fortnights"] },
-        hz: { type: 'num', dim: { T: -1 }, val: 1/SEC, desc: "second", desc: "hertz", uscu: null, alt: ["hertz"] },
         grain: { type: 'num', dim: { M: 1 }, val: LBM/7000, uscu: true },
         stone: { type: 'num', dim: { M: 1 }, val: 14*LBM, uscu: true, desc: "UK stone" }, // no alt "stones"
         hundredweight: { type: 'num', dim: { M: 1 }, val: 112*LBM, uscu: true,
@@ -2488,14 +2455,17 @@
           let alts = sym.alt ?? [];
           if (sym.display)
             alts.unshift(sym.display);
+          let unfilteredAlts = alts;
           alts = alts.filter(name => name !== desc);
+          if (desc === name || unfilteredAlts.includes(desc))
+            desc = `<span class="stuff-text">${desc}</span>`;
           if (sym.reserved)
             desc += " <i>(reserved)</i>";
           if (alts.length > 0) {
             desc += ", also: ";
             let comma = "";
             for (const alt of alts) {
-              desc += comma + alt;
+              desc += comma + `<span class="stuff-text">${alt}</span>`;
               comma = ", ";
             }
           }
