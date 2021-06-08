@@ -984,9 +984,6 @@
              desc: "universal gravitational constant" },
         c: { type: 'num', dim: { L: 1, T:-1 }, val: 299792458*M/SEC, desc: "speed of light"},
 
-        // Anything!
-        thing: { type: 'num', dim: { THING: 1 }, val:1, alt: ["things"], display: null },
-
         // Obscure/whimsical units
         link: { type: 'num', dim: { L: 1 }, val: 66*FT/100, desc: "surveyor's link", uscu: true, alt: ["links"] },
         rod: { type: 'num', dim: { L: 1 }, val: 66*FT/4, desc: "surveyor's rod", uscu: true, alt: ["rods"] },
@@ -1217,7 +1214,7 @@
         'A', 'mA', 'uA', 'V', 'kV', 'mV','uV', 'Wb',
         'ohm', 'kohm', 'F', 'mF', 'uF', 'nF', 'pF', 
         'bit', 'byte', 'baud',
-        'KB',  'MB',  'GB',  'TB',  'PB',  'EB', 'thing',
+        'KB',  'MB',  'GB',  'TB',  'PB',  'EB',
         // seconds come after electrical and information units so that a coulomb
         // is an "A s", not an "s A"
         's', 'K',
@@ -1402,9 +1399,10 @@
         let absVal = Math.abs(val);
         if (absVal > 0 && absVal < 1) {
           // We want to display things like 0.0000001 when possible, but not if
-          // signigicant digits are hanging out behind the truncation
+          // signigicant digits are hanging out behind the truncation.
+          // The 0.1 test is to avoid getting a lot of 0.999999 values that should be 1
           let val2 = absVal * 10**DIGITS_PRECISION;
-          if (Math.trunc(val2) === 0 || val2 - Math.trunc(val2) > EPSILON)
+          if (absVal < 0.1 && (Math.trunc(val2) === 0 || val2 - Math.trunc(val2) > EPSILON))
             return String(val) + unitsStr + invUnitsStr + descStr;
         }
         // Avoids display of nonsense like 2.5000...001 while
