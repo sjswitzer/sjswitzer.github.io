@@ -460,7 +460,9 @@
             For instance, <code>60 /ft2</code> means 60 per square foot.
             <code>144/ft2</code> means 144 per square foot or, equivalently, 1 per square inch
             (which is how it will display). <i>What</i> per square foot? Anything.
-            Think &ldquo;ducks&rdquo; and you'll be on the right track.
+            Think &ldquo;ducks&rdquo; or &ldquo;pebbles&rdquo; and you'll be on the right track.
+        <p> In fact, you can type <code>640 'ducks' / mi2</code> or <code>144 'pebble'/ft2</code>.
+            (Bear in mind that 'pebble' is a different nonce unit from 'pebbles'.)
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
             This is to prevent accidentally typing <code>12'3'</code> when you really
@@ -1152,7 +1154,7 @@
             let val2 = getSymbol(symPrefix);
             let exp = Number(symSuffix);
             if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim &&!val2.origin && exp > 1) {
-              let desc = val2.desc && `${val2.desc ?? match[1]}^${String(exp)}`;
+              let desc = val2.desc && `${val2.desc ?? symPrefix}^${String(exp)}`;
               return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(numVal(val2), exp),
                 desc, reserved: val2.reserved, uscu: val2.uscu };
             }
@@ -1246,6 +1248,9 @@
             else if (unitsSystem === 'cgs')
               allowedCandidateUnits = candidateUnitsCGS;
           }
+          allowedCandidateUnits = [ ...allowedCandidateUnits ];
+          for (const sym of Object.values(userUnits))
+            allowedCandidateUnits.push(sym);
           // Find best units to express the value in
           let iterations = 0;
           while (!Dim.isScalar(dim)) {
@@ -1617,6 +1622,19 @@
         return val.val;
       }
 
+      const userUnits = {};
+
+      function getUserUnit(name) {
+        let sym = userUnits[name];
+        if (sym)
+          return sym;
+        const display = `'${name}'`;
+        sym = { sym: display, type: 'num', val: 1, dim: {}, userMeasure: true, display };
+        sym.dim['UM-'+name] = 1;
+        userUnits[name] = sym;
+        return sym;
+      }
+
       // Parse a value, which is either a plain number (n) or a sequesnce of
       // number-fractions (nf) each followed by a unit:
       //    n
@@ -1641,14 +1659,14 @@
             break;
           let chunkDim = {};
           let gotUnit = false;
-          if (take("'")) {
+          if (take("'") && !ALPHA.includes(peekc())) {
             if (FT >= lastUnitVal) throw "Implausible units";
             lastUnitVal = FT;
             chunkDim.L = 1;
             chunkVal = [ chunkVal[0]*FT, chunkVal[1] ];
             uscu = true;
             gotUnit = true;
-          } else if (take('"')) {
+          } else if (take('"') && !ALPHA.includes(peekc())) {
             if (IN >= lastUnitVal) throw "Implausible units";
             lastUnitVal = 1;
             chunkDim.L = 1;
@@ -1656,18 +1674,40 @@
             uscu = true;
             gotUnit = true;
           } else {
+            let qchar = parseStr.charAt(parsePos-1); // This is SUCH a hack
+            if (qchar === '"' || qchar === "'")
+              parsePos -= 1;
+            if (parseStr.charAt(parsePos-1) === '"') 
+              parsePos -= 1;
             // system and user-defined units
             while (true) {
               const backtrack2 = parsePos;
               let hasSlash = take('/');
-              let word = parseWord({ ...opts, noSkip: hasSlash });
-              if (!word) {
-                parsePos = backtrack2;
-                break;
+              let sym;
+              qchar = peekc();
+              if (!(qchar === '"' || qchar === "'"))
+                qchar = undefined;
+              if (qchar && take(qchar, { noSkip: hasSlash })) {
+                let word = parseWord(NOSKIP);
+                if (!word || !take(qchar, NOSKIP))
+                  throw new ChattyError("Bad user unit");
+                sym = getUserUnit(word);
+                let exp = parseNum({ noSkip: true, intOnly: true });
+                if (exp !== null) {
+                  if (exp < 2)
+                    throw "Bad units exponent";
+                  sym = { ... sym, dim: Dim.mul(sym.dim, exp), /* val is always 1 */ }
+                }
+              } else {
+                let word = parseWord({ ...opts, noSkip: hasSlash });
+                if (!word) {
+                  parsePos = backtrack2;
+                  break;
+                }
+                sym = getSymbol(word);
+                if (!sym)
+                  throw new ChattyError(`Unknown unit: "${word}"`);
               }
-              const sym = getSymbol(word);
-              if (!sym)
-                throw new ChattyError(`Unknown unit: "${word}"`);
               if (sym.origin) {
                 if (origin)
                   origin += sym.origin;
@@ -2080,6 +2120,15 @@
         return val;
       }
 
+      function setUserSymbol(val) {
+        let sym = val.sym;
+        if (systemSymbols[sym]?.reserved)
+          return;
+        val = { ...val, defined: undefined, desc: undefined, userMeasure: undefined,
+                display: undefined, reserved: undefined, alt: undefined };
+        userSymbols[sym] = val;
+      }
+
       function updateParse(userHitEnter) {
         clearFields();
         try {
@@ -2095,9 +2144,7 @@
                 throw `Cannot redefine reserved symbol ${name}`;
               }
               showAssignResult(val);
-              val = { ...val,
-                  defined: undefined, desc: undefined, display: undefined, reserved: undefined };         // copy, because we're about to modify it
-              userSymbols[sym] = val;
+              setUserSymbol(val);
               showUserSymbols();
             } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.leadingTerms) {
               showFeetInchesResult(numVal(val));
@@ -2179,9 +2226,7 @@
         if (val.type === 'num') {
           if (opts?.html)
             return `${escapeHTML(val.sym)} = ${val2str(val, opts)}`;
-          if (opts?.html)
-            return escapeHTML(str);
-          return escapeHTML(`${val.sym} = ${val2str(val, opts)}`);
+          return `${val.sym} = ${val2str(val, opts)}`;
         }
         if (val.type === 'fn') {
           let str = `${val.sym}(${val.params.join(", ")}) = ${val.body}`;
@@ -2324,13 +2369,8 @@
           try {
             let val = parseInputStatement(def);
             skipSpaces();
-            if (val !== null && !peekc()) { // nothing left over at the end
-              let sym = val.sym;
-              if (systemSymbols[sym]?.reserved)
-                next;
-              delete val.defined;
-              userSymbols[sym] = val;
-            }
+            if (val !== null && !peekc()) // nothing left over at the end
+              setUserSymbol(val);
           }
           catch (e) {
           }
