@@ -387,7 +387,7 @@
             <td> 1/4 mi2 / acres
             <td> The number of acres in a quarter of a square mile
         </table>
-        <p> Just for fun, try <code>furlongs/fortnight</code> or <code>gallon/cup</code>.
+        <p> Just for fun, try <code>furlongs/fortnight</code>, <code>1200 baud</code> or <code>gallon/cup</code>.
         <h2> Terms </h2>
         <p> Expressions are built up out of <i>terms</i> which are either
           <ul>
@@ -1628,6 +1628,19 @@
       const nonceUnits = {};
 
       function getNonceUnit(name) {
+        // It's preferable to write 'duck'2 to 'duck2' but we'll allow it anyway.
+        let pos = name.length;
+        while (pos > 1 && DIGITS.includes(name.charAt(pos-1)))
+          pos -= 1;
+        if (pos < name.length) {
+          const symPrefix = name.substr(0, pos);
+          const symSuffix = name.substr(pos);
+          let val = getNonceUnit(symPrefix);
+          let exp = Number(symSuffix);
+          if (exp < 2)
+            throw "Bad units exponent";
+          return { ...val, dim: Dim.mul(val.dim, exp), val: Math.pow(numVal(val), exp) };
+        }
         let sym = nonceUnits[name];
         if (sym)
           return sym;
