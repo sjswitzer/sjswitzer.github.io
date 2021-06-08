@@ -928,7 +928,7 @@
         // Information (BIT)
         bit: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BIT, alt: ["bits"] },
         baud: { type: 'num', dim: { BIT: 1, T: -1 }, val: BIT/SEC },
-        kbaud: { type: 'num', dim: { BIT: 1, T: -1 }, val: 1000*BIT/SEC, desc: "kilobaud" },
+        kilobaud: { type: 'num', dim: { BIT: 1, T: -1 }, val: 1000*BIT/SEC, alt: "kbaud" },
         byte: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BYTE, alt: ["bytes"] },
         // I personally find this offensive, but the modern consensus is that the well-named
         // units here are powers of 10 and the stupidly-named ones are powers of 2.
