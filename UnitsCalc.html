@@ -427,9 +427,7 @@
             (Bear in mind that "pebble" is a different unit from "pebbles".)
             Try <code>2 "shoes"/person * 1000 people</code>.
             If there's some unit this tool didn't anticipate, you can define it yourself,
-            <code>bogosity = "bogosity"</code>, or just use <code>"bogosity"</code> inline
-            (<code>20 bogosity</code>, assuming you've defined the variable,
-            or just <code>20 "bogosity"</code>).
+            <code>bogosity = "bogosity"</code> and use it as an ordinary unit such as <code>20 bogosity</code>.
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
             This is to prevent accidentally typing <code>12'3'</code> when you really
@@ -727,8 +725,8 @@
       const BIT = 1000000, BYTE = 8*BIT;
       const DEGREE = 60*60*1000, RADIAN = 180*DEGREE/Math.PI;
       const CANDLE = 10**12;
-      const PERSON = 10**15;
-      const NONCE = 10**15;  // so that nonce units stand a chance in the units reduction battle
+      const PERSON = 1000000;
+      const NONCE = 1000000;
 
       const DIGITS = "0123456789";
       const MICROSYM = "\u00B5", OHMSYM = "\u2126", PISYM = "\uD835\uDF0B", TAUSYM = "\uD835\uDF0F";
@@ -916,7 +914,7 @@
             desc: "reyl, acoustic reactance" },
 
         // Population (PERSON)
-        person: { type: 'num', dim: { PERSON: 1 }, val: PERSON, reserved: true, uscu: null,
+        person: { type: 'num', dim: { PERSON: 1 }, val: PERSON, reserved: true, uscu: null, favored: 1,
             desc: "person", alt: [ "persons", "people", "capita" ] },
         percapita: { type: 'num', dim: { PERSON: -1 }, val: 1/PERSON, uscu: null },
 
@@ -1255,20 +1253,25 @@
                   return 1;
                 }
 
+                // Favored units
+                let diff = (b.unit.favored ?? 0) - (a.unit.favored ?? 0);
+                if (diff !== 0)
+                  return diff;
+
                 // The fewer independend dimensions remaining, the better
-                let dimDiff = a.reducedNDims - b.reducedNDims;
-                if (dimDiff !== 0)
-                  return dimDiff;
+                diff = a.reducedNDims - b.reducedNDims;
+                if (diff !== 0)
+                  return diff;
 
                 // The fewer dimensions in the reducer, the better
-                dimDiff = a.reducerNDims - b.reducerNDims;
-                if (dimDiff !== 0)
-                  return dimDiff;
+                diff = a.reducerNDims - b.reducerNDims;
+                if (diff !== 0)
+                  return diff;
 
                 // The closer to scalar the better
-                let normDiff = a.normSquared - b.normSquared;
-                if (normDiff !== 0)
-                  return normDiff;
+                diff = a.normSquared - b.normSquared;
+                if (diff !== 0)
+                  return diff;
 
                 // Favor units that reduce the denominator
                 let expDiff = Math.sign(a.exp * a.unitExp) - Math.sign(b.exp * b.unitExp);
@@ -1589,7 +1592,7 @@
         if (sym)
           return sym;
         const display = `"${name}"`;
-        sym = { sym: display, type: 'num', val: NONCE, dim: {}, display, uscu: null };
+        sym = { sym: display, type: 'num', val: NONCE, dim: {}, display, favored: 1, uscu: null };
         sym.dim['NONCE-'+name] = 1;
         nonceUnits[name] = sym;
         return sym;
