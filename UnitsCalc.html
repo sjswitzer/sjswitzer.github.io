@@ -462,12 +462,12 @@
             <code>144/ft2</code> means 144 per square foot or, equivalently, 1 per square inch
             (which is how it will display). <i>What</i> per square foot? Anything.
             Think &ldquo;ducks&rdquo; or &ldquo;pebbles&rdquo; and you'll be on the right track.
-        <p> In fact, you can type <code>640 'ducks' / mi2</code> or <code>144 'pebble'/ft2</code>.
-            (Bear in mind that 'pebble' is a different nonce unit from 'pebbles'.) If there's some
+        <p> In fact, you can type <code>640 "ducks" / mi2</code> or <code>144 "pebble"/ft2</code>.
+            (Bear in mind that "pebble" is a different unit from "pebbles".) If there's some
             unit this tool didn't anticipate, you can define it yourself,
-            <code>bogosity = 'bogosity'</code>, or just use <code>'bogosity'</code> inline
+            <code>bogosity = "bogosity"</code>, or just use <code>"bogosity'</code> inline
             (<code>20 bogosity</code>, assuming you've defined the variable,
-            or just <code>20 'bogosity'</code>).
+            or just <code>20 "bogosity'</code>).
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
             This is to prevent accidentally typing <code>12'3'</code> when you really
@@ -765,7 +765,8 @@
       const UAMP = 1000, MAMP = 1000*UAMP, AMP = 1000*MAMP, KELVIN = 9000000;
       const BIT = 1000000, BYTE = 8*BIT;
       const DEGREE = 60*60*1000, RADIAN = 180*DEGREE/Math.PI;
-      const CANDLE = 1000000;
+      const CANDLE = 10**12;
+      const NONCE = 10**15;  // so that nonce units stand a chance in the units reduction battle
 
       const DIGITS = "0123456789";
       const MICROSYM = "\u00B5", OHMSYM = "\u2126", PISYM = "\uD835\uDF0B", TAUSYM = "\uD835\uDF0F";
@@ -1214,7 +1215,7 @@
       const commonUnits = [ // Ensure a covering basis of units in all cases
         'A', 'mA', 'uA', 'V', 'kV', 'mV','uV', 'Wb',
         'ohm', 'kohm', 'F', 'mF', 'uF', 'nF', 'pF', 
-        'bit', 'byte', 'baud',
+        'bit', 'byte',
         'KB',  'MB',  'GB',  'TB',  'PB',  'EB',
         // seconds come after electrical and information units so that a coulomb
         // is an "A s", not an "s A"
@@ -1259,9 +1260,7 @@
             else if (unitsSystem === 'cgs')
               allowedCandidateUnits = candidateUnitsCGS;
           }
-          allowedCandidateUnits = [ ...allowedCandidateUnits ];
-          for (const sym of Object.values(nonceUnits))
-            allowedCandidateUnits.push(sym);
+          allowedCandidateUnits = [ ...Object.values(nonceUnits), ...allowedCandidateUnits ];
           // Find best units to express the value in
           let iterations = 0;
           while (!Dim.isScalar(dim)) {
@@ -1635,15 +1634,15 @@
         let sym = nonceUnits[name];
         if (sym)
           return sym;
-        const display = `'${name}'`;
-        sym = { sym: display, type: 'num', val: 1, dim: {}, display };
+        const display = `"${name}"`;
+        sym = { sym: display, type: 'num', val: NONCE, dim: {}, display };
         sym.dim['NONCE-'+name] = 1;
         nonceUnits[name] = sym;
         return sym;
       }
 
       // Parse a nonce unit
-      //   '"' word '"' -- both kinds of quotes
+      //   '"' word '"' num? -- both kinds of quotes, must match
 
       function parseNonceUnit(opts) {
         const backtrack = parsePos;
@@ -1660,7 +1659,7 @@
             if (exp !== null) {
               if (exp < 2)
                 throw "Bad units exponent";
-              sym = { ... sym, dim: Dim.mul(sym.dim, exp), /* val is always 1 */ };
+              sym = { ... sym, dim: Dim.mul(sym.dim, exp), val: Math.pow(numVal(sym), exp) };
             }
             return sym;
           }
@@ -1735,7 +1734,7 @@
                   origin = sym.origin;
               }
               if (Dim.isScalar(sym.dim) || !sym.val)
-                throw new ChattyError(`Not a unit: "${word}"`);
+                throw new ChattyError(`Not a unit: "${sym.sym}"`);
               let symVal = sym.val;
               if (symVal.val >= lastUnitVal) throw "Implausible units";
               lastUnitVal = sym.val;
