@@ -427,9 +427,9 @@
             (Bear in mind that "pebble" is a different unit from "pebbles".)
             Try <code>2 "shoes"/person * 1000 people</code>.
             If there's some unit this tool didn't anticipate, you can define it yourself,
-            <code>bogosity = "bogosity"</code>, or just use <code>"bogosity'</code> inline
+            <code>bogosity = "bogosity"</code>, or just use <code>"bogosity"</code> inline
             (<code>20 bogosity</code>, assuming you've defined the variable,
-            or just <code>20 "bogosity'</code>).
+            or just <code>20 "bogosity"</code>).
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
             This is to prevent accidentally typing <code>12'3'</code> when you really
@@ -742,21 +742,17 @@
 
       const systemSymbols = {
         // Length (L)
-        in: { type: 'num', dim: { L: 1 }, val: IN, desc: "inch", reserved: true, uscu: true,
-            alt: ["inch", "inches"] },
-        ft: { type: 'num', dim: { L: 1 }, val: FT, desc: "foot", reserved: true, uscu: true,
-            alt: ["foot", "feet"] },
-        yd: { type: 'num', dim: { L: 1 }, val: 3*FT, desc: "yard", uscu: true,
-            alt: ["yard", "yards"] },
-        mi: { type: 'num', dim: { L: 1 }, val: MI, desc: "mile", alt: ["mile", "miles"],
+        in: { type: 'num', dim: { L: 1 }, val: IN, reserved: true, uscu: true, alt: ["inch", "inches"] },
+        ft: { type: 'num', dim: { L: 1 }, val: FT, reserved: true, uscu: true, alt: ["foot", "feet"] },
+        yd: { type: 'num', dim: { L: 1 }, val: 3*FT, uscu: true, alt: ["yard", "yards"] },
+        mi: { type: 'num', dim: { L: 1 }, val: MI, alt: ["mile", "miles"],
             reserved: true, uscu: true },
-        nm: { type: 'num', dim: { L: 1 }, val: NM, desc: "nanometer", alt: ["nanometer"] },
-        um: { type: 'num', dim: { L: 1 }, val: UM, desc: "micrometer", display: MICROSYM+"m", alt: ["micrometer"] },
-        mm: { type: 'num', dim: { L: 1 }, val: MM, desc: "millimeter", alt: ["millimeter"] },
-        cm: { type: 'num', dim: { L: 1 }, val: CM, desc: "centimeter", reserved: true, alt: ["centimeter"] },
-        m:  { type: 'num', dim: { L: 1 }, val: M, desc: "meter", reserved: true, alt: ["meter", "meters"] },
-        km: { type: 'num', dim: { L: 1 }, val: KM, desc: "kilometer",
-            alt: ["kilometer", "kilometers"] },
+        nm: { type: 'num', dim: { L: 1 }, val: NM, alt: ["nanometer", "nanometers"] },
+        um: { type: 'num', dim: { L: 1 }, val: UM, display: MICROSYM+"m", alt: ["micrometer", "micrometers"] },
+        mm: { type: 'num', dim: { L: 1 }, val: MM, alt: ["millimeter", "millimeters"] },
+        cm: { type: 'num', dim: { L: 1 }, val: CM, reserved: true, alt: ["centimeter", "centimeters"] },
+        m:  { type: 'num', dim: { L: 1 }, val: M, reserved: true, alt: ["meter", "meters"] },
+        km: { type: 'num', dim: { L: 1 }, val: KM, alt: ["kilometer", "kilometers"] },
         au:  { type: 'num', dim: { L: 1 }, val: 149597870700*M, desc: "astronomical unit" },
         parsec:  { type: 'num', dim: { L: 1 }, val: 149597870700*M * 648000/Math.PI,
             desc: "astronomy, parallax of one arcsecond", alt: ["parsecs"] },
@@ -784,43 +780,33 @@
         floz : { type: 'num', dim: { L: 3 }, val: GAL/128, desc: "fluid ounce", uscu: true },
         dram : { type: 'num', dim: { L: 3 }, val: GAL/128/8, uscu: true, alt: ["drams"] },
         minim : { type: 'num', dim: { L: 3 }, val: GAL/128/8/60, uscu: true, alt: ["minims"] },
-        tbsp : { type: 'num', dim: { L: 3 }, val: GAL/256, desc: "tablespoon", uscu: true,
-            alt: ["tbsps", "tablespoon", "tablespoons"] },
-        tsp : { type: 'num', dim: { L: 3 }, val: GAL/768, desc: "teaspoon", uscu: true,
-            alt: ["tsps", "teaspoon", "teaspoons"] },
-        liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3, alt: ["liters", "litre", "litres"] },
-        ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, desc: "milliliter", alt: ["milliliter", "millilitre", "milliliters", "millilitres"] },
+        tbsp : { type: 'num', dim: { L: 3 }, val: GAL/256, uscu: true, alt: ["tablespoon", "tablespoons", "tbsps"] },
+        tsp : { type: 'num', dim: { L: 3 }, val: GAL/768, uscu: true, alt: ["teaspoon", "teaspoons", "tsps"] },
+        liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3, desc: "liter", alt: ["liters", "litre", "litres"] },
+        ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, alt: ["milliliter", "millilitre", "milliliters", "millilitres"] },
         // (dry)
         cc : { type: 'num', dim: { L: 3 }, val: CM**3, desc: "cubic centimeter" },
         cord : { type: 'num', dim: { L: 3 }, val: 128*FT**3, desc: "cord of wood", uscu: true, alt: ["cords"] },
 
         // Time (T)
-        us: { type: 'num', dim: { T: 1 }, val: US, desc: "microsecond", uscu: null, display: MICROSYM+"s",
-           alt: ["microsecond", "microseconds"] },
-        ms: { type: 'num', dim: { T: 1 }, val: MS, desc: "millisecond", uscu: null,
-           alt: ["millisecond", "milliseconds"] },
-        s: { type: 'num', dim: { T: 1 }, val: SEC, desc: "second", reserved: true, uscu: null,
+        us: { type: 'num', dim: { T: 1 }, val: US, uscu: null, display: MICROSYM+"s", alt: ["microsecond", "microseconds"] },
+        ms: { type: 'num', dim: { T: 1 }, val: MS, uscu: null, alt: ["millisecond", "milliseconds"] },
+        s: { type: 'num', dim: { T: 1 }, val: SEC, reserved: true, uscu: null,
             alt: ["second", "seconds", "sec", "secs"] },
-        min: { type: 'num', dim: { T: 1 }, val: MIN, desc: "minute", uscu: null,
-            alt: ["minute", "minutes", "mins"] },
-        hr: { type: 'num', dim: { T: 1 }, val: HR, desc: "hour", uscu: null, alt: ["hour", "hours", "hrs"] },
-        hz: { type: 'num', dim: { T: -1 }, val: 1/SEC, desc: "second", desc: "hertz", uscu: null, alt: ["hertz"] },
+        min: { type: 'num', dim: { T: 1 }, val: MIN, uscu: null, alt: ["minute", "minutes", "mins"] },
+        hr: { type: 'num', dim: { T: 1 }, val: HR, uscu: null, alt: ["hour", "hours", "hrs"] },
+        hz: { type: 'num', dim: { T: -1 }, val: 1/SEC, desc: "hertz", uscu: null, alt: ["hertz"] },
 
         // Mass (M)
         lb: { type: 'num', dim: { M: 1 }, val: LBM, desc: "pound mass", uscu: true, alt: ["lbs", "pound", "pounds"] },
         oz: { type: 'num', dim: { M: 1 }, val: LBM/16, desc: "ounce mass", uscu: true, alt: ["ounce", "ounces"]},
-        ug: { type: 'num', dim: { M: 1 }, val: UG, desc: "microgram", display: MICROSYM+"g",
-            alt: ["microgram", "micrograms"] },
-        mg: { type: 'num', dim: { M: 1 }, val: MG, desc: "milligram",
-            alt: ["milligram", "milligrams"]  },
-        gm: { type: 'num', dim: { M: 1 }, val: GM, reserved: true, desc: "gram",
-            alt: ["gram", "grams"] },
-        kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, desc: "kilogram",
-            alt: ["kilogram", "kilograms"] },
+        ug: { type: 'num', dim: { M: 1 }, val: UG, display: MICROSYM+"g", alt: ["microgram", "micrograms"] },
+        mg: { type: 'num', dim: { M: 1 }, val: MG, alt: ["milligram", "milligrams"]  },
+        gm: { type: 'num', dim: { M: 1 }, val: GM, reserved: true, alt: ["gram", "grams"] },
+        kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, alt: ["kilogram", "kilograms"] },
 
         // Force (L M T^-2)
-        N: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC), desc: "newton",
-            alt: ["newton", "newtons"] },
+        N: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC), alt: ["newton", "newtons"] },
         dyne: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: KG*M/(SEC*SEC)/100000, alt: ["dynes"] },
         lbf: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: LBF, desc: "pound force", uscu: true },
 
@@ -829,60 +815,50 @@
         erg: { type: 'num', dim: { L: 2, M: 1, T:-2 }, val: KG*M*M/(SEC*SEC)/10000000, alt: ["ergs"] },
 
         // Power (L^2 M T^-3)
-        W: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: KG*M*M/(SEC*SEC*SEC), desc: "watt",
-            alt: ["watt", "watts"] },
-        kW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 1000*KG*M*M/(SEC*SEC*SEC), desc: "kilowatt",
-            alt: ["kilowatt", "killowatts"] },
-        mW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: KG*M*M/1000/(SEC*SEC*SEC), desc: "milliwatt",
-            alt: ["milliwatt", "milliwatts"] },
+        W: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: KG*M*M/(SEC*SEC*SEC), alt: ["watt", "watts"] },
+        kW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 1000*KG*M*M/(SEC*SEC*SEC), alt: ["kilowatt", "killowatts"] },
+        mW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: KG*M*M/1000/(SEC*SEC*SEC), alt: ["milliwatt", "milliwatts"] },
         horsepower: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: 550*FT*LBF/SEC, desc: "mechanical horsepower", uscu: true },
 
         // Pressure (L^-1 M T^-2)
-        Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: KG/(M*SEC*SEC), desc: "pascal",
-            alt: ["pascal", "pascals"] },
-        kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 1000*KG/(M*SEC*SEC),
-            desc: "kilopascal", alt: ["kilopascal", "kilopascals"] },
+        Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: KG/(M*SEC*SEC), alt: ["pascal", "pascals"] },
+        kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 1000*KG/(M*SEC*SEC), alt: ["kilopascal", "kilopascals"] },
         PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: LBF/(IN*IN),
             desc: "pounds per square inch", uscu: true },
-        atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 101325*KG/(M*SEC*SEC),
-            desc: "atmosphere" },
+        atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 101325*KG/(M*SEC*SEC), desc: "atmosphere" },
         bar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 100000*KG/(M*SEC*SEC), alt: ["bars"] },
-        millibar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 100*KG/(M*SEC*SEC),
-            alt: ["millibars"] },
+        millibar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 100*KG/(M*SEC*SEC), alt: ["millibars"] },
 
         // Electricity (A ...)
         //   http://www.ebyte.it/library/educards/sidimensions/SiDimensionsAlfaList.html
-        A: { type: 'num', dim: { A: 1 }, val: AMP, reserved: true, desc: "ampere",
-            alt: ["ampere", "amperes", "amp", "amps"]  },
-        mA: { type: 'num', dim: { A: 1 }, val: MAMP, desc: "milliampere", alt: ["milliampere", "milliamperes"] },
-        uA: { type: 'num', dim: { A: 1 }, val: UAMP, desc: "microampere", display: MICROSYM+"A",
-            alt: ["microampere", "microamperes"] },
+        A: { type: 'num', dim: { A: 1 }, val: AMP, reserved: true, alt: ["ampere", "amperes", "amp", "amps"]  },
+        mA: { type: 'num', dim: { A: 1 }, val: MAMP, alt: ["milliampere", "milliamperes"] },
+        uA: { type: 'num', dim: { A: 1 }, val: UAMP, display: MICROSYM+"A", alt: ["microampere", "microamperes"] },
         V: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG * M**2 / SEC**3 / AMP,
-            desc: "volt", alt: ["volt", "volts"] },
+            alt: ["volt", "volts"] },
         kV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: 1000*KG * M**2 / SEC**3 / AMP,
-            desc: "kilovolt", alt: ["kilovolt", "kilovolts"] },
+            alt: ["kilovolt", "kilovolts"] },
         mV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG/1000 * M**2 / SEC**3 / AMP,
-            desc: "millivolt", alt: ["millivolt", "millivolts"] },
+            alt: ["millivolt", "millivolts"] },
         uV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: KG/1000**2 * M**2 / SEC**3 / AMP,
-            desc: "microvolt", display: MICROSYM+"V", alt: ["microvolt", "microvolts"] },
+            display: MICROSYM+"V", alt: ["microvolt", "microvolts"] },
         ohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: KG * M**2 / SEC**3 / AMP**2,
-            desc: "ohm", display: OHMSYM, alt: ["ohms"] },
+            display: OHMSYM, alt: ["ohms"] },
         kohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: 1000*KG * M**2 / SEC**3 / AMP**2,
-            desc: "kiloohm", display: "k" + OHMSYM, alt: ["kiloohm", "kiloohms", "kilohm", "kilohms"] },
-        S: { type: 'num', dim: { M: -1, L: -2, T: 3, A: 2 }, val: SEC**3 * AMP**2 / KG / M**2,
-            desc: "siemens" },
+            display: "k" + OHMSYM, alt: ["kiloohm", "kiloohms", "kilohm", "kilohms"] },
+        S: { type: 'num', dim: { M: -1, L: -2, T: 3, A: 2 }, val: SEC**3 * AMP**2 / KG / M**2, desc: "siemens" },
         C: { type: 'num', dim: { T: 1, A: 1 }, val: SEC*AMP, desc: "coulomb" },
         // farads tend to be very small
         F: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: SEC**4 * AMP**2 / KG / M**2,
-            desc: "farad" },
+            alt: ["farad", "farads"] },
         mF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: SEC**4 * AMP**2 / KG / M**2 / 1000,
-            desc: "millifarad" },
+            alt: ["millifarad", "millifarads"] },
         uF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: SEC**4 * AMP**2 / KG / M**2 / 1000**2,
-            desc: "microfarad", display: MICROSYM+"F" },
+            alt: ["microfarad", "microfarads"], display: MICROSYM+"F" },
         nF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: SEC**4 * AMP**2 / KG / M**2 / 1000**3,
-            desc: "nanofarad" },
+            alt: ["nanofarad", "nanofarads"] },
         pF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: SEC**4 * AMP**2 / KG / M**2 / 1000**4,
-            desc: "picofarad" },
+            alt: ["picofarad", "picofarads"] },
         Wb: { type: 'num', dim: { M: 1, L: 2, T: -2, A: -1 }, val: KG * M**2 / SEC**2 / AMP,
             desc: "weber, magnetic flux" },
         T: { type: 'num', dim: { M: 1, T: -2, A: -1 }, val: KG / SEC**2 / AMP,
@@ -900,34 +876,32 @@
         // I personally find this offensive, but the modern consensus is that the well-named
         // units here are powers of 10 and the stupidly-named ones are powers of 2.
         //   https://www.ibm.com/docs/en/storage-insights?topic=overview-units-measurement-storage-data
-        KB: { type: 'num', dim: { BIT: 1 }, val: 10**3 * BYTE, desc: "kilobyte" },
-        MB: { type: 'num', dim: { BIT: 1 }, val: 10**6 * BYTE, desc: "megabyte" },
-        GB: { type: 'num', dim: { BIT: 1 }, val: 10**9 * BYTE, desc: "gigabyte" },
-        TB: { type: 'num', dim: { BIT: 1 }, val: 10**12 * BYTE, desc: "terabyte" },
-        PB: { type: 'num', dim: { BIT: 1 }, val: 10**15 * BYTE, desc: "petabyte" },
-        EB: { type: 'num', dim: { BIT: 1 }, val: 10**18 * BYTE, desc: "exabyte" },
-        KiB: { type: 'num', dim: { BIT: 1 }, val: 2**10 * BYTE, desc: "kibibyte" },
-        MiB: { type: 'num', dim: { BIT: 1 }, val: 2**20 * BYTE, desc: "mebibyte" },
-        GiB: { type: 'num', dim: { BIT: 1 }, val: 2**30 * BYTE, desc: "gibibyte" },
-        TiB: { type: 'num', dim: { BIT: 1 }, val: 2**40 * BYTE, desc: "tebibyte" },
-        PiB: { type: 'num', dim: { BIT: 1 }, val: 2**50 * BYTE, desc: "pebibyte" },
-        EiB: { type: 'num', dim: { BIT: 1 }, val: 2**60 * BYTE, desc: "exbibyte" },
+        KB: { type: 'num', dim: { BIT: 1 }, val: 10**3 * BYTE, alt: ["kilobyte", "kilobytes"] },
+        MB: { type: 'num', dim: { BIT: 1 }, val: 10**6 * BYTE, alt: ["megabyte", "megabytes"] },
+        GB: { type: 'num', dim: { BIT: 1 }, val: 10**9 * BYTE, alt: ["gigabyte", "gigabytes"] },
+        TB: { type: 'num', dim: { BIT: 1 }, val: 10**12 * BYTE, alt: ["terabyte", "terabytes"] },
+        PB: { type: 'num', dim: { BIT: 1 }, val: 10**15 * BYTE, alt: ["petabyte", "petabytes"] },
+        EB: { type: 'num', dim: { BIT: 1 }, val: 10**18 * BYTE, alt: ["exabyte", "exabytes"] },
+        KiB: { type: 'num', dim: { BIT: 1 }, val: 2**10 * BYTE, alt: ["kibibyte", "kibibytes"] },
+        MiB: { type: 'num', dim: { BIT: 1 }, val: 2**20 * BYTE, alt: ["mebibyte", "mebibytes"] },
+        GiB: { type: 'num', dim: { BIT: 1 }, val: 2**30 * BYTE, alt: ["gibibyte", "gibibytes"] },
+        TiB: { type: 'num', dim: { BIT: 1 }, val: 2**40 * BYTE, alt: ["tebibyte", "tebibytes"] },
+        PiB: { type: 'num', dim: { BIT: 1 }, val: 2**50 * BYTE, alt: ["pebibyte", "pebibytes"] },
+        EiB: { type: 'num', dim: { BIT: 1 }, val: 2**60 * BYTE, alt: ["exbibyte", "exbibytes"]},
 
         // Temperature (Q)
-        K: { type: 'num', dim: { Q: 1 }, val: KELVIN, reserved: true, desc: "kelvin",
-            alt: ["kelvin", "kelvins"] },
+        K: { type: 'num', dim: { Q: 1 }, val: KELVIN, reserved: true,  alt: ["kelvin", "kelvins"] },
         celsius: { type: 'num', dim: { Q: 1 }, val: KELVIN, origin: 273.15*KELVIN,
-            desc: "Celsius" },
+            desc: "Celsius", alt: ["degc"] },
         fahrenheit: { type: 'num', dim: { Q: 1 }, val: 5*KELVIN/9, origin: (273.15-32*5/9)*KELVIN,
-            desc: "Fahrenheit" },
+            desc: "Fahrenheit", alt: ["degf"] },
 
         // Angles (RAD)
         //   A steradian can be thought of as a square radian because 2pi radians covers
         //   a circle and 4pi steradians covers a sphere. Even if not completely
         //   sound, there are no operations on it that are harmed by the assumption.
         radian: { type: 'num', dim: { RAD: 1 }, reserved: true, val: RADIAN, alt: ["radians"] },
-        sr: { type: 'num', dim: { RAD: 2 }, val: RADIAN**2, desc: "steradian",
-            alt: ["steradian", "steradians"] },
+        sr: { type: 'num', dim: { RAD: 2 }, val: RADIAN**2, alt: ["steradian", "steradians"] },
         degree: { type: 'num', dim: { RAD: 1 }, val: DEGREE, alt: ["degrees"] },
 
         // Luminosity (CD...)
@@ -943,12 +917,12 @@
 
         // Population (PERSON)
         person: { type: 'num', dim: { PERSON: 1 }, val: PERSON, reserved: true, uscu: null,
-            alt: [ "persons", "people", "capita" ] },
+            desc: "person", alt: [ "persons", "people", "capita" ] },
         percapita: { type: 'num', dim: { PERSON: -1 }, val: 1/PERSON, uscu: null },
 
         // Interesting constants and units (various)
         pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
-        tau: { type: 'num', dim: {}, val: 2*Math.PI, display: TAUSYM, desc: `${TAUSYM}, or 2${PISYM}` },
+        tau: { type: 'num', dim: {}, val: 2*Math.PI, display: TAUSYM, desc: `2${PISYM}` },
         mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number" },
         boltz: { type: 'num', dim: { L: 2, M: 1, T:-2, Q: -1 }, val: 1.380649e-23*KG*M*M/(SEC*SEC)/KELVIN,
             desc: "Boltzmann constant" },
@@ -2451,8 +2425,8 @@
         for (const [name, sym] of Object.entries(systemSymbols)) {
           if (sym.type !== 'num' || sym.altOf || sym.display === null)
             continue;
-          let desc = sym.desc ?? sym.display ?? name;
           let alts = sym.alt ?? [];
+          let desc = sym.desc || (alts.length > 1 && alts[0]) || name;
           if (sym.display)
             alts.unshift(sym.display);
           let unfilteredAlts = alts;
