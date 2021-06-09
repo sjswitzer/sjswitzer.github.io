@@ -1659,11 +1659,11 @@
           
       function parseValue(opts) {
         const backtrack1 = parsePos;
-        let num = 0, dim, origin;
-        let lastUnitVal = Number.POSITIVE_INFINITY;
+        let num = 0, dim, origin, firstChunk = true;
+        let lastChunkVal = Number.POSITIVE_INFINITY;
         let uscu = false;   // consider it metric unless we encounter any non-metric unit
 
-        // The idea of lastUnitVal is that units should get progressively smaller.
+        // The idea of lastChunkVal is that units should get progressively smaller.
         // Otherwise, someone could enter 2'3' when they meant 2'3"
 
         while (true) {  // additive chunks [nf unit unit unit]*
@@ -1672,20 +1672,24 @@
           // the units have factors of ten in them so first multiply the unit
           // then divide by the denom so that the value remains a clean integer when possible.
           let chunkVal = parseNumFrac({ ...opts, preciceDecimal: true });
-          if (chunkVal === null)
-            break;
+          if (chunkVal === null) {
+           /* if (firstChunk)
+              chunkVal = [ 1, 1 ];
+            else */
+              break;
+          }
           let chunkDim = {};
           let gotUnit = false;
           if (take("'") && !ALPHA.includes(peekc())) {
-            if (FT >= lastUnitVal) throw "Implausible units";
-            lastUnitVal = FT;
+            if (FT >= lastChunkVal) throw "Implausible units";
+            lastChunkVal = FT;
             chunkDim.L = 1;
             chunkVal = [ chunkVal[0]*FT, chunkVal[1] ];
             uscu = true;
             gotUnit = true;
           } else if (take('"') && !ALPHA.includes(peekc())) {
-            if (IN >= lastUnitVal) throw "Implausible units";
-            lastUnitVal = 1;
+            if (IN >= lastChunkVal) throw "Implausible units";
+            lastChunkVal = IN;
             chunkDim.L = 1;
             chunkVal = [ chunkVal[0]*IN, chunkVal[1] ];
             uscu = true;
@@ -1693,8 +1697,6 @@
           } else {
             let qchar = parseStr.charAt(parsePos-1); // This is SUCH a hack
             if (qchar === '"' || qchar === "'")
-              parsePos -= 1;
-            if (parseStr.charAt(parsePos-1) === '"') 
               parsePos -= 1;
             // system and user-defined units
             while (true) {
@@ -1720,9 +1722,6 @@
               if (Dim.isScalar(sym.dim) || !sym.val)
                 throw new ChattyError(`Not a unit: "${sym.sym}"`);
               let symVal = sym.val;
-              if (symVal.val >= lastUnitVal) throw "Implausible units";
-              lastUnitVal = sym.val;
-              let saveChunkDim = chunkDim;
               if (hasSlash)
                 chunkDim = Dim.sub(chunkDim, sym.dim);
               else
@@ -1735,6 +1734,10 @@
                 uscu = true;
               gotUnit = true;
             }
+            let thisChunkVal = chunkVal[0] / chunkVal[1];
+            if (!isFinite(thisChunkVal)) throw "Divide by zero";
+            if (thisChunkVal >= lastChunkVal) throw "Implausible units";
+            lastChunkVal = thisChunkVal;
           }
           if (!gotUnit) {
             dim = undefined;
@@ -1747,6 +1750,7 @@
             throw new ChattyError("Implausible units");
           num += chunkVal[0] / chunkVal[1];
           if (!isFinite(num)) throw "Divide by zero";
+          firstChunk = false;
         }
         if (dim)
           return { type: 'num', dim, val: num, origin, uscu };
