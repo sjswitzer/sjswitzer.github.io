@@ -41,12 +41,7 @@
       }
 
       body:not([data-presentation-mode="legacy"]) > .layout-column {
-        width: 35em;
-      }
-      @media (hover: none) {  /* not the best test, but use full width on mobile */
-        body:not([data-presentation-mode="legacy"]) > .layout-column {
-          width: 100% !important;
-        }
+          width: 100%;
       }
 
       body:not([data-protocol="file:"]) .local-only {
