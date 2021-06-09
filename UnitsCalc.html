@@ -933,11 +933,12 @@
 
         // Lumosity (CD...)
         groupLuminosity: { group: "Lumosity Units" },
-        cd: { type: 'num', dim: { CD: 1 }, val: CANDLE, reserved: true, desc: "candle, luminous intensity" },
+        cd: { type: 'num', dim: { CD: 1 }, val: CANDLE, reserved: true, desc: "candle, luminous intensity",
+            alt: ["candle", "candeles"] },
         lx: { type: 'num', dim: { CD: 1, RAD: 2, L: -2 }, val: CANDLE * RADIAN**2 / M**2,
-            desc: "lux, luminous emittance" },
+            desc: "lux, luminous emittance", alt: ["lux"] },
         lm: { type: 'num', dim: { CD: 1, RAD: 2 }, val: CANDLE * RADIAN**2,
-            desc: "lumen, luminous flux" },
+            desc: "lumen, luminous flux", alt: ["lumen", "lumens"] },
 
         // Interesting constants and units (various)
         groupVarious: { group: "Constants" },
@@ -1207,17 +1208,81 @@
       const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'lbf', 'ft', 'lb' ]);
 
       function val2str(val, opts) {
-        let descStr = "", leadingTerms = val.leadingTerms ?? [];
+        let descStr = "", displayUnits = val.displayUnits;
         if (opts?.describe && val.desc)
           descStr = ` (${val.desc})`;
         let unitsStr = "", invUnitsStr = "";
         if (val.val !== undefined) {
           let uscu = !!val.uscu;
-          for (const leadingTerm of leadingTerms)
-            if (leadingTerm.uscu)
-              uscu = true;
+          if (displayUnits?.uscu)
+            uscu = true;
           let dim = val.dim;
           val = numVal(val);
+          function describeUnit(unit) {
+            let normSquared = Dim.normSquared(dim);
+            let exp = 0, unitExp = 0;
+            for (let i = 1; i < 100; ++i) {
+              let normSquaredPos = Dim.normSquared(Dim.add(dim, unit.dim, -i));
+              let normSquaredNeg = Dim.normSquared(Dim.add(dim, unit.dim, i));
+              if (normSquaredPos < normSquared) {
+                normSquared = normSquaredPos;
+                exp = i;
+              } else if (normSquaredNeg < normSquared) {
+                normSquared = normSquaredNeg;
+                exp = -i;
+              } else {
+                break;
+              }
+            }
+            if (exp === 0)
+                return null;
+            for (const ue of Object.values(unit.dim))
+              if (ue)
+                unitExp += ue;
+            const reduced = Dim.add(dim, unit.dim, -exp);
+            const reducedNDims = Dim.nDims(reduced);
+            let origin = unit.origin ?? 0;
+            let newVal;
+            if (exp >= 0) 
+              newVal = (val-origin) / Math.pow(unit.val, exp);
+            else
+              newVal = (val - origin) * Math.pow(unit.val, -exp);
+            let favored = unit.favored ?? 0;
+            return { unit, exp, unitExp, newVal, normSquared, reduced, favored, reducedNDims };
+          }
+          function applyDesc(unitDesc) {
+              let unitList = unitDesc.unit.unitList ?? [ [ 1, unitDesc.unit ] ];
+              for (let [exp, unit] of unitList) {
+                let str = " "; 
+                let displayExp = exp = unitDesc.exp * exp;
+                if (displayExp < 0) {
+                  displayExp = -displayExp;
+                  str += " /"
+                }
+                if (unit.display && !opts?.saveMode)
+                  str += unit.display;
+                else
+                  str += unit.sym;
+                if (displayExp !== 1) {
+                  let expStr = String(displayExp);
+                  if (opts?.html)
+                    expStr = `<sup>${expStr}</sup>`;
+                  str += expStr;
+                }
+                if (exp < 0)
+                  invUnitsStr += str;
+                else
+                  unitsStr += str;
+              }
+              val = unitDesc.newVal;
+              dim = unitDesc.reduced;
+            }
+          if (displayUnits) {
+            const desc = describeUnit(displayUnits);
+            if (!desc)
+              throw "Value cannot be displayed in given units";
+            applyDesc(desc);
+          }
           let allowedCandidateUnits = candidateUnits;
           if (dim.L && dim.M || dim.A || dim.DC) {
             // Things get weird when both mass and length are in a value. It's best
@@ -1237,41 +1302,10 @@
             if (++iterations > 100)
               throw "Failed to reduce units";
             let unitDescs = [];
-            let candidates = allowedCandidateUnits;
-            let leadingTerm;
-            if (leadingTerms.length > 0)
-              candidates = [leadingTerm = leadingTerms.shift()];
-            for (const unit of candidates) {
-              let normSquared = Dim.normSquared(dim);
-              let exp = 0, unitExp = 0;
-              for (let i = 1; i < 100; ++i) {
-                let normSquaredPos = Dim.normSquared(Dim.add(dim, unit.dim, -i));
-                let normSquaredNeg = Dim.normSquared(Dim.add(dim, unit.dim, i));
-                if (normSquaredPos < normSquared) {
-                  normSquared = normSquaredPos;
-                  exp = i;
-                } else if (normSquaredNeg < normSquared) {
-                  normSquared = normSquaredNeg;
-                  exp = -i;
-                } else {
-                  break;
-                }
-              }
-              if (exp === 0)
-                  continue;
-              for (const ue of Object.values(unit.dim))
-                if (ue)
-                  unitExp += ue;
-              const reduced = Dim.add(dim, unit.dim, -exp);
-              const reducedNDims = Dim.nDims(reduced);
-              let origin = unit.origin ?? 0;
-              let newVal;
-              if (exp >= 0) 
-                newVal = (val-origin) / Math.pow(unit.val, exp);
-              else
-                newVal = (val - origin) * Math.pow(unit.val, -exp);
-              let favored = unit.favored ?? 0;
-              unitDescs.push({ unit, exp, unitExp, newVal, normSquared, reduced, favored, reducedNDims });
+            for (const unit of allowedCandidateUnits) {
+              const unitDesc = describeUnit(unit);
+              if (unitDesc)
+                unitDescs.push(unitDesc)
             }
             unitDescs.sort((a,b) => {  // Note that we're sorting from best to worst
               function cmp(a,b) {
@@ -1333,33 +1367,10 @@
             if (logLevel > 1)
                console.log("======== " + parseStr + " unit candidates for " + val + " " +
                  JSON.stringify(dim) + " ========\n" + JSON.stringify(unitDescs, null, 2));
-            if (unitDescs.length < 1) {
-              if (leadingTerm) throw `Unit "${leadingTerm.sym}" does not simplify expression units`;
+            if (unitDescs.length < 1)
               throw "system error: insufficient basis units";
-            }
-            const unitDesc = unitDescs[0];
-            let str = " ";
-            let displayExp = unitDesc.exp;
-            if (displayExp < 0) {
-              displayExp = -displayExp;
-              str += " /"
-            }
-            if (unitDesc.unit.display && !opts?.saveMode)
-              str += unitDesc.unit.display;
-            else
-              str += unitDesc.unit.sym;
-            if (displayExp !== 1) {
-              let expStr = String(displayExp);
-              if (opts?.html)
-                expStr = `<sup>${expStr}</sup>`;
-              str += expStr;
-            }
-            if (unitDesc.exp < 0)
-              invUnitsStr += str;
-            else
-              unitsStr += str;
-            val = unitDesc.newVal;
-            dim = unitDesc.reduced;
+            applyDesc(unitDescs[0]);
+            displayUnits = undefined;
           }
         }
         if (opts?.saveMode) {
@@ -1432,6 +1443,8 @@
         document.getElementById('results').style.display = 'none';
         document.getElementById('numberResults').style.display = 'none';
         document.getElementById('error').style.display = '';
+        if (typeof e === 'object' && !(e instanceof ChattyError))
+          throw e;  // rethrow
       }
 
       //
@@ -1596,7 +1609,7 @@
       }
 
       function numVal(val) {
-        if (val?.origin)   // collapse afine values
+        if (val?.origin)   // collapse affine values
           return val.val + val.origin;
         return val.val;
       }
@@ -1664,7 +1677,7 @@
           implicitValue = true;
         }
         let backtrack1 = parsePos;
-        let unitVal = 1, unitList, dim= {}, origin, uscu;
+        let unitVal = 1, unitList = [], dim= {}, origin, uscu;
         while (true) {
           const backtrack2 = parsePos;
           let hasSlash = take('/');
@@ -1688,7 +1701,7 @@
             // Affine units can only have a +1 exponent or a negative exponent.
             // We ignore the offset for negative exponents because a unit in the denominator
             // is like differentiation and constants dissapear.
-            if (unitList || sym.withExp) throw `Bad unit: ${sym.sym}`
+            if (unitList.length > 0 || sym.withExp) throw `Bad unit: ${sym.sym}`
             origin = sym.origin;
           }
           if (Dim.isScalar(sym.dim) || !sym.val) {
@@ -1709,10 +1722,14 @@
           if (sym.uscu)
             uscu = true;
           unitVal *= symVal;
-          unitList = unitList ?? [];
-          unitList.push(sym);
+          let exp = sym.withExp ?? 1;
+          if (hasSlash)
+            exp = - exp;
+          if (sym.baseSym)
+            sym = sym.baseSym;
+          unitList.push([ exp, sym ]);
         }
-        if (!unitList) {
+        if (unitList.length < 1) {
           parsePos = backtrack1;
           return null;
         }
@@ -1757,7 +1774,6 @@
             uscu = true;
           } else {
             parsePos = backtrack1; // un-eat the quote in case this is a nonce unit
-            //returns { chunkVal, unitVal, unitList, dim, origin, uscu };
             const res = parseUnitString(chunkVal, opts);
             if (!res)
               break;
@@ -1838,7 +1854,7 @@
               return { type: 'parse', op: 'neg', expr: val };
             if (val.type !== 'num') throw new ChattyError("Must be numeric");
             let resVal = - val.val;
-            if (val.origin)   // special negation of afine values: don't nehate the origin value
+            if (val.origin)   // special negation of affine values: don't negate the origin value
               resVal += val.origin
             return { type: val.type, dim: val.dim, val: resVal, uscu: val.uscu };
           }
@@ -2068,9 +2084,9 @@
 
       // Parse a statement:
       //    expr
-      //    expr '|' [ '/'? word ]*
       //    word '=' expr
       //    word '(' [ word [ ',' word ]* ]? ')' '=' expr
+      //    expr '|' unitsstr
 
       function parseStatement(opts) {
         const backtrack = parsePos;
@@ -2095,7 +2111,14 @@
               // make sure the parameters all have different names
               const paramNames = {};
               for (const p of params) {
-                if (paramNames[p]) throw `duplicate parameter ${p} in function ${word}`;
+                if (paramNames[p]) throw `Duplicate parameter ${p} in function ${word}`;
+                const symVal = getSymbol(p);
+                if (symVal?.reserved) {
+                  let name = `"${p}"`;
+                  if (symVal.desc && symVal.desc !== sym)
+                    name = `${name} (${symVal.desc})`;
+                  throw `Parameter cannot be reserved reserved symbol ${name}`;
+                }
                 paramNames[p] = true;
               }
               const saveEnv = environment;
@@ -2121,20 +2144,12 @@
         }
         let val = parseExpr();
         if (val && take('|')) {
-          let leadingTerms = [];
-          while (true) {
-            take('/');  // ignored anyway
-            let word = parseWord();
-            if (!word)
-               break;
-            if (word) {
-              let leadingTerm = getSymbol(word);
-              if (!leadingTerm || leadingTerm.type !== 'num' || Dim.isScalar(leadingTerm.dim) || !leadingTerm.val)
-                throw new ChattyError(`Not a unit: ${word}`);
-              leadingTerms.push(leadingTerm);
-            }
+          let displayUnits = parseUnitString(opts);
+          if (!displayUnits) {
+            parsePos = backtrack;
+            return null;
           }
-          return { ...val, leadingTerms };
+          return { ...val, displayUnits };
         }
         return val;
       }
@@ -2188,7 +2203,7 @@
               showUserSymbols();
               if (opts?.userHitEnter)
                 document.getElementById('expr').value = "";
-            } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.leadingTerms) {
+            } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.displayUnits) {
               showFeetInchesResult(numVal(val));
             } else if (val.type === 'num') {
               showResult(val);
