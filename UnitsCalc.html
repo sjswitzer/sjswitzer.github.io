@@ -280,7 +280,7 @@
         <div class="expands">
           <input style="width: 100%;" type="text" id="expr" value=""
             autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="none"
-            oninput="updateParse()" onchange="updateParse(true)">
+            oninput="updateParse()" onchange="updateParse({ doAssigns: true, userHitEnter: true })">
         </div>
         <span class="button" style="margin-left: .25em; font-size: 1.125em"
           onclick="showHelp('help-expr')">?</span>
@@ -466,7 +466,7 @@
             (say, <code>a = 2</code> and <code>b = 3</code>), the function
             <code>ab() = a + b</code> can be invoked as <code>ab()</code> or <code>ab</code>,
             and in either case gives you the current value of <code>a + b</code>.
-            If you change <code>a</code> or <code>b</code> (say, <code>b = 5</code>), then the
+            If you change either variable (say, <code>b = 5</code>), then the
             value <code>ab</code> changes too.
         <h3> Built-In Functions </h3>
         <table class="example">
@@ -514,6 +514,7 @@
             <li> How many tablespoons in a cup? <code>cup | tbsp</code>
             <li> Sea-level air pressure in PSI? <code>atm | PSI</code>
             <li> What's 20 degrees celsius in fahrenheit? <code>20 celsius | fahrenheit</code>
+            <li> What's about absolute zero? <code>0K | degf</code>
             <li> What <i>is</i> 20000 leagues anyway? <code>20000 league | mi</code>
             <li> How far away is the Sun in miles? <code>au | mi</code>
             <li> What's the current with <code>5V</code> across a <code>2000 ohm</code> resister?
@@ -523,7 +524,7 @@
                  assuming electricity costs $0.20 per kilowatt hour?
                  <code>.20 'dollars' / kW hr * 100 watts * 356 days</code>, about $170
             <li> Alternatively, it's about $1.75 per watt per year
-                 <code>.20 'dollars' / kW hr * 1 watt * 365 days</code>
+                 <code>.20 'dollars' / kW hr * watt * 365 days</code>
             <li> How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>
             <li> How long does it take sunlight to reach the Earth? <code>au/c | min</code>
             <li> What's a kilobyte per meter in kilometers? <code>KB/m | km</code>
@@ -777,6 +778,9 @@
             desc: "100 meters \u00D7 100 meters" },
 
         // Volume (L^3)
+        //    Sadly, there's ambiguity in units between liquid volume, dry volume, and mass
+        //    and, further, differences between the US and Imperial systems.
+        //    When in conflict, I've chosen liquid volumes and US units.
         groupVolume: { group: "Volume Units" },
         gallon : { type: 'num', dim: { L: 3 }, val: GAL, uscu: true, alt: ["gallons"] },
         quart : { type: 'num', dim: { L: 3 }, val: GAL/4, uscu: true, alt: ["quarts"] },
@@ -788,6 +792,10 @@
         liter : { type: 'num', dim: { L: 3 }, val: (10*CM)**3, desc: "liter", alt: ["liters", "litre", "litres"] },
         ml : { type: 'num', dim: { L: 3 }, val: (CM)**3, alt: ["milliliter", "millilitre", "milliliters", "millilitres"] },
         cc : { type: 'num', dim: { L: 3 }, val: CM**3, desc: "cubic centimeter" },
+        gi : { type: 'num', dim: { L: 3 }, val: GAL/32, uscu: true, desc: "gill", alt:["gill", "gills"] },
+        dram : { type: 'num', dim: { L: 3 }, val: GAL/128/8, uscu: true, alt: ["drams"] },
+        minim : { type: 'num', dim: { L: 3 }, val: GAL/128/8/60, uscu: true, alt: ["minims"] },
+        cord : { type: 'num', dim: { L: 3 }, val: 128*FT**3, desc: "cord of wood", uscu: true, alt: ["cords"] },
 
         // Mass (M)
         groupMass: { group: "Mass Units" },
@@ -798,15 +806,6 @@
         mg: { type: 'num', dim: { M: 1 }, val: MG, alt: ["milligram", "milligrams"]  },
         ug: { type: 'num', dim: { M: 1 }, val: UG, display: MICROSYM+"g", alt: ["microgram", "micrograms"] },
         
-        // Volume (L^3)
-        //    Sadly, there's ambiguity in units between liquid volume, dry volume, and mass
-        //    and, further, differences between the US and Imperial systems.
-        //    When in conflict, I've chosen liquid volumes and US units.
-        gi : { type: 'num', dim: { L: 3 }, val: GAL/32, uscu: true, desc: "gill", alt:["gill", "gills"] },
-        dram : { type: 'num', dim: { L: 3 }, val: GAL/128/8, uscu: true, alt: ["drams"] },
-        minim : { type: 'num', dim: { L: 3 }, val: GAL/128/8/60, uscu: true, alt: ["minims"] },
-        cord : { type: 'num', dim: { L: 3 }, val: 128*FT**3, desc: "cord of wood", uscu: true, alt: ["cords"] },
-
         // Time (T)
         groupTime: { group: "Time Units" },
         hr: { type: 'num', dim: { T: 1 }, val: HR, uscu: null, alt: ["hour", "hours", "hrs"] },
@@ -839,9 +838,9 @@
         // Data (BIT)
         groupInformation: { group: "Data Units" },
         bit: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BIT, alt: ["bits"] },
+        byte: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BYTE, alt: ["bytes"] },
         baud: { type: 'num', dim: { BIT: 1, T: -1 }, val: BIT/SEC },
         kilobaud: { type: 'num', dim: { BIT: 1, T: -1 }, val: 1000*BIT/SEC, alt: ["kbaud"] },
-        byte: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BYTE, alt: ["bytes"] },
         // I personally find this offensive, but the modern consensus is that the well-named
         // units here are powers of 10 and the stupidly-named ones are powers of 2.
         //   https://www.ibm.com/docs/en/storage-insights?topic=overview-units-measurement-storage-data
@@ -1135,10 +1134,11 @@
             const symSuffix = symName.substr(pos);
             let val2 = getSymbol(symPrefix);
             let exp = Number(symSuffix);
-            if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim &&!val2.origin && exp > 1) {
-              let desc = val2.desc && `${val2.desc ?? symPrefix}^${String(exp)}`;
+            if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim && exp > 1) {
+              let desc = val2.sym && `${val2.sym ?? symPrefix}^${String(exp)}`;
               return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(numVal(val2), exp),
-                desc, reserved: val2.reserved, uscu: val2.uscu };
+                desc, reserved: val2.reserved, uscu: val2.uscu,
+                baseSym: val2, withExp: exp };
             }
           }
         }
@@ -1162,7 +1162,7 @@
             environment[symVal.params[i]] = params[i];
           let val = parseExpr();
           skipSpaces();
-          if (peekc()) throw "Invalid function";
+          if (peekc() !== null) throw "Invalid function";
           return val;
         }
         finally {
@@ -1270,7 +1270,8 @@
                 newVal = (val-origin) / Math.pow(unit.val, exp);
               else
                 newVal = (val - origin) * Math.pow(unit.val, -exp);
-              unitDescs.push({ unit, exp, unitExp, newVal, normSquared, reduced, reducedNDims });
+              let favored = unit.favored ?? 0;
+              unitDescs.push({ unit, exp, unitExp, newVal, normSquared, reduced, favored, reducedNDims });
             }
             unitDescs.sort((a,b) => {  // Note that we're sorting from best to worst
               function cmp(a,b) {
@@ -1284,7 +1285,7 @@
                 }
 
                 // Favored units
-                let diff = (b.unit.favored ?? 0) - (a.unit.favored ?? 0);
+                let diff = b.favored - a.favored;
                 if (diff !== 0)
                   return diff;
 
@@ -1638,7 +1639,7 @@
           if (take(qchar, NOSKIP)) {
             let word = parseWord(NOSKIP);
             if (!word || !take(qchar, NOSKIP))
-              throw new ChattyError("Bad user unit");
+              throw new ChattyError(peekc() === null ? "Incomplete input" : "Bad user unit" );
             let sym = getNonceUnit(word);
             let exp = parseNum({ noSkip: true, intOnly: true });
             if (exp !== null) {
@@ -1653,19 +1654,85 @@
         return null;
       }
 
+      // Parse a unit string
+      //    [ '/'? word ]+
+
+      function parseUnitString(chunkVal, opts) {
+        let implicitValue = false;
+        if (!chunkVal) {
+          chunkVal = [ 1, 1 ];
+          implicitValue = true;
+        }
+        let backtrack1 = parsePos;
+        let unitVal = 1, unitList, dim= {}, origin, uscu;
+        while (true) {
+          const backtrack2 = parsePos;
+          let hasSlash = take('/');
+          let sym = parseNonceUnit({ noSkip: hasSlash });
+          if (!sym) {
+            let word = parseWord({ ...opts, noSkip: hasSlash });
+            if (!word) {
+              parsePos = backtrack2;
+              break;
+            }
+            sym = getSymbol(word);
+            if (!sym) {
+              if (!implicitValue)  // could be a variable instead
+                throw new ChattyError(`Unknown unit: "${word}"`);
+              parsePos = backtrack1;
+              return null;
+            }
+          }
+          if (sym.origin && !hasSlash) {
+            // Affine units must appear alone with no exponents or in the denominator.
+            // Affine units can only have a +1 exponent or a negative exponent.
+            // We ignore the offset for negative exponents because a unit in the denominator
+            // is like differentiation and constants dissapear.
+            if (unitList || sym.withExp) throw `Bad unit: ${word}`
+            origin = sym.origin;
+          }
+          if (Dim.isScalar(sym.dim) || !sym.val) {
+            // There's an ambiguity with variables if it's an implict value, so don't error
+            if (!implicitValue)
+              throw new ChattyError(`Unknown unit: "${sym.sym}"`);
+            parsePos = backtrack1;
+            return null;
+          }
+          let symVal = sym.val;
+          if (hasSlash) {
+            dim = Dim.sub(dim, sym.dim);
+            chunkVal = [ chunkVal[0]/symVal, chunkVal[1] ];
+          } else {
+            dim = Dim.add(dim, sym.dim);
+            chunkVal = [ chunkVal[0]*symVal, chunkVal[1] ];
+          }
+          if (sym.uscu)
+            uscu = true;
+          unitVal *= symVal;
+          unitList = unitList ?? [];
+          unitList.push(sym);
+        }
+        if (!unitList) {
+          parsePos = backtrack1;
+          return null;
+        }
+        let val = chunkVal[0] / chunkVal[1];
+        if (!isFinite(val)) throw "Divide by zero";
+        return { type: 'num', val, dim, uscu, origin, chunkVal, unitVal, unitList };
+      }
+
       // Parse a value, which is either a plain number (n) or a sequesnce of
       // number-fractions (nf) each followed by a unit:
       //    n
-      //    [ nf? [ '/'? unit ]+ ]*
-      // The nf is only actually optional on the first iteration
+      //    [ nf [ "'" | '"' | unitstring ] ]+
           
       function parseValue(opts) {
-        const backtrack1 = parsePos;
-        let num = 0, dim, origin, firstChunk = true;
-        let lastChunkVal = Number.POSITIVE_INFINITY;
+        const backtrack = parsePos;
+        let val = 0, dim, origin;
+        let lastUnitVal = Number.POSITIVE_INFINITY;
         let uscu = false;   // consider it metric unless we encounter any non-metric unit
 
-        // The idea of lastChunkVal is that units should get progressively smaller.
+        // The idea of lastUnitVal is that units should get progressively smaller.
         // Otherwise, someone could enter 2'3' when they meant 2'3"
 
         while (true) {  // additive chunks [nf unit unit unit]*
@@ -1673,96 +1740,50 @@
           // The idea is tha decimals like "0.1" can't be represented exactly but
           // the units have factors of ten in them so first multiply the unit
           // then divide by the denom so that the value remains a clean integer when possible.
-          let chunkVal = parseNumFrac({ ...opts, preciceDecimal: true });
-          let implicitValue = false;
-          if (chunkVal === null) {
-            if (!firstChunk)
-              break;
-            chunkVal = [ 1, 1 ];
-            implicitValue = true;
-          }
-          let chunkDim = {};
-          let gotUnit = false;
-          if (take("'") && !ALPHA.includes(peekc())) {
-            if (FT >= lastChunkVal) throw "Implausible units";
-            lastChunkVal = FT;
-            chunkDim.L = 1;
-            chunkVal = [ chunkVal[0]*FT, chunkVal[1] ];
-            uscu = true;
-            gotUnit = true;
-          } else if (take('"') && !ALPHA.includes(peekc())) {
-            if (IN >= lastChunkVal) throw "Implausible units";
-            lastChunkVal = IN;
-            chunkDim.L = 1;
-            chunkVal = [ chunkVal[0]*IN, chunkVal[1] ];
-            uscu = true;
-            gotUnit = true;
-          } else {
-            let qchar = parseStr.charAt(parsePos-1); // This is SUCH a hack
-            if (qchar === '"' || qchar === "'")
-              parsePos -= 1;
-            // system and user-defined units
-            while (true) {
-              const backtrack2 = parsePos;
-              let hasSlash = take('/');
-              let sym = parseNonceUnit({ noSkip: hasSlash });
-              if (!sym) {
-                let word = parseWord({ ...opts, noSkip: hasSlash });
-                if (!word) {
-                  parsePos = backtrack2;
-                  break;
-                }
-                sym = getSymbol(word);
-                if (!sym)
-                  throw new ChattyError(`Unknown unit: "${word}"`);
-              }
-              if (sym.origin) {
-                if (origin)
-                  origin += sym.origin;
-                else
-                  origin = sym.origin;
-              }
-              if (Dim.isScalar(sym.dim) || !sym.val) {
-                if (!implicitValue)  // there's an ambiguity if it's an implicit value, but error otherwise
-                  throw new ChattyError(`Not a unit: "${sym.sym}"`);
-                parsePos = backtrack1;
-                return null;
-              }
-              let symVal = sym.val;
-              if (hasSlash)
-                chunkDim = Dim.sub(chunkDim, sym.dim);
-              else
-                chunkDim = Dim.add(chunkDim, sym.dim);
-              if (hasSlash)
-                chunkVal = [ chunkVal[0]/symVal, chunkVal[1] ];
-              else
-                chunkVal = [ chunkVal[0]*symVal, chunkVal[1] ];
-              if (sym.uscu)
-                uscu = true;
-              gotUnit = true;
-            }
-            let thisChunkVal = chunkVal[0] / chunkVal[1];
-            if (!isFinite(thisChunkVal)) throw "Divide by zero";
-            if (thisChunkVal >= lastChunkVal) throw "Implausible units";
-            lastChunkVal = thisChunkVal;
-          }
-          if (!gotUnit) {
-            dim = undefined;
-            parsePos = backtrack1;
+          let chunkVal = parseNumFrac({ ...opts, preciceDecimal: true },), unitVal = 0;
+          if (!chunkVal)
             break;
+          let chunkDim;
+          const backtrack1 = parsePos;
+          if (take("'") && !ALPHA.includes(peekc())) {
+            chunkDim = { L: 1 };
+            unitVal = FT;
+            chunkVal = [ chunkVal[0]*unitVal, chunkVal[1] ];
+            uscu = true;
+          } else if (take('"') && !ALPHA.includes(peekc())) {
+            chunkDim = { L:1 };
+            unitVal = IN;
+            chunkVal = [ chunkVal[0]*unitVal, chunkVal[1] ];
+            uscu = true;
+          } else {
+            parsePos = backtrack1; // un-eat the quote in case this is a nonce unit
+            //returns { chunkVal, unitVal, unitList, dim, origin, uscu };
+            const res = parseUnitString(chunkVal, opts);
+            if (!res)
+              break;
+            if (origin && res.origin) throw "Implausible units";
+            chunkVal = res.chunkVal;
+            unitVal = res.unitVal;
+            chunkDim = res.dim;
+            origin = res.origin;
+            if (res.uscu)
+              uscu = true;
           }
+          if (!chunkDim)
+            break;
           if (!dim)
             dim = chunkDim;
           else if (!Dim.equal(dim, chunkDim))
             throw new ChattyError("Implausible units");
-          num += chunkVal[0] / chunkVal[1];
-          if (!isFinite(num)) throw "Divide by zero";
-          firstChunk = false;
+          val += chunkVal[0] / chunkVal[1];
+          if (!isFinite(val)) throw "Divide by zero";
+          if (unitVal >= lastUnitVal)  throw "Implausible units";
+          lastUnitVal = unitVal;
         }
         if (dim)
-          return { type: 'num', dim, val: num, origin, uscu };
-        parsePos = backtrack1;
-        num = parseNum(opts);
+          return { type: 'num', dim, val, origin, uscu };
+        parsePos = backtrack;
+        let num = parseNum(opts);
         if (num !== null)
           return  {type: 'num', dim: {}, val: num };
         return null;
@@ -1793,7 +1814,7 @@
       //    term [ '(' [ expr [ ',' expr ]* ]? ')' ]+
       //    value
       //    word
-      //    nonce-unit
+      //    unitstring
 
       function parseTerm(opts) {
         const backtrack = parsePos;
@@ -1852,6 +1873,8 @@
               val = { type: 'num', dim: {}, val: val };
           } else {
             val = parseValue(opts);
+            if (!val)
+               val = parseUnitString(null, opts);
           }
           if (val === null) {
             const word = parseWord(opts);
@@ -2127,7 +2150,7 @@
         environment = env || {};
         let val = parseStatement(opts);
         skipSpaces();
-        if (val === null || peekc()) {
+        if (val === null || peekc() !== null) {
           let rest = parseStr.substr(parseFurthest);
           if (rest.length > 0)
             throw new ChattyError(`Cannot parse beyond "${rest}"`);
@@ -2146,12 +2169,12 @@
         userSymbols[sym] = val;
       }
 
-      function updateParse(userHitEnter) {
+      function updateParse(opts) {
         clearFields();
         try {
           let val = parseInputStatement(document.getElementById('expr').value);
           if (val !== null) {
-            if (userHitEnter && val.defined) {
+            if (opts?.doAssigns && val.defined) {
               const sym = val.sym;
               const symVal = getSymbol(sym);
               if (symVal?.reserved) {
@@ -2163,6 +2186,8 @@
               showAssignResult(val);
               setUserSymbol(val);
               showUserSymbols();
+              if (opts?.userHitEnter)
+                document.getElementById('expr').value = "";
             } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.leadingTerms) {
               showFeetInchesResult(numVal(val));
             } else if (val.type === 'num') {
@@ -2180,7 +2205,7 @@
           }
         }
         catch (e) {
-          showError(e, { allErrors: userHitEnter });
+          showError(e, { allErrors: opts?.userHitEnter || opts?.showErrors });
         }
 
         // Gray out the result since we can't parse correctly right now
@@ -2386,7 +2411,7 @@
           try {
             let val = parseInputStatement(def);
             skipSpaces();
-            if (val !== null && !peekc()) // nothing left over at the end
+            if (val !== null && peekc() === null) // nothing left over at the end
               setUserSymbol(val);
           }
           catch (e) {
@@ -2440,7 +2465,7 @@
                 if (sym?.origin)
                   text = "0 " + text;
                 document.getElementById('expr').value = text.trim();
-                updateParse(true);
+                updateParse({ doAssigns: true, showErrors: true });
                 return;
               }
               element = element.parentElement;
