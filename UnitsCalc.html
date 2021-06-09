@@ -518,8 +518,8 @@
             <li> What's <code>pi/4</code> radians in degrees? <code>pi/4 radians | degrees</code>
             <li> How much does it cost to run a 100 watt lightbulb for a year,
                  assuming electricity costs $0.20 per kilowatt hour?
-                 <code>.20 'dollars' / 1 kW hr * 100 W * 356 days</code>, or about $1.75 per watt per year
-                 <code>.20 'dollars' / 1 kW hr * W * 365 days</code>
+                 <code>.20 'dollars' / kW hr * 100 watts * 356 days</code>, or about $1.75 per watt per year
+                 <code>.20 'dollars' / kW hr * 1 watt * 365 days</code>
             <li> How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>
             <li> How long does it take sunlight to reach the Earth? <code>au/c | min</code>
             <li> What's a kilobyte per meter in kilometers? <code>KB/m | km</code>
@@ -1550,16 +1550,19 @@
       // -- word must be a dimensionless number, mostly in service of saying "pi/4 radians"
 
       function parseNumFrac(opts) {
+        const backtrack1 = parsePos;
         let val = parseNum(opts);
         if (val === null) {
           let word = parseWord(), sym = word && getSymbol(word);
-          if (!sym || sym.type !== 'num' || !Dim.isScalar(sym.dim))
+          if (!sym || sym.type !== 'num' || !Dim.isScalar(sym.dim)) {
+            parsePos = backtrack1;
              return null;
+          }
           val = sym.val;
           if (opts?.preciceDecimal)
             val = [ val, 1 ];
         }
-        const backtrack = parsePos;
+        const backtrack2 = parsePos;
         if (take('/', NOSKIP)) {
           let denom = parseNum({ noSkip: true, intOnly: true });
           if (denom === null) {
@@ -1589,7 +1592,7 @@
             return val + q;
           }
         }
-        parsePos = backtrack;
+        parsePos = backtrack2;
         return val;
       }
 
@@ -1655,7 +1658,8 @@
       // Parse a value, which is either a plain number (n) or a sequesnce of
       // number-fractions (nf) each followed by a unit:
       //    n
-      //    [ nf [ '/'? unit ['^' n]? ]+ ]*
+      //    [ nf? [ '/'? unit ]+ ]*
+      // The nf is only actually optional on the first iteration
           
       function parseValue(opts) {
         const backtrack1 = parsePos;
@@ -1673,9 +1677,9 @@
           // then divide by the denom so that the value remains a clean integer when possible.
           let chunkVal = parseNumFrac({ ...opts, preciceDecimal: true });
           if (chunkVal === null) {
-           /* if (firstChunk)
+            if (firstChunk)
               chunkVal = [ 1, 1 ];
-            else */
+            else
               break;
           }
           let chunkDim = {};
