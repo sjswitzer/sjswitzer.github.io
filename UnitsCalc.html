@@ -1137,7 +1137,7 @@
             if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim && exp > 1) {
               let desc = val2.sym && `${val2.sym ?? symPrefix}^${String(exp)}`;
               return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(numVal(val2), exp),
-                desc, reserved: val2.reserved, uscu: val2.uscu,
+                desc, reserved: val2.reserved, uscu: val2.uscu, origin: val2.origin,
                 baseSym: val2, withExp: exp };
             }
           }
@@ -1688,7 +1688,7 @@
             // Affine units can only have a +1 exponent or a negative exponent.
             // We ignore the offset for negative exponents because a unit in the denominator
             // is like differentiation and constants dissapear.
-            if (unitList || sym.withExp) throw `Bad unit: ${word}`
+            if (unitList || sym.withExp) throw `Bad unit: ${sym.sym}`
             origin = sym.origin;
           }
           if (Dim.isScalar(sym.dim) || !sym.val) {
