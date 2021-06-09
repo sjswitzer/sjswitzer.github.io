@@ -424,11 +424,11 @@
             <code>144/ft2</code> means 144 per square foot or, equivalently, 1 per square inch
             (which is how it will display). <i>What</i> per square foot? Anything.
             Think &ldquo;ducks&rdquo; or &ldquo;pebbles&rdquo; and you'll be on the right track.
-        <p> In fact, you can type <code>640 "ducks" / mi2</code> or <code>144 "pebble"/ft2</code>.
-            (Bear in mind that "pebble" is a different unit from "pebbles".)
-            Try <code>2 "shoes"/person * 1000 people</code>.
+        <p> In fact, you can type <code>640 'ducks' / mi2</code> or <code>144 'pebble'/ft2</code>.
+            (Bear in mind that 'pebble' is a different unit from 'pebbles'.)
+            Try <code>2 'shoes'/person * 1000 people</code>.
             If there's some unit this tool didn't anticipate, you can define it yourself,
-            <code>bogosity = "bogosity"</code> and use it as an ordinary unit such as <code>20 bogosity</code>.
+            <code>bogosity = 'bogosity'</code> and use it as an ordinary unit such as <code>20 bogosity</code>.
         <p> Units must be specified in descending order.
             You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
             This is to prevent accidentally typing <code>12'3'</code> when you really
@@ -459,12 +459,15 @@
             then hitting &ldquo;enter.&rdquo; For instance, you can define a function to average to numbers
             or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
             <code>mean(&hellip;)</code> already does that, so&hellip;).
-        <p> Function bodies can use any of their parameters and variables
+        <p> Functions can use any of their parameters and variables
             that have already been defined. As a special case, a function with no parameters
             can be used as a &ldquo;dynamic variable.&rdquo; That is, assuming variables <code>a</code>
-            and <code>b</code> are already defined, the function
+            and <code>b</code> are already defined
+            (say, <code>a = 2</code> and <code>b = 3</code>), the function
             <code>ab() = a + b</code> can be invoked as <code>ab()</code> or <code>ab</code>,
             and in either case gives you the current value of <code>a + b</code>.
+            If you change <code>a</code> or <code>b</code> (say, <code>b = 5</code>), then the
+            value <code>ab</code> changes too.
         <h3> Built-In Functions </h3>
         <table class="example">
           <tr>
@@ -518,7 +521,8 @@
             <li> What's <code>pi/4</code> radians in degrees? <code>pi/4 radians | degrees</code>
             <li> How much does it cost to run a 100 watt lightbulb for a year,
                  assuming electricity costs $0.20 per kilowatt hour?
-                 <code>.20 'dollars' / kW hr * 100 watts * 356 days</code>, or about $1.75 per watt per year
+                 <code>.20 'dollars' / kW hr * 100 watts * 356 days</code>, about $170
+            <li> Alternatively, it's about $1.75 per watt per year
                  <code>.20 'dollars' / kW hr * 1 watt * 365 days</code>
             <li> How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>
             <li> How long does it take sunlight to reach the Earth? <code>au/c | min</code>
@@ -1260,14 +1264,13 @@
                   unitExp += ue;
               const reduced = Dim.add(dim, unit.dim, -exp);
               const reducedNDims = Dim.nDims(reduced);
-              const reducerNDims = Dim.nDims(unit.dim);
               let origin = unit.origin ?? 0;
               let newVal;
               if (exp >= 0) 
                 newVal = (val-origin) / Math.pow(unit.val, exp);
               else
                 newVal = (val - origin) * Math.pow(unit.val, -exp);
-              unitDescs.push({unit, exp, unitExp, newVal, normSquared, reduced, reducedNDims, reducerNDims});
+              unitDescs.push({ unit, exp, unitExp, newVal, normSquared, reduced, reducedNDims });
             }
             unitDescs.sort((a,b) => {  // Note that we're sorting from best to worst
               function cmp(a,b) {
@@ -1287,11 +1290,6 @@
 
                 // The fewer independend dimensions remaining, the better
                 diff = a.reducedNDims - b.reducedNDims;
-                if (diff !== 0)
-                  return diff;
-
-                // The fewer dimensions in the reducer, the better
-                diff = a.reducerNDims - b.reducerNDims;
                 if (diff !== 0)
                   return diff;
 
@@ -1621,7 +1619,7 @@
         let sym = nonceUnits[name];
         if (sym)
           return sym;
-        const display = `"${name}"`;
+        const display = `'${name}'`;
         sym = { sym: display, type: 'num', val: NONCE, dim: {}, display, favored: 1, uscu: null };
         sym.dim['NONCE-'+name] = 1;
         nonceUnits[name] = sym;
