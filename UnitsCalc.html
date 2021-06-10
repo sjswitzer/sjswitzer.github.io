@@ -417,8 +417,7 @@
             feet and inches or a named unit.
             The  <span class="linklike" onclick="showHelp('help-builtin')">full list</span>
             of predefined units and constants is too long to show here.
-        <p> Any <i>variable</i> you define with a unit can be used as
-            a unit itself.
+        <p> Any variable you define can be used as a unit itself.
             For example, if you enter <code>cubit = 1 1/2'</code>, you can then use
             expressions like <code>3 cubit 5 1/2"</code>.
         <p> A unit can be immediately followed (without spaces) by a number which is
@@ -1148,7 +1147,7 @@
             const symSuffix = symName.substr(pos);
             let val2 = getSymbol(symPrefix);
             let exp = Number(symSuffix);
-            if (val2 && val2.type === 'num' && !Dim.isScalar(val2.dim) && val2.dim && exp > 1) {
+            if (val2 && val2.type === 'num' && exp > 1) {
               let desc = val2.sym && `${val2.sym ?? symPrefix}^${String(exp)}`;
               return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(numVal(val2), exp),
                 desc, reserved: val2.reserved, uscu: val2.uscu, origin: val2.origin,
@@ -1719,8 +1718,7 @@
             if (unitList.length > 0 || sym.withExp) throw `Bad unit: ${sym.sym}`
             origin = sym.origin;
           }
-          if (Dim.isScalar(sym.dim) || !sym.val) {
-            // There's an ambiguity with variables if it's an implict value, so don't error
+          if (!sym.val) {
             if (!implicitValue)
               throw new ChattyError(`Unknown unit: "${sym.sym}"`);
             parsePos = backtrack1;
@@ -1750,7 +1748,9 @@
         }
         let val = chunkVal[0] / chunkVal[1];
         if (!isFinite(val)) throw "Divide by zero";
-        let desc = unitList.length === 1 ? unitList[0][1].desc : undefined;
+        let desc;
+        if (unitList.length === 1 && unitList[0][0] === 1)
+          desc = unitList[0][1].desc;
         return { type: 'num', val, dim, uscu, origin, desc, chunkVal, unitVal, unitList };
       }
 
