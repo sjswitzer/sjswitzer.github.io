@@ -137,6 +137,7 @@
       div.help td.group {
         padding-top: .5em;
         font-style: italic;
+        font-weight: normal !important;
       }
       div.help th {
         font-weight: bold;
@@ -150,16 +151,21 @@
       div.help code {
         font-weight: bolder;
         font-family: caption, sans-serif;
+        color: #222222;  /* subtle graying to offset the boldness */
       } 
       div.help code.abstract {
         font-style: italic;
       }
       div.help table.example tr td:first-child {
         width: 7em;
-      }
+        font-weight: bold;
+        color: #222222;
+     }
       div.help table.example2 tr td:nth-child(1),
       div.help table.example2 tr td:nth-child(2) {
         width: 3em;
+        font-weight: bold;
+        color: #222222;
       }
       div.help table.example, div.help table.example2 {
         margin-left: 1em;
@@ -338,7 +344,7 @@
             The results box will be grayed out while that happens.
             It would be too noisy to alert each of these errors, but if you don't 
             know why it's grayed out, you can hit &ldquo;enter&rdquo; to see an error message.
-        <p> In these help boxes, most sample expressions, like
+        <p> In these help boxes most sample expressions, like
             <code>11'4"/2</code>, can be clicked to evaluate the expression.
         </p>
         <table class="stuff example">
@@ -514,7 +520,7 @@
             <li> How many tablespoons in a cup? <code>cup | tbsp</code>
             <li> Sea-level air pressure in PSI? <code>atm | PSI</code>
             <li> What's 20 degrees celsius in fahrenheit? <code>20 celsius | fahrenheit</code>
-            <li> What's about absolute zero? <code>0K | degf</code>
+            <li> What about absolute zero? <code>0K | degf</code>
             <li> What <i>is</i> 20000 leagues anyway? <code>20000 league | mi</code>
             <li> How far away is the Sun in miles? <code>au | mi</code>
             <li> What's the current with <code>5V</code> across a <code>2000 ohm</code> resister?
@@ -525,10 +531,14 @@
                  <code>.20 'dollars' / kW hr * 100 watts * 356 days</code>, about $170
             <li> Alternatively, it's about $1.75 per watt per year
                  <code>.20 'dollars' / kW hr * watt * 365 days</code>
+            <li> What's 45 mpg as km/liter? <code>45 mi/gallon | km/liter</code>
             <li> How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>
             <li> How long does it take sunlight to reach the Earth? <code>au/c | min</code>
             <li> What's a kilobyte per meter in kilometers? <code>KB/m | km</code>
                  It seems rather silly, but it might be a length of magnetic tape
+            <li> Suppose an Icelandic Kr&oacute;na is about <code>ISK = .008 'dollar'</code>
+                 and gas costs <code>220 ISK/liter</code>; what't that in dollats per gallon?
+                 <code>220 ISK/liter | 'dollar'/gallon</code>
           </ul>
         <p> As an exercise (click the code that follows), suppose an elephant weighs
             <code>elephantWeight = 8000lbf</code>
@@ -890,6 +900,9 @@
         atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 101325*KG/(M*SEC*SEC), desc: "atmosphere" },
         bar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 100000*KG/(M*SEC*SEC), alt: ["bars"] },
         millibar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 100*KG/(M*SEC*SEC), alt: ["millibars"] },
+        mmHg: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 133.322387415*KG/(M*SEC*SEC),
+            desc: "millimeter of mercury" },
+        torr: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: 101325*KG/760/(M*SEC*SEC) },
 
         // Electrical (A ...)
         //   http://www.ebyte.it/library/educards/sidimensions/SiDimensionsAlfaList.html
@@ -934,7 +947,7 @@
         // Lumosity (CD...)
         groupLuminosity: { group: "Lumosity Units" },
         cd: { type: 'num', dim: { CD: 1 }, val: CANDLE, reserved: true, desc: "candle, luminous intensity",
-            alt: ["candle", "candeles"] },
+            alt: ["candle", "candles"] },
         lx: { type: 'num', dim: { CD: 1, RAD: 2, L: -2 }, val: CANDLE * RADIAN**2 / M**2,
             desc: "lux, luminous emittance", alt: ["lux"] },
         lm: { type: 'num', dim: { CD: 1, RAD: 2 }, val: CANDLE * RADIAN**2,
@@ -1674,6 +1687,8 @@
         let implicitValue = false;
         if (!chunkVal) {
           chunkVal = [ 1, 1 ];
+          // In this case, there's doubt whether we've got a unit string or just a variable,
+          // so don't throw an error if it's not a unit; just fail the parse.
           implicitValue = true;
         }
         let backtrack1 = parsePos;
@@ -1690,7 +1705,7 @@
             }
             sym = getSymbol(word);
             if (!sym) {
-              if (!implicitValue)  // could be a variable instead
+              if (!implicitValue)
                 throw new ChattyError(`Unknown unit: "${word}"`);
               parsePos = backtrack1;
               return null;
@@ -1735,7 +1750,8 @@
         }
         let val = chunkVal[0] / chunkVal[1];
         if (!isFinite(val)) throw "Divide by zero";
-        return { type: 'num', val, dim, uscu, origin, chunkVal, unitVal, unitList };
+        let desc = unitList.length === 1 ? unitList[0][1].desc : undefined;
+        return { type: 'num', val, dim, uscu, origin, desc, chunkVal, unitVal, unitList };
       }
 
       // Parse a value, which is either a plain number (n) or a sequesnce of
@@ -2115,7 +2131,7 @@
                 const symVal = getSymbol(p);
                 if (symVal?.reserved) {
                   let name = `"${p}"`;
-                  if (symVal.desc && symVal.desc !== sym)
+                  if (symVal.desc && symVal.desc !== name)
                     name = `${name} (${symVal.desc})`;
                   throw `Parameter cannot be reserved reserved symbol ${name}`;
                 }
