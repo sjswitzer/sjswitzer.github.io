@@ -1456,7 +1456,7 @@
         document.getElementById('results').style.display = 'none';
         document.getElementById('numberResults').style.display = 'none';
         document.getElementById('error').style.display = '';
-        if (typeof e === 'object' && !(e instanceof ChattyError))
+        if ((e instanceof Error) && !(e instanceof ChattyError))
           throw e;  // rethrow
       }
 
@@ -1773,11 +1773,12 @@
           // The idea is tha decimals like "0.1" can't be represented exactly but
           // the units have factors of ten in them so first multiply the unit
           // then divide by the denom so that the value remains a clean integer when possible.
+          const backtrackChunk = parsePos;
           let chunkVal = parseNumFrac({ ...opts, preciceDecimal: true },), unitVal = 0;
           if (!chunkVal)
             break;
           let chunkDim;
-          const backtrack1 = parsePos;
+          const backtrackQuote = parsePos;
           if (take("'") && !ALPHA.includes(peekc())) {
             chunkDim = { L: 1 };
             unitVal = FT;
@@ -1789,10 +1790,12 @@
             chunkVal = [ chunkVal[0]*unitVal, chunkVal[1] ];
             uscu = true;
           } else {
-            parsePos = backtrack1; // un-eat the quote in case this is a nonce unit
+            parsePos = backtrackQuote; // un-eat the quote in case this is a nonce unit
             const res = parseUnitString(chunkVal, opts);
-            if (!res)
+            if (!res) {
+              parsePos = backtrackChunk;
               break;
+            }
             if (origin && res.origin) throw "Implausible units";
             chunkVal = res.chunkVal;
             unitVal = res.unitVal;
