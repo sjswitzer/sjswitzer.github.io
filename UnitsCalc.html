@@ -148,24 +148,23 @@
       div.help ul > li {
         margin: .5em;
       }
-      div.help code {
-        font-weight: bolder;
+      div.help code,
+      div.help table.example tr td:first-child,
+      div.help table.example2 tr td:nth-child(1),
+      div.help table.example2 tr td:nth-child(2) {
+        font-weight: bold;
         font-family: caption, sans-serif;
-        color: #222222;  /* subtle graying to offset the boldness */
+        color: #444444;  /* subtle graying to offset the boldness */
       } 
       div.help code.abstract {
         font-style: italic;
       }
       div.help table.example tr td:first-child {
         width: 7em;
-        font-weight: bold;
-        color: #222222;
      }
       div.help table.example2 tr td:nth-child(1),
       div.help table.example2 tr td:nth-child(2) {
         width: 3em;
-        font-weight: bold;
-        color: #222222;
       }
       div.help table.example, div.help table.example2 {
         margin-left: 1em;
@@ -464,7 +463,6 @@
             then hitting &ldquo;enter.&rdquo; For instance, you can define a function to average to numbers
             or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
             <code>mean(&hellip;)</code> already does that, so&hellip;).
-            How about the area of a circle? <code>circleArea(r) = &#x1D70B; r2</code>
         <p> Functions can use any of their parameters and variables
             that have already been defined. As a special case, a function with no parameters
             can be used as a &ldquo;dynamic variable.&rdquo; That is, assuming variables <code>a</code>
@@ -586,6 +584,10 @@
             special-purpose language design, grammar ambiguity, and maintaining full
             decimal precision in different units while using floating-point arithmetic
             (remember that 0.1 can't be represented exactly in binary floating point).
+        <p> As an example of using ambiguity for profit, there seemed to be no principled
+            reason to forbid using a dimensionless number as a unit and allowing it
+            lets you define the function <code>circleArea(r) = &#x1D70B; r2</code>
+            or write <code>17 mol</code>.
         <p> Still, the main distinction of this tool is that it deals naturally with notations
             typically used with feet and inches. But, <i>sigh</i>,
             <a href="https://www.google.com/search?q=5%27+6+3%2F8%22+%2F+3">
@@ -957,7 +959,7 @@
         groupVarious: { group: "Constants" },
         pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
         tau: { type: 'num', dim: {}, val: 2*Math.PI, display: TAUSYM, desc: `2${PISYM}` },
-        mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number" },
+        mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number", alt: ["mols"] },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27*KG },
         boltz: { type: 'num', dim: { L: 2, M: 1, T:-2, Q: -1 }, val: 1.380649e-23*KG*M*M/(SEC*SEC)/KELVIN,
             desc: "Boltzmann constant" },
@@ -2223,7 +2225,10 @@
       function updateParse(opts) {
         clearFields();
         try {
-          let val = parseInputStatement(document.getElementById('expr').value);
+          let exprStr = document.getElementById('expr').value;
+          if (exprStr.trim() === "")
+            showAssignResult("&nbsp;");
+          let val = parseInputStatement(exprStr);
           if (val !== null) {
             if (opts?.doAssigns && val.defined) {
               const sym = val.sym;
@@ -2331,9 +2336,8 @@
       }
 
       function showAssignResult(val) {
-        let str = symString(val, { html: true });
-        if (!str)
-          return;
+        let str = (typeof val === 'string') ? val : symString(val, { html: true });
+        if (str === undefined) return;
         document.getElementById('results').style.display = 'none';
         document.getElementById('numberResults').style.display = '';
         document.getElementById('error').style.display = 'none';
