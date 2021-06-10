@@ -464,6 +464,7 @@
             then hitting &ldquo;enter.&rdquo; For instance, you can define a function to average to numbers
             or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
             <code>mean(&hellip;)</code> already does that, so&hellip;).
+            How about the area of a circle? <code>circleArea(r) = &#x1D70B; r2</code>
         <p> Functions can use any of their parameters and variables
             that have already been defined. As a special case, a function with no parameters
             can be used as a &ldquo;dynamic variable.&rdquo; That is, assuming variables <code>a</code>
@@ -1147,11 +1148,16 @@
             const symSuffix = symName.substr(pos);
             let val2 = getSymbol(symPrefix);
             let exp = Number(symSuffix);
-            if (val2 && val2.type === 'num' && exp > 1) {
-              let desc = val2.sym && `${val2.sym ?? symPrefix}^${String(exp)}`;
-              return { sym: symName, type: 'num', dim: Dim.mul(val2.dim, exp), val: Math.pow(numVal(val2), exp),
-                desc, reserved: val2.reserved, uscu: val2.uscu, origin: val2.origin,
-                baseSym: val2, withExp: exp };
+            if (val2 && exp > 1) {
+              if (val2.type === 'num') {
+                let desc = val2.sym && `${val2.sym ?? symPrefix}^${String(exp)}`;
+                return { sym: symName, type: 'num',
+                  dim: Dim.mul(val2.dim, exp), val: Math.pow(numVal(val2), exp),
+                  desc, reserved: val2.reserved, uscu: val2.uscu, origin: val2.origin,
+                  baseSym: val2, withExp: exp };
+              } else if (val2.type === 'parse') {
+                return { type: 'parse', expr: val2, exp: exp };
+              }
             }
           }
         }
@@ -1568,23 +1574,26 @@
       }
 
       // Parse a number or a number followed by fraction or a fraction:
-      //    n | word 
-      //    n n/n
-      //    (n|word)/n
-      // -- word must be a dimensionless number, mostly in service of saying "pi/4 radians"
+      //    [ num | word] [num '/' num]?  -- no spaces around slash
+      //    [ num | word ] '/' num        -- no spaces around slash
+      // returns null, [ num, denom ] or "parse"
 
       function parseNumFrac(opts) {
         const backtrack1 = parsePos;
-        let val = parseNum(opts);
+        var parse = false;
+        let val = parseNum({ ...opts, preciceDecimal: true });
         if (val === null) {
           let word = parseWord(), sym = word && getSymbol(word);
-          if (!sym || sym.type !== 'num' || !Dim.isScalar(sym.dim)) {
-            parsePos = backtrack1;
-             return null;
+          if (sym && sym.type === 'parse') {
+            parse = true;
+            val = [ 1, 1 ];
+          } else {
+            if (!sym || sym.type !== 'num' || !Dim.isScalar(sym.dim)) {
+              parsePos = backtrack1;
+              return null;
+            }
+            val = [ sym.val, 1 ];
           }
-          val = sym.val;
-          if (opts?.preciceDecimal)
-            val = [ val, 1 ];
         }
         const backtrack2 = parsePos;
         if (take('/', NOSKIP)) {
@@ -1593,13 +1602,8 @@
             parsePos = backtrack2;
             return val;
           }
-          if (opts?.preciceDecimal) {
-            if (denom === 0)  throw "Divide by zero";
-            return [ val[0], denom*val[1] ];
-          }
-          const q = val/denom;
-          if (!isFinite(q)) throw "Divide by zero";
-          return q;
+          if (denom === 0)  throw "Divide by zero";
+          return [ val[0], denom*val[1] ];
         }
         let num = parseNum({ intOnly: true });
         if (num === null)
@@ -1607,16 +1611,13 @@
         if (take('/'), NOSKIP) {
           let denom = parseNum({ noSkip: true, intOnly: true });
           if (denom !== null) {
-            if (opts?.preciceDecimal) {
-              if (denom === 0) throw "Divide by zero";
-              return [ val[0] + num*val[1]/denom, val[1] ];
-            }
-            const q = num/denom;
-            if (!isFinite(q)) throw "Divide by zero";
-            return val + q;
+            if (denom === 0) throw "Divide by zero";
+            return [ val[0]*denom + num*val[1], val[1]*denom ];
           }
         }
         parsePos = backtrack2;
+        if (parse)
+          return 'parse';
         return val;
       }
 
@@ -1683,7 +1684,7 @@
       //    [ '/'? word ]+
 
       function parseUnitString(chunkVal, opts) {
-        let implicitValue = false;
+        let implicitValue = false, type = 'num';
         if (!chunkVal) {
           chunkVal = [ 1, 1 ];
           // In this case, there's doubt whether we've got a unit string or just a variable,
@@ -1709,6 +1710,11 @@
               parsePos = backtrack1;
               return null;
             }
+          }
+          if (sym.type === 'parse') {
+            type = 'parse';
+            unitList.push([ 1, sym ]);
+            continue;
           }
           if (sym.origin && !hasSlash) {
             // Affine units must appear alone with no exponents or in the denominator.
@@ -1751,7 +1757,7 @@
         let desc;
         if (unitList.length === 1 && unitList[0][0] === 1)
           desc = unitList[0][1].desc;
-        return { type: 'num', val, dim, uscu, origin, desc, chunkVal, unitVal, unitList };
+        return { type, val, dim, uscu, origin, desc, chunkVal, unitVal, unitList };
       }
 
       // Parse a value, which is either a plain number (n) or a sequesnce of
@@ -1761,7 +1767,7 @@
           
       function parseValue(opts) {
         const backtrack = parsePos;
-        let val = 0, dim, origin;
+        let val = 0, dim, origin, type = 'num';
         let lastUnitVal = Number.POSITIVE_INFINITY;
         let uscu = false;   // consider it metric unless we encounter any non-metric unit
 
@@ -1774,9 +1780,13 @@
           // the units have factors of ten in them so first multiply the unit
           // then divide by the denom so that the value remains a clean integer when possible.
           const backtrackChunk = parsePos;
-          let chunkVal = parseNumFrac({ ...opts, preciceDecimal: true },), unitVal = 0;
+          let chunkVal = parseNumFrac(opts), unitVal = 0;
           if (!chunkVal)
             break;
+          if (chunkVal === "parse") {
+            type = 'parse';
+            chunkVal = [ 1, 1 ];
+          }
           let chunkDim;
           const backtrackQuote = parsePos;
           if (take("'") && !ALPHA.includes(peekc())) {
@@ -1796,27 +1806,34 @@
               parsePos = backtrackChunk;
               break;
             }
-            if (origin && res.origin) throw "Implausible units";
-            chunkVal = res.chunkVal;
-            unitVal = res.unitVal;
-            chunkDim = res.dim;
-            origin = res.origin;
-            if (res.uscu)
-              uscu = true;
+            if (res.type === 'num') {
+              if (origin && res.origin) throw "Implausible units";
+              chunkVal = res.chunkVal;
+              unitVal = res.unitVal;
+              chunkDim = res.dim;
+              origin = res.origin;
+              if (res.uscu)
+                uscu = true;
+            } else if (res.type === 'parse') {
+              type = 'parse';
+              chunkDim = {};
+            }
           }
-          if (!chunkDim)
+          if (!chunkDim) // no unit found in this iteration
             break;
           if (!dim)
             dim = chunkDim;
-          else if (!Dim.equal(dim, chunkDim))
-            throw new ChattyError("Implausible units");
-          val += chunkVal[0] / chunkVal[1];
-          if (!isFinite(val)) throw "Divide by zero";
-          if (unitVal >= lastUnitVal)  throw "Implausible units";
-          lastUnitVal = unitVal;
+          if (type !== 'parse') {
+            if (!Dim.equal(dim, chunkDim))
+              throw new ChattyError("Implausible units");
+            val += chunkVal[0] / chunkVal[1];
+            if (!isFinite(val)) throw "Divide by zero";
+            if (unitVal >= lastUnitVal)  throw "Implausible units";
+            lastUnitVal = unitVal;
+          }
         }
         if (dim)
-          return { type: 'num', dim, val, origin, uscu };
+          return { type, dim, val, origin, uscu };
         parsePos = backtrack;
         let num = parseNum(opts);
         if (num !== null)
