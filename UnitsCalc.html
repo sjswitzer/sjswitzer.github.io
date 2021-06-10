@@ -1222,7 +1222,7 @@
 
       function val2str(val, opts) {
         let descStr = "", displayUnits = val.displayUnits;
-        if (opts?.describe && val.desc)
+        if (opts?.describe && val.desc && !displayUnits)
           descStr = ` (${val.desc})`;
         let unitsStr = "", invUnitsStr = "";
         if (val.val !== undefined) {
