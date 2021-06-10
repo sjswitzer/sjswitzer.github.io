@@ -5,8 +5,8 @@
   results when applicable. But it now supports fairly general dimensional calculations
   in units of length, mass, time, information, temperature, electrical current, etc.
 
-  If the final component of the file/URL contains "inch", it will display the original
-  user interface, otherwise the interface will be simplified.
+  If the fileor URL contains "inch", it will display the original user interface,
+  otherwise the interface will be simplified.
 
   Copyright 2021 Stan Switzer
     This work is licensed under a Creative Commons Attribution-ShareAlike
@@ -564,7 +564,7 @@
         <p> This program started out as a quick and dirty tool to easily divide
             lengths given in feet and inches into equal parts, a common task
             in the construction industry and quite tedious to work out by hand.
-            If the file name or last URL element contains the string "inch" (any case),
+            If the file name or URL contains the string "inch" (regardless of case),
             you'll see the original user interface. If you're curoius, you can
             <span class="linklike" onclick="toggleLegacyMode()">switch</code> the UI.
         <p> But I started to think of it as a <i>calculator</i> and wondered
@@ -2513,7 +2513,7 @@
           document.body.removeAttribute(attr);
       }
 
-      if (window.location.href.match(/inch[^/]*$/i))
+      if (window.location.href.match(/inch/i))
         toggleLegacyMode(true);
       document.body.setAttribute('data-protocol', window.location.protocol);
 
