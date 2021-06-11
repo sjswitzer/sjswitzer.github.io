@@ -658,6 +658,11 @@
       const InternalError = Error;
 
       let logLevel = 0;
+      function Log(level, ...messages) {
+        if (level <= logLevel)
+          console.log(...messages);
+      }
+
       class Dim {
         static isScalar(dim) {
           return Dim.nDims(dim) === 0;
@@ -1479,8 +1484,7 @@
                 throw new InternalError("Bad comparitor");
               return res;
             });
-            if (logLevel > 1)
-               console.log("======== " + parseStr + " unit candidates for " + val + " " +
+            Log(2, "======== " + parseStr + " unit candidates for " + val + " " +
                  JSON.stringify(dim) + " ========\n" + JSON.stringify(unitDescs, null, 2));
             if (unitDescs.length < 1)
               throw new InternalError("Insufficient basis units");
@@ -2574,8 +2578,7 @@
           let symStr = symString(userSymbols[sym], { saveMode: true });
           if (symStr) {
             wad.defs.push(symStr);
-            if (logLevel > 0)
-              console.log(`Saving: ${symStr}`);
+            Log(1, `Saving: ${symStr}`);
           }
         }
         let json = JSON.stringify(wad);
