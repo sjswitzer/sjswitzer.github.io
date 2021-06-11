@@ -946,7 +946,7 @@
         sr: { type: 'num', dim: { RAD: 2 }, val: RADIAN**2, alt: ["steradian", "steradians"] },
         degree: { type: 'num', dim: { RAD: 1 }, val: DEGREE, alt: ["degrees"] },
         arcmin: { type: 'num', dim: { RAD: 1 }, val: [ DEGREE, 60 ], alt: ["arcminute", "arcminutes"] },
-        arcsec: { type: 'num', dim: { RAD: 1 }, val: [ DEGREE, 60**2 ], alt: ["arcsecond", "arcseconds"] },
+        arcsec: { type: 'num', dim: { RAD: 1 }, val: [ DEGREE, 60*60 ], alt: ["arcsecond", "arcseconds"] },
 
         // Data (BIT)
         groupInformation: { group: "Data Units" },
@@ -979,7 +979,7 @@
         // Force (L M T^-2)
         groupForce: { group: "Force Units" },
         N: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: [ KG * M, SEC**2 ], alt: ["newton", "newtons"] },
-        dyne: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: [ KG*M, SEC**2 * 100000 ], alt: ["dynes"] },
+        dyne: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: [ KG * M, 100000 * SEC**2 ], alt: ["dynes"] },
         lbf: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: LBF, desc: "pound force", uscu: true },
 
         // Energy (L^2 M, T^-2)
@@ -990,13 +990,13 @@
         // Power (L^2 M T^-3)
         groupPower: { group: "Power Units" },
         W: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ KG * M**2, SEC**3 ], alt: ["watt", "watts"] },
-        kW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ 1000 * KG * M**2, SEC**2 ], alt: ["kilowatt", "killowatts"] },
-        mW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ KG * M * M, 1000 * SEC**3 ], alt: ["milliwatt", "milliwatts"] },
+        kW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ 1000 * KG * M**2, SEC**3 ], alt: ["kilowatt", "killowatts"] },
+        mW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ KG * M**2, 1000 * SEC**3 ], alt: ["milliwatt", "milliwatts"] },
         horsepower: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ 550 * FT * LBF, SEC ], desc: "mechanical horsepower", uscu: true },
 
         // Pressure (L^-1 M T^-2)
         groupPressure: { group: "Pressure Units" },
-        Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ KG, M * SEC*2 ], alt: ["pascal", "pascals"] },
+        Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ KG, M * SEC**2 ], alt: ["pascal", "pascals"] },
         kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ 1000 * KG, M * SEC**2 ], alt: ["kilopascal", "kilopascals"] },
         PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ LBF, IN**2 ],
             desc: "pounds per square inch", uscu: true },
