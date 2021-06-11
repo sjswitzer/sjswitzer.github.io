@@ -1242,7 +1242,7 @@
         if (!val) {
           // special case to create pseudo-variables for exponentiated units.
           // there's no need for more than one digitl that would surely be a user error
-          if (DIGITS.includes(symName.charAt(symName.length-1))) {
+          if (symName.length > 1 && DIGITS.includes(symName.charAt(symName.length-1))) {
             const symPrefix = symName.substr(0, symName.length-1);
             const symSuffix = symName.substr(symName.length-1);
             val = getSymbol(symPrefix);
@@ -1727,7 +1727,7 @@
 
       function getNonceUnit(name) {
         // It's preferable to write 'duck'2 to 'duck2' but we'll allow it anyway.
-        if (DIGITS.includes(name.charAt(name.length-1))) {
+        if (name.length > 1 && DIGITS.includes(name.charAt(name.length-1))) {
           const symPrefix = name.substr(0, name.length-1);
           const symSuffix = name.substr(name.length-1);
           let val = getNonceUnit(symPrefix);
