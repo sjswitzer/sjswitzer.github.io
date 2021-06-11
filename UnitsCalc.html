@@ -924,9 +924,10 @@
 
         // Temperature (Q)
         groupTemperature: { group: "Temperature Units" },
-        celsius: { type: 'num', dim: { Q: 1 }, val: KELVIN, origin: 273.15 * KELVIN,
+        celsius: { type: 'num', dim: { Q: 1 }, val: KELVIN, origin: [ 27315 * KELVIN, 100 ],
             desc: "Celsius", alt: ["degc"] },
-        fahrenheit: { type: 'num', dim: { Q: 1 }, val: [ 5 * KELVIN, 9 ], origin: (273.15-32*5/9)*KELVIN,
+        fahrenheit: { type: 'num', dim: { Q: 1 }, val: [ 5 * KELVIN, 9 ],
+            origin: [ 27315*KELVIN*9 - 3200*5*KELVIN, 900 ], // KELVIN*(273.15-32*5/9)
             desc: "Fahrenheit", alt: ["degf"] },
         K: { type: 'num', dim: { Q: 1 }, val: KELVIN, reserved: true,  alt: ["kelvin", "kelvins"] },
 
@@ -1361,8 +1362,8 @@
                 unitExp += ue;
             const reduced = Dim.add(dim, unit.dim, -exp);
             const reducedNDims = Dim.nDims(reduced);
-            let origin = unit.origin ?? 0;
-            let newVal = Rat.div(Rat.sub(val, [ origin, 1 ]), Rat.pow(unit.val, exp));
+            let origin = unit.origin ?? [ 0, 1 ];
+            let newVal = Rat.div(Rat.sub(val, origin), Rat.pow(unit.val, exp));
             let newNum = Rat.number(newVal);
             let favored = unit.favored ?? 0;
             return { unit, exp, unitExp, newVal, newNum, normSquared, reduced, favored, reducedNDims };
@@ -1720,8 +1721,8 @@
       }
 
       function numVal(val) {
-        if (val?.origin)   // collapse affine values
-          return Rat.add(val.val, [ val.origin, 1 ]);
+        if (val.origin)   // collapse affine values
+          return Rat.add(val.val, val.origin);
         return val.val;
       }
 
