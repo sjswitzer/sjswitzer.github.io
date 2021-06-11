@@ -655,7 +655,8 @@
         }
       }
 
-      
+      const InternalError = Error;
+
       let logLevel = 0;
       class Dim {
         static isScalar(dim) {
@@ -1239,13 +1240,11 @@
           val = { type: 'fn',  params:["..."], native: val,
             body: `#BuiltinFunction-${val.name}#` };
         if (!val) {
-          // special case to create pseudo-variables for exponentiated units
-          let pos = symName.length;
-          while (pos > 1 && DIGITS.includes(symName.charAt(pos-1)))
-            pos -= 1;
-          if (pos < symName.length) {
-            const symPrefix = symName.substr(0, pos);
-            const symSuffix = symName.substr(pos);
+          // special case to create pseudo-variables for exponentiated units.
+          // there's no need for more than one digitl that would surely be a user error
+          if (DIGITS.includes(symName.charAt(symName.length-1))) {
+            const symPrefix = symName.substr(0, symName.length-1);
+            const symSuffix = symName.substr(symName.length-1);
             let val2 = getSymbol(symPrefix);
             let exp = Number(symSuffix);
             if (val2 && exp > 1) {
@@ -1418,7 +1417,7 @@
           let iterations = 0;
           while (!Dim.isScalar(dim)) {
             if (++iterations > 100)
-              throw new Error("System error: failed to reduce units");  // a system error, hence Error
+              throw new InternalError("Failed to reduce units");  // a system error, hence Error
             let unitDescs = [];
             for (const unit of allowedCandidateUnits) {
               const unitDesc = describeUnit(unit);
@@ -1479,14 +1478,14 @@
               // ensure comparitor is well-behaved
               let res = cmp(a,b), rev = cmp(b,a);
               if (res !== -rev)
-                throw new Error("System error: bad comparitor");
+                throw new InternalError("Bad comparitor");
               return res;
             });
             if (logLevel > 1)
                console.log("======== " + parseStr + " unit candidates for " + val + " " +
                  JSON.stringify(dim) + " ========\n" + JSON.stringify(unitDescs, null, 2));
             if (unitDescs.length < 1)
-              throw new Error("System error: insufficient basis units");
+              throw new InternalError("Insufficient basis units");
             applyDesc(unitDescs[0]);
             displayUnits = undefined;
           }
@@ -1730,12 +1729,9 @@
 
       function getNonceUnit(name) {
         // It's preferable to write 'duck'2 to 'duck2' but we'll allow it anyway.
-        let pos = name.length;
-        while (pos > 1 && DIGITS.includes(name.charAt(pos-1)))
-          pos -= 1;
-        if (pos < name.length) {
-          const symPrefix = name.substr(0, pos);
-          const symSuffix = name.substr(pos);
+        if (DIGITS.includes(name.charAt(name.length-1))) {
+          const symPrefix = name.substr(0, name.length-1);
+          const symSuffix = name.substr(name.length-1);
           let val = getNonceUnit(symPrefix);
           let exp = Number(symSuffix);
           if (exp < 2)
@@ -1766,11 +1762,11 @@
             if (!word || !take(qchar, NOSKIP))
               throw new ChattyError(peekc() === null ? "Incomplete input" : "Bad user unit" );
             let sym = getNonceUnit(word);
-            let exp = parseNum({ noSkip: true, intOnly: true });
-            if (exp !== null) {
+            if (DIGITS.includes(peekc())) {
+              let exp = Number(getc());
               if (exp < 2)
                 throw new MessageError("Bad units exponent");
-              sym = { ... sym, dim: Dim.mul(sym.dim, exp), val: Math.pow(numVal(sym), exp) };
+              return { ...sym, dim: Dim.mul(sym.dim, exp), val: Rat.pow(numVal(sym), exp) };
             }
             return sym;
           }
