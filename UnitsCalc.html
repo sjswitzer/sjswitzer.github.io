@@ -640,12 +640,18 @@
     <script type="text/javascript">
       "use strict";
 
+      class MessageError extends Error {
+        constructor(msg) {
+          super(msg);
+        }
+        toString() { return this.message; }
+      }
+
       // Errors that are too chatty to show while typing.
       //   (Error will be shown if the user hits "enter.")
-      class ChattyError extends Error {
+      class ChattyError extends MessageError {
         constructor(msg) {
-          super();
-          this.message = msg;
+          super(msg);
         }
       }
 
@@ -746,7 +752,7 @@
         static number(a) {
           let res = a[0]/a[1];
           if (!isFinite(res))
-            throw new Error("Divide by zero");
+            throw new MessageError("Divide by zero");
           return res;
         }
 
@@ -756,12 +762,12 @@
           if (a[0] === 0)
             return [ 0, 1 ];
           if (a[1] === 0)
-            throw new Error("Divide by zero");
+            throw new MessageError("Divide by zero");
           let g = gcd(...a);
           let denom = a[1]/g;
           if (denom !== denom|0) { // tests for being an int32
             let num =  a[0]/a[1];
-            if (!isFinite(num)) throw Error("Divide by zero"); 
+            if (!isFinite(num)) throw new MessageError("Divide by zero"); 
             return [num, 1 ];
           }
           if (denom < 0) 
@@ -784,7 +790,7 @@
           if (!(typeof b === 'number'))
             b = b[0] / b[1];
           if (!isFinite(b))
-            throw new Error("Divide by zero");
+            throw new MessageError("Divide by zero");
           if (b < 0) {
             b = -b;
             a = [ a[1], a[0] ];
@@ -804,7 +810,7 @@
         static neg(a) { return [ -a[0], a[1] ]; }
         static recip(a) {
           if (a[1] === 0)
-            throw new Error("Divide by zero");
+            throw new MessageError("Divide by zero");
           return [ a[1], a[0] ];
         }
       }
@@ -1093,77 +1099,77 @@
         },
 
         mean: function(...params) {
-          if (params.length < 1) throw `${this.sym}(): No parameters`;
+          if (params.length < 1) throw new MessageError(`${this.sym}(): No parameters`);
           let res = reduceParamVals(this.sym, [ 0, 1 ], params, (accum, val) => Rat.add(accum, val));
           return { ...res, val: Rat.div(res.val, [ params.length, 1 ]) };
         },
 
         sum: function(...params) {
-          if (params.length < 1) throw `${this.sym}(): No parameters`;
+          if (params.length < 1) throw new MessageError(`${this.sym}(): No parameters`);
           let res = reduceParamVals(this.sym, [ 0, 1 ], params, (accum, val) => Rat.add(accum, val));
           return res;
         },
 
         abs: function AbsoluteValue(...params) {
-          if (params.length !== 1) throw `${this.sym}(): Requires one parameter`;
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Requires one parameter`);
           let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(): Requires numeric parameter`;
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(): Requires numeric parameter`);
           return { ...val, val: Rat.abs(val.val) };
         },
 
         sign: function(...params) {
-          if (params.length !== 1) throw `${this.sym}(): Requires one parameter`;
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Requires one parameter`);
           let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(): Requires numeric parameter`;
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(): Requires numeric parameter`);
           return { ...val, val: Rat.sign(val.val), dim:{} };
         },
 
         // Square root
         sqrt: function SquareRoot(...params) {
-          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
           let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(x): Illegal parameter`);
           let dim = Dim.div(val.dim, 2);
-          if (!dim) throw `${this.sym}(x): parameter must have even units`;
+          if (!dim) throw new MessageError(`${this.sym}(x): parameter must have even units`);
           return { type: 'num', dim, val: Rat.sqrt(numVal(val)), uscu: val.uscu };
         },
 
         // Cube root
         cbrt: function CubeRoot(...params) {
-          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
           let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(x): Illegal parameter`);
           let dim = Dim.div(val.dim, 3);
-          if (! dim) throw `${this.sym}(x): parameter must have even units`;
+          if (! dim) throw new MessageError(`${this.sym}(x): parameter must have even units`);
           return { type: 'num', dim, val: Rat.cbrt(numVal(val)), uscu: val.uscu };
         },
 
         // Some trig functions that are valid over their whole domain, are somewhat useful,
         // and illustrate interesting things about dimensional analysis.
         sin: function Sine(...params) {
-          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
           let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(x): Illegal parameter`);
           if (Dim.isScalar(val.dim))
             return { type: 'num', val: [ Math.sin(Rat.number(numVal(val))), 1 ], dim: {} };
-          if (!Dim.equal(val.dim, { RAD: 1 })) throw `${this.sym}(x): Parameter must be an angle`;
+          if (!Dim.equal(val.dim, { RAD: 1 })) throw new MessageError(`${this.sym}(x): Parameter must be an angle`);
           return { type: 'num', val: [ Math.sin(Rat.number(numVal(val))/RADIAN), 1 ], dim: {} };
         },
 
         cos: function Cosine(...params) {
-          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
           let val = params[0];
-          if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(x): Illegal parameter`);
           if (Dim.isScalar(val.dim))
             return { type: 'num', val: [ Math.cos(Rat.number(numVal(val))), 1 ], dim: {} };
-          if (!Dim.equal(val.dim, { RAD: 1 })) throw `${this.sym}(x): Parameter must be an angle`;
+          if (!Dim.equal(val.dim, { RAD: 1 })) throw new MessageError(`${this.sym}(x): Parameter must be an angle`);
           return { type: 'num', val: [ Math.cos(Rat.number(numVal(val))/RADIAN), 1], dim: {} };
         },
 
         atan2: function ArctangentOfRatio(...params) {
-          if (params.length !== 2) throw `${this.sym}(): Needs two parameters`;
+          if (params.length !== 2) throw new MessageError(`${this.sym}(): Needs two parameters`);
           let val1 = params[0], val2 = params[1];
-          if (!Dim.equal(val1.dim, val2.dim)) throw `${this.sym}(): Parameter types incompatible`;
+          if (!Dim.equal(val1.dim, val2.dim)) throw new MessageError(`${this.sym}(): Parameter types incompatible`);
           return { type: 'num', dim: { RAD: 1 },
               val: [ Math.atan2(Rat.number(numVal(val1)), Rat.number(numVal(val2)))*RADIAN, 1 ] };
         },
@@ -1178,9 +1184,10 @@
 
         // Set logging level
         Logging: function SetLogLevel(...params) {
-          if (params.length !== 1) throw `${this.sym}(): Needs one parameter`;
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
           let val = params[0];
-          if (val.type !== 'num' || !Dim.isScalar(val.dim) || numVal(val) < 0 ) throw `${this.sym}(x): Illegal parameter`;
+          if (val.type !== 'num' || !Dim.isScalar(val.dim) || numVal(val) < 0 ) 
+            throw new MessageError(`${this.sym}(x): Illegal parameter`);
           let oldLevel = logLevel;
           logLevel = Rat.number(numVal(val));
           return { type: 'num', dim: {}, val: [ oldLevel, 1 ] };
@@ -1199,7 +1206,7 @@
         let dim;
         let uscu = false;
         for (const val of params) {
-          if (val.type !== 'num') throw `${name}(): Illegal parameter`;
+          if (val.type !== 'num') throw new MessageError(`${name}(): Illegal parameter`);
           const value = numVal(val);
           if (value !== 0) {
             if (dim && !Dim.equal(val.dim, dim))
@@ -1272,7 +1279,7 @@
             environment[symVal.params[i]] = params[i];
           let val = parseExpr();
           skipSpaces();
-          if (peekc() !== null) throw "Invalid function";
+          if (peekc() !== null) throw new MessageError("Invalid function");
           return val;
         }
         finally {
@@ -1386,7 +1393,7 @@
           if (displayUnits) {
             const desc = describeUnit(displayUnits);
             if (!desc)
-              throw "Value cannot be displayed in given units";
+              throw new MessageError("Value cannot be displayed in given units");
             applyDesc(desc);
           }
           let allowedCandidateUnits = candidateUnits;
@@ -1406,7 +1413,7 @@
           let iterations = 0;
           while (!Dim.isScalar(dim)) {
             if (++iterations > 100)
-              throw "Failed to reduce units";
+              throw new Error("System error: failed to reduce units");  // a system error, hence Error
             let unitDescs = [];
             for (const unit of allowedCandidateUnits) {
               const unitDesc = describeUnit(unit);
@@ -1467,14 +1474,14 @@
               // ensure comparitor is well-behaved
               let res = cmp(a,b), rev = cmp(b,a);
               if (res !== -rev)
-                throw "bad comparitor";
+                throw new Error("System error: bad comparitor");
               return res;
             });
             if (logLevel > 1)
                console.log("======== " + parseStr + " unit candidates for " + val + " " +
                  JSON.stringify(dim) + " ========\n" + JSON.stringify(unitDescs, null, 2));
             if (unitDescs.length < 1)
-              throw "system error: insufficient basis units";
+              throw new Error("System error: insufficient basis units");
             applyDesc(unitDescs[0]);
             displayUnits = undefined;
           }
@@ -1528,12 +1535,12 @@
           const times = getField('times', 1);
           const div = getField('div', 1);
           if (denom === 0 || div === 0)
-            throw new Error("Divide by zero");
+            throw new MessageError("Divide by zero");
 
           let totalInches = (ft*12 + inch + num/denom) * times / div;
-          if (isNaN(totalInches)) throw "Bad input";
+          if (isNaN(totalInches)) throw new MessageError("Bad input");
           if (!isFinite(totalInches))
-            throw new Error("Divide by zero")
+            throw new MessageError("Divide by zero")
 
           showFeetInchesResult([ totalInches*IN, 1 ], { updateExpr: true });
         }
@@ -1544,9 +1551,7 @@
 
       function showError(e, opts) {
         // always update the text, in case the error box is already showing
-        let msg = e;
-        if (e instanceof ChattyError)
-          msg = e.message;
+        let msg = String(e);
         document.getElementById('error').textContent = String(msg);
         if (!opts?.allErrors && e instanceof ChattyError)
           return;
@@ -1554,7 +1559,7 @@
         document.getElementById('results').style.display = 'none';
         document.getElementById('numberResults').style.display = 'none';
         document.getElementById('error').style.display = '';
-        if ((e instanceof Error) && !(e instanceof ChattyError))
+        if ((e instanceof Error) && !(e instanceof MessageError))
           throw e;  // rethrow
       }
 
@@ -1650,7 +1655,7 @@
               let val = Number.parseFloat(str);
               if (isNaN(val)) {
                 parsePos = backtrack;
-                throw `Bad number: ${str}`;
+                throw new Error(`System error: bad number: ${str}`);
               }
               return val;
             }
@@ -1729,7 +1734,7 @@
           let val = getNonceUnit(symPrefix);
           let exp = Number(symSuffix);
           if (exp < 2)
-            throw "Bad units exponent";
+            throw new MessageError("Bad units exponent");
           return { ...val, dim: Dim.mul(val.dim, exp), val: Rat.pow(numVal(val), exp) };
         }
         let sym = nonceUnits[name];
@@ -1759,7 +1764,7 @@
             let exp = parseNum({ noSkip: true, intOnly: true });
             if (exp !== null) {
               if (exp < 2)
-                throw "Bad units exponent";
+                throw new MessageError("Bad units exponent");
               sym = { ... sym, dim: Dim.mul(sym.dim, exp), val: Math.pow(numVal(sym), exp) };
             }
             return sym;
@@ -1810,7 +1815,7 @@
             // Affine units can only have a +1 exponent or a negative exponent.
             // We ignore the offset for negative exponents because a unit in the denominator
             // is like differentiation and constants dissapear.
-            if (unitList.length > 0 || sym.withExp) throw `Bad unit: ${sym.sym}`
+            if (unitList.length > 0 || sym.withExp) throw new MessageError(`Bad unit: ${sym.sym}`);
             origin = sym.origin;
           }
           if (!sym.val) {
@@ -1894,7 +1899,7 @@
               break;
             }
             if (res.type === 'num') {
-              if (origin && res.origin) throw "Implausible units";
+              if (origin && res.origin) throw new MessageError("Implausible units");
               chunkVal = res.val;
               unitVal = Rat.number(res.unitVal);
               chunkDim = res.dim;
@@ -1914,7 +1919,7 @@
             if (!Dim.equal(dim, chunkDim))
               throw new ChattyError("Implausible units");
             val = Rat.add(val, chunkVal);
-            if (unitVal >= lastUnitVal)  throw "Implausible units";
+            if (unitVal >= lastUnitVal)  throw new MessageError("Implausible units");
             lastUnitVal = unitVal;
           }
         }
@@ -2081,13 +2086,13 @@
             return val;
           }
           if (val.type === 'fn' || exp.type === 'fn')
-            throw "Cannot exponentiate functions";
+            throw new MessageError("Cannot exponentiate functions");
           if (val.type === 'parse' || exp.type === 'parse')
             return { type: 'parse', op: 'exp', expr1: val, expr2: exp };
           if (!Dim.isScalar(exp.dim))
-            throw "Must exponentiate with a scalar";
+            throw new MessageError("Must exponentiate with a scalar");
           if (!Dim.isScalar(val.dim) && numVal(exp) !== Math.trunc(numVal(exp)))
-            throw "Cannot exponentiate non-scalars by non-integers";
+            throw new MessageError("Cannot exponentiate non-scalars by non-integers");
           return { type: 'num', dim: Dim.mul(val.dim, Rat.number(exp.val)),
             val: Rat.pow(numVal(val), numVal(exp)), uscu: val.uscu };
         }
@@ -2111,14 +2116,14 @@
               return null;
             }
             if (val.type === 'fn' || val2.type === 'fn')
-              throw "Can't multiply functions";
+              throw new MessageError("Can't multiply functions");
             if (val.type === 'parse' || val2.type === 'parse')
               val = { type: 'parse', op: '*', expr1: val, expr2: val2 };
             else if (val.type === 'num' && val2.type === 'num')
               val = { type: 'num', dim: Dim.add(val.dim, val2.dim),
                   val: Rat.mul(numVal(val), numVal(val2)), uscu: val.uscu || val2.uscu };
             else
-              throw "Unknown value type";
+              throw new MessageError("Unknown value type");
           } else if (take('/') || take('\u00F7')) { // '/' or divide sign
             let val2 = parseExponentiation(opts);
             if (val2 === null) {
@@ -2126,14 +2131,14 @@
               return null;
             }
             if (val.type === 'fn' || val2.type === 'fn')
-              throw "Can't divide functions";
+              throw new MessageError("Can't divide functions");
             if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '/', expr1: val, expr2: val2 };
             } else if (val.type === 'num' && val2.type === 'num') {
               val = { type: 'num', dim: Dim.sub(val.dim, val2.dim),
                   val: Rat.div(numVal(val), numVal(val2)), uscu: val.uscu || val2.uscu };
             } else {
-              throw "Unknown value type";
+              throw new MessageError("Unknown value type");
             }
           } else {
             break;
@@ -2173,7 +2178,7 @@
               else
                 throw new ChattyError("Cannot add different unit types")
             } else {
-              throw "Unknown value type";
+              throw new MessageError("Unknown value type");
             }
           } else if (take('-')) {
             let val2 = parseMulExpr(opts);
@@ -2182,7 +2187,7 @@
               return null;
             }
             if (val.type === 'fn' || val2.type === 'fn')
-              throw "Can't subtract functions";
+              throw new MessageError("Can't subtract functions");
             if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '-', expr1: val, expr2: val2 };
             } else if (numVal(val2)[0] === 0) {
@@ -2195,7 +2200,7 @@
                 throw new ChattyError("Cannot subtract different unit types")
             }
             else {
-              throw "Unknown value type";
+              throw new MessageError("Unknown value type");
             }
           } else {
             break;
@@ -2233,13 +2238,14 @@
               // make sure the parameters all have different names
               const paramNames = {};
               for (const p of params) {
-                if (paramNames[p]) throw `Duplicate parameter ${p} in function ${word}`;
+                if (paramNames[p])
+                  throw new MessageError(`Duplicate parameter ${p} in function ${word}`);
                 const symVal = getSymbol(p);
                 if (symVal?.reserved) {
                   let name = `"${p}"`;
                   if (symVal.desc && symVal.desc !== name)
                     name = `${name} (${symVal.desc})`;
-                  throw `Parameter cannot be reserved reserved symbol ${name}`;
+                  throw new MessageError(`Parameter cannot be reserved reserved symbol ${name}`);
                 }
                 paramNames[p] = true;
               }
@@ -2310,7 +2316,7 @@
                 let name = `"${sym}"`;
                 if (symVal.desc && symVal.desc !== sym)
                   name = `${name} (${symVal.desc})`;
-                throw `Cannot redefine reserved symbol ${name}`;
+                throw new MessageError(`Cannot redefine reserved symbol ${name}`);
               }
               showAssignResult(val);
               setUserSymbol(val);
