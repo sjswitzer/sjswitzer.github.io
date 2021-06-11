@@ -505,8 +505,8 @@
         </table>
         <p> Note that angles are neither degrees nor radians. They are <i>just angles</i> and can be
             specified or displayed using either notation. If, however, a plain number is given, it will be
-            interpreted as radians. Compare <code>sin(45 degrees)</code>, <code>sin(pi/4radian)</code>
-            and <code>sin(pi/4)</code>. 
+            interpreted as radians. So <code>sin(45 degrees)</code>, <code>sin(pi/4radian)</code>
+            and <code>sin(pi/4)</code> all mean the same thing.
         <h2> Unit Conversions </h2>
         <p> To display results in terms of specific units, follow an expression by <code>|</code>
             then a unit or series of units.
@@ -1080,7 +1080,8 @@
         day: { type: 'num', dim: { T: 1 }, val: 24 * HR, uscu: null, alt: ["days"] },
         week: { type: 'num', dim: { T: 1 }, val: 24 * 7 * HR, desc: "7 days", uscu: null, alt: ["weeks"] },
         fortnight: { type: 'num', dim: { T: 1 }, val: 24 * 14 * HR, desc: "2 weeks", uscu: null, alt: ["fortnights"] },
-        link: { type: 'num', dim: { L: 1 }, val: [ 66 * FT, 100 ], desc: "surveyor's link", uscu: true, alt: ["links"] },
+        link: { type: 'num', dim: { L: 1 }, val: [ 66 * FT, 100 ],  // you'd think 2/3 foot, but no its really .66 ft!
+            desc: "surveyor's link", uscu: true, alt: ["links"] },
         rod: { type: 'num', dim: { L: 1 }, val: [ 66  *FT, 4 ], desc: "surveyor's rod", uscu: true, alt: ["rods"] },
         chain: { type: 'num', dim: { L: 1 }, val: 66 * FT, desc: "surveyor's chain", uscu: true, alt: ["chains"] },
         furlong: { type: 'num', dim: { L: 1 }, val: 660 * FT, uscu: true, alt: ["furlongs"] },
@@ -1094,8 +1095,8 @@
         ton: { type: 'num', dim: { M: 1 }, val: 2000 * LBM, uscu: true, alt: ["tons"], desc: "US ton" },
         tonne: { type: 'num', dim: { M: 1 }, val: 1000 * KG, alt: ["tonnes"], desc: "metric ton" },
         carat: { type: 'num', dim: { M: 1 }, val: 200 * MG, alt: ["carats"] },
-        league: { type: 'num', dim: { L: 1 }, val: 5.556 * KM, uscu: true, alt: ["leagues"], desc: "nautical league" },
-        nml: { type: 'num', dim: { L: 1 }, val: NMI, uscu: true, desc: "nautical mile" },
+        league: { type: 'num', dim: { L: 1 }, val: 3 * NMI, uscu: true, alt: ["leagues"], desc: "3 nautical miles" },
+        nmi: { type: 'num', dim: { L: 1 }, val: NMI, uscu: true, desc: "nautical mile" },
         knot: { type: 'num', dim: { L: 1, T: -1 }, val: [ NMI, HR ], uscu: true, alt: ["knots"], desc: "nautical mile per hour" },
         dozen: { type: 'num', dim: {}, val: 12 },
         bakersdozen: { type: 'num', dim: {}, val: 13, display: null }, // :)
@@ -1503,7 +1504,7 @@
           // signigicant digits are hanging out behind the truncation.
           // The 0.1 test is to avoid getting a lot of 0.999999 values that should be 1
           let val2 = absVal * 10**DIGITS_PRECISION;
-          if (absVal < 0.1 && (Math.trunc(val2) === 0 || val2 - Math.trunc(val2) > EPSILON))
+          if (absVal < 0.001 && (Math.trunc(val2) === 0 || val2 - Math.trunc(val2) > EPSILON))
             return val.toExponential() + unitsStr + invUnitsStr + descStr;
         }
         if (absVal > 1e15) // toFixed can't be trusted with numbers bigger than this
