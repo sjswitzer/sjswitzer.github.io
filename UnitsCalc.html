@@ -757,7 +757,7 @@
             return [ 0, 1 ];
           if (a[1] === 0)
             throw new Error("Divide by zero");
-          var g = gcd(...a);
+          let g = gcd(...a);
           let denom = a[1]/g;
           if (denom !== denom|0) { // tests for being an int32
             let num =  a[0]/a[1];
@@ -1250,7 +1250,7 @@
           }
           return null;
         }
-        if (val.type == 'num' && typeof val.val === 'number')  // normalize to rational
+        if (val.type === 'num' && typeof val.val === 'number')  // normalize to rational
           val.val = [ val.val, 1 ];
         if (!val.sym)
           val.sym = symName;
@@ -1671,7 +1671,7 @@
 
       function parseNumFrac(opts) {
         const backtrack1 = parsePos;
-        var parse = false;
+        let parse = false;
         let val = parseNum(opts);
         if (val === null) {
           let word = parseWord(), sym = word && getSymbol(word);
