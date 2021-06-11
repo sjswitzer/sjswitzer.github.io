@@ -1245,17 +1245,15 @@
           if (DIGITS.includes(symName.charAt(symName.length-1))) {
             const symPrefix = symName.substr(0, symName.length-1);
             const symSuffix = symName.substr(symName.length-1);
-            let val2 = getSymbol(symPrefix);
+            val = getSymbol(symPrefix);
             let exp = Number(symSuffix);
-            if (val2 && exp > 1) {
-              if (val2.type === 'num') {
-                let desc = val2.sym && `${val2.sym ?? symPrefix}^${String(exp)}`;
+            if (val && exp > 1) {
+              if (val.type === 'num') {
+                let desc = val.sym && `${val.sym ?? symPrefix}^${String(exp)}`;
                 return { sym: symName, type: 'num',
-                  dim: Dim.mul(val2.dim, exp), val: Rat.pow(numVal(val2), exp),
-                  desc, reserved: val2.reserved, uscu: val2.uscu, origin: val2.origin,
-                  baseSym: val2, withExp: exp };
-              } else if (val2.type === 'parse') {
-                return { type: 'parse', expr: val2, exp: exp };
+                  dim: Dim.mul(val.dim, exp), val: Rat.pow(numVal(val), exp),
+                  desc, reserved: val.reserved, uscu: val.uscu, origin: val.origin,
+                  baseSym: val, withExp: exp };
               }
             }
           }
@@ -1799,6 +1797,9 @@
               break;
             }
             sym = getSymbol(word);
+            if (!sym && opts?.parse)
+              sym = { type: 'parse', word }; 
+
             if (!sym) {
               if (!implicitValue)
                 throw new ChattyError(`Unknown unit: "${word}"`);
