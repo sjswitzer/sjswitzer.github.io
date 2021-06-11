@@ -725,6 +725,90 @@
         }
       }
 
+      function gcd(...params) {   // if the arguments can't be processed as int32, returns 1
+        let aa = Math.abs(params[0]);
+        let a = aa|0;  // |0 gives the optimizer something to work with
+        if (aa !== a) return 1;
+        for (let i = params.length-1; i > 0; --i) {
+          let ab = Math.abs(params[i]);
+          let b = ab|0;
+          if (ab !== b) return 1;
+          while (b !== 0) {
+            let t = b;
+            b = a % b;
+            a = t;
+          }
+        }
+        return a;
+      }
+
+      class Rat {   // rational numbers [ num, denom ]
+        static number(a) {
+          let res = a[0]/a[1];
+          if (!isFinite(res))
+            throw new Error("Divide by zero");
+          return res;
+        }
+
+        // Reduces and normalizes a rational.
+        // The denominator will always be an int32.
+        static reduce(a) {
+          if (a[0] === 0)
+            return [ 0, 1 ];
+          if (a[1] === 0)
+            throw new Error("Divide by zero");
+          var g = gcd(...a);
+          let denom = a[1]/g;
+          if (denom !== denom|0) { // tests for being an int32
+            let num =  a[0]/a[1];
+            if (!isFinite(num)) throw Error("Divide by zero"); 
+            return [num, 1 ];
+          }
+          if (denom < 0) 
+            return [ -a[0]/g, -denom ];
+          return [ a[0]/g, denom ];
+        }
+
+        static cmp(a, b) {
+          // avoid division:  n1/d1 - n2/d2 = (n1*d2 - n2/d1)/(d1*d2)
+          return a[0]*b[1] - b[0]*a[1] * Math.sign(a[1]*b[1]);
+        }
+
+        static mul(a, b) {
+          return Rat.reduce([ a[0]*b[0], a[1]*b[1] ]);
+        }
+        static div(a, b) {
+          return Rat.reduce([ a[0]*b[1], a[1]*b[0] ]);
+        }
+        static pow(a, b) {
+          if (!(typeof b === 'number'))
+            b = b[0] / b[1];
+          if (!isFinite(b))
+            throw new Error("Divide by zero");
+          if (b < 0) {
+            b = -b;
+            a = [ a[1], a[0] ];
+          }
+          return [ a[0]**b, a[1]**b ];
+        }
+
+        static add(a, b, factor = 1) {
+          let res = [ a[0]*b[1] + factor*b[0]*a[1], a[1]*b[1] ];
+          return Rat.reduce(res);
+        }
+        static sub(a, b) { return Rat.add(a, b, -1); }
+        static sqrt(a) { return [ Math.sqrt(Rat.number(a)), 1 ]; }
+        static cbrt(a) { return [ Math.cbrt(Rat.number(a)), 1 ]; }
+        static abs(a) { return [ Math.abs(a[0]), Math.abs(a[1])]; }
+        static sign(a) { return [ Math.sign(a[0]) * Math.sign(a[1]), 1 ]; }
+        static neg(a) { return [ -a[0], a[1] ]; }
+        static recip(a) {
+          if (a[1] === 0)
+            throw new Error("Divide by zero");
+          return [ a[1], a[0] ];
+        }
+      }
+
       // A curious thing worth noting: It turns out that fractions of the form
       // "n / power-of-2" are precicely the values that can be represented exactly
       // in floating point arithmetic and also the conventional way of expressing
@@ -1003,34 +1087,35 @@
         hyp: function Hypotenuse(...params) {
           if (params.length < 1)	
             return { type: 'num', dim: {}, val: 0 };
-          let res = reduceParamVals(this.sym, 0, params, (accum, val) => accum + val*val);
-          return { ...res, val: Math.sqrt(res.val) };
+          let res = reduceParamVals(this.sym, [ 0, 1 ], params,
+              (accum, val) => Rat.add(accum, Rat.mul(val, val)));
+          return { ...res, val: Rat.sqrt(res.val) };
         },
 
         mean: function(...params) {
           if (params.length < 1) throw `${this.sym}(): No parameters`;
-          let res = reduceParamVals(this.sym, 0, params, (accum, val) => accum + val);
-          return { ...res, val: res.val/params.length };
+          let res = reduceParamVals(this.sym, [ 0, 1 ], params, (accum, val) => Rat.add(accum, val));
+          return { ...res, val: Rat.div(res.val, [ params.length, 1 ]) };
         },
 
         sum: function(...params) {
           if (params.length < 1) throw `${this.sym}(): No parameters`;
-          let res = reduceParamVals(this.sym, 0, params, (accum, val) => accum + val);
-          return { ...res, val: res.val };
+          let res = reduceParamVals(this.sym, [ 0, 1 ], params, (accum, val) => Rat.add(accum, val));
+          return res;
         },
 
         abs: function AbsoluteValue(...params) {
           if (params.length !== 1) throw `${this.sym}(): Requires one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(): Requires numeric parameter`;
-          return { ...val, val: Math.abs(val.val) };
+          return { ...val, val: Rat.abs(val.val) };
         },
 
         sign: function(...params) {
           if (params.length !== 1) throw `${this.sym}(): Requires one parameter`;
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(): Requires numeric parameter`;
-          return { ...val, val: Math.sign(val.val), dim:{} };
+          return { ...val, val: Rat.sign(val.val), dim:{} };
         },
 
         // Square root
@@ -1040,7 +1125,7 @@
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
           let dim = Dim.div(val.dim, 2);
           if (!dim) throw `${this.sym}(x): parameter must have even units`;
-          return { type: 'num', dim, val: Math.sqrt(numVal(val)), uscu: val.uscu };
+          return { type: 'num', dim, val: Rat.sqrt(numVal(val)), uscu: val.uscu };
         },
 
         // Cube root
@@ -1050,7 +1135,7 @@
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
           let dim = Dim.div(val.dim, 3);
           if (! dim) throw `${this.sym}(x): parameter must have even units`;
-          return { type: 'num', dim, val: Math.cbrt(numVal(val)), uscu: val.uscu };
+          return { type: 'num', dim, val: Rat.cbrt(numVal(val)), uscu: val.uscu };
         },
 
         // Some trig functions that are valid over their whole domain, are somewhat useful,
@@ -1060,9 +1145,9 @@
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
           if (Dim.isScalar(val.dim))
-            return { type: 'num', val: Math.sin(numVal(val)), dim: {} };
+            return { type: 'num', val: [ Math.sin(Rat.number(numVal(val))), 1 ], dim: {} };
           if (!Dim.equal(val.dim, { RAD: 1 })) throw `${this.sym}(x): Parameter must be an angle`;
-          return { type: 'num', val: Math.sin(numVal(val)/RADIAN), dim: {} };
+          return { type: 'num', val: [ Math.sin(Rat.number(numVal(val))/RADIAN), 1 ], dim: {} };
         },
 
         cos: function Cosine(...params) {
@@ -1070,25 +1155,26 @@
           let val = params[0];
           if (val.type !== 'num') throw `${this.sym}(x): Illegal parameter`;
           if (Dim.isScalar(val.dim))
-            return { type: 'num', val: Math.cos(numVal(val)), dim: {} };
+            return { type: 'num', val: [ Math.cos(Rat.number(numVal(val))), 1 ], dim: {} };
           if (!Dim.equal(val.dim, { RAD: 1 })) throw `${this.sym}(x): Parameter must be an angle`;
-          return { type: 'num', val: Math.cos(numVal(val)/RADIAN), dim: {} };
+          return { type: 'num', val: [ Math.cos(Rat.number(numVal(val))/RADIAN), 1], dim: {} };
         },
 
         atan2: function ArctangentOfRatio(...params) {
           if (params.length !== 2) throw `${this.sym}(): Needs two parameters`;
           let val1 = params[0], val2 = params[1];
           if (!Dim.equal(val1.dim, val2.dim)) throw `${this.sym}(): Parameter types incompatible`;
-          return { type: 'num', val: Math.atan2(numVal(val1), numVal(val2))*RADIAN, dim: { RAD: 1 } };
+          return { type: 'num', dim: { RAD: 1 },
+              val: [ Math.atan2(Rat.number(numVal(val1)), Rat.number(numVal(val2)))*RADIAN, 1 ] };
         },
 
         // Sets MKS or CGS preference
-        MKS: function SetMKS() { unitsSystem = 'mks'; return { type: 'num', dim: {}, val: 0}; },
-        CGS: function SetCGS() { unitsSystem = 'cgs'; return { type: 'num', dim: {}, val: 0}; },
+        MKS: function SetMKS() { unitsSystem = 'mks'; return { type: 'num', dim: {}, val: [ 0, 1 ] }; },
+        CGS: function SetCGS() { unitsSystem = 'cgs'; return { type: 'num', dim: {}, val: [ 0, 1 ] }; },
 
         // For debugging, call saveUserSymbols.
         //    (it's hard to debug when the window is closing) 
-        SAVE: function DebugSaveSyms() { saveUserSymbols(); return { type: 'num', dim: {}, val: 0}; },
+        SAVE: function DebugSaveSyms() { saveUserSymbols(); return { type: 'num', dim: {}, val: [ 0, 1 ] }; },
 
         // Set logging level
         Logging: function SetLogLevel(...params) {
@@ -1096,8 +1182,8 @@
           let val = params[0];
           if (val.type !== 'num' || !Dim.isScalar(val.dim) || numVal(val) < 0 ) throw `${this.sym}(x): Illegal parameter`;
           let oldLevel = logLevel;
-          logLevel = numVal(val);
-          return { type: 'num', dim: {}, val: oldLevel };
+          logLevel = Rat.number(numVal(val));
+          return { type: 'num', dim: {}, val: [ oldLevel, 1 ] };
         },
       };
 
@@ -1106,7 +1192,7 @@
           for (const alt of sym.alt)
             systemSymbols[alt] = { ...sym, altOf: name, alt: undefined, reserved: false };
         if (sym.display)
-        systemSymbols[sym.display] = { ...sym, altOf: name, display: undefined, reserved: false };
+          systemSymbols[sym.display] = { ...sym, altOf: name, display: undefined, reserved: false };
       }
 
       function reduceParamVals(name, accum, params, fn) {  // fn => (accum, val) => val
@@ -1154,7 +1240,7 @@
               if (val2.type === 'num') {
                 let desc = val2.sym && `${val2.sym ?? symPrefix}^${String(exp)}`;
                 return { sym: symName, type: 'num',
-                  dim: Dim.mul(val2.dim, exp), val: Math.pow(numVal(val2), exp),
+                  dim: Dim.mul(val2.dim, exp), val: Rat.pow(numVal(val2), exp),
                   desc, reserved: val2.reserved, uscu: val2.uscu, origin: val2.origin,
                   baseSym: val2, withExp: exp };
               } else if (val2.type === 'parse') {
@@ -1162,8 +1248,11 @@
               }
             }
           }
+          return null;
         }
-        if (val && !val.sym)
+        if (val.type == 'num' && typeof val.val === 'number')  // normalize to rational
+          val.val = [ val.val, 1 ];
+        if (!val.sym)
           val.sym = symName;
         return val;
       }
@@ -1198,7 +1287,7 @@
       // fetch unit values and filter out any non-units (user may have redefined some)
       function filterUnits(unitSyms) {
         return unitSyms.map(sym => getSymbol(sym))
-          .filter(val => val.type === 'num' && val.val && !Dim.isScalar(val.dim));
+          .filter(val => val.type === 'num' && val.val?.[0] && !Dim.isScalar(val.dim));
       }
 
       // The first unit listed is prefered over later units with the same
@@ -1262,41 +1351,38 @@
             const reduced = Dim.add(dim, unit.dim, -exp);
             const reducedNDims = Dim.nDims(reduced);
             let origin = unit.origin ?? 0;
-            let newVal;
-            if (exp >= 0) 
-              newVal = (val-origin) / Math.pow(unit.val, exp);
-            else
-              newVal = (val - origin) * Math.pow(unit.val, -exp);
+            let newVal = Rat.div(Rat.sub(val, [ origin, 1 ]), Rat.pow(unit.val, exp));
+            let newNum = Rat.number(newVal);
             let favored = unit.favored ?? 0;
-            return { unit, exp, unitExp, newVal, normSquared, reduced, favored, reducedNDims };
+            return { unit, exp, unitExp, newVal, newNum, normSquared, reduced, favored, reducedNDims };
           }
           function applyDesc(unitDesc) {
-              let unitList = unitDesc.unit.unitList ?? [ [ 1, unitDesc.unit ] ];
-              for (let [exp, unit] of unitList) {
-                let str = " "; 
-                let displayExp = exp = unitDesc.exp * exp;
-                if (displayExp < 0) {
-                  displayExp = -displayExp;
-                  str += " /"
-                }
-                if (unit.display && !opts?.saveMode)
-                  str += unit.display;
-                else
-                  str += unit.sym;
-                if (displayExp !== 1) {
-                  let expStr = String(displayExp);
-                  if (opts?.html)
-                    expStr = `<sup>${expStr}</sup>`;
-                  str += expStr;
-                }
-                if (exp < 0)
-                  invUnitsStr += str;
-                else
-                  unitsStr += str;
+            let unitList = unitDesc.unit.unitList ?? [ [ 1, unitDesc.unit ] ];
+            for (let [exp, unit] of unitList) {
+              let str = " "; 
+              let displayExp = exp = unitDesc.exp * exp;
+              if (displayExp < 0) {
+                displayExp = -displayExp;
+                str += " /"
               }
-              val = unitDesc.newVal;
-              dim = unitDesc.reduced;
+              if (unit.display && !opts?.saveMode)
+                str += unit.display;
+              else
+                str += unit.sym;
+              if (displayExp !== 1) {
+                let expStr = String(displayExp);
+                if (opts?.html)
+                  expStr = `<sup>${expStr}</sup>`;
+                str += expStr;
+              }
+              if (exp < 0)
+                invUnitsStr += str;
+              else
+                unitsStr += str;
             }
+            val = unitDesc.newVal;
+            dim = unitDesc.reduced;
+          }
           if (displayUnits) {
             const desc = describeUnit(displayUnits);
             if (!desc)
@@ -1364,11 +1450,11 @@
                 // to some ridiculous number of cubic miles and it really should be cubic feet.
                 // so being over 1 should give a bonus over the "distance from 1", but should
                 // not be absolute.
-                const aa = Math.abs(a.newVal), bb = Math.abs(b.newVal);
+                const aa = Math.abs(a.newNum), ab = Math.abs(b.newNum);
 
-                // Values closer to 1 win
-                let va = Math.abs(Math.log10(Math.abs(a.newVal))) - (aa >= 1 ? 5 : 0);
-                let vb = Math.abs(Math.log10(Math.abs(b.newVal))) - (bb >= 1 ? 5 : 0);
+                // Values closer to 1 win. log10 is number of digits basically
+                let va = Math.abs(Math.log10(Math.abs(a.newNum))) - (aa >= 1 ? 5 : 0);
+                let vb = Math.abs(Math.log10(Math.abs(b.newNum))) - (ab >= 1 ? 5 : 0);
                 if (!isFinite(va) || !isFinite(vb)) {
                   if (isFinite(va))
                     return -1;
@@ -1393,6 +1479,7 @@
             displayUnits = undefined;
           }
         }
+        val = Rat.number(val);   // Finally, smash it into a JS number
         if (opts?.saveMode) {
           // full precision value
           return String(val) + unitsStr + invUnitsStr;
@@ -1404,8 +1491,10 @@
           // The 0.1 test is to avoid getting a lot of 0.999999 values that should be 1
           let val2 = absVal * 10**DIGITS_PRECISION;
           if (absVal < 0.1 && (Math.trunc(val2) === 0 || val2 - Math.trunc(val2) > EPSILON))
-            return String(val) + unitsStr + invUnitsStr + descStr;
+            return val.toExponential() + unitsStr + invUnitsStr + descStr;
         }
+        if (absVal > 1e15) // toFixed can't be trusted with numbers bigger than this
+            return val.toExponential() + unitsStr + invUnitsStr + descStr;
         // Avoids display of nonsense like 2.5000...001 while
         // maintaining accuracy to "DIGITS_PRECISION" decimal digits.
         val = val.toFixed(DIGITS_PRECISION);
@@ -1438,13 +1527,15 @@
           const denom = getField('denom', 1);
           const times = getField('times', 1);
           const div = getField('div', 1);
-          if (denom === 0 || div === 0) throw "Divide by zero";
+          if (denom === 0 || div === 0)
+            throw new Error("Divide by zero");
 
           let totalInches = (ft*12 + inch + num/denom) * times / div;
           if (isNaN(totalInches)) throw "Bad input";
-          if (!isFinite(totalInches)) throw "Divide by zero"
+          if (!isFinite(totalInches))
+            throw new Error("Divide by zero")
 
-          showFeetInchesResult(totalInches*IN, { updateExpr: true });
+          showFeetInchesResult([ totalInches*IN, 1 ], { updateExpr: true });
         }
         catch (e) {
           showError(e);
@@ -1566,9 +1657,7 @@
           }
           parsePos = backtrack2;
           if (nDigits > 0) {
-            if (opts?.preciceDecimal)
-              return [ val, div ];
-            return val/div;
+            return [ val, div ];
           }
           parsePos = backtrack;    
         }
@@ -1583,7 +1672,7 @@
       function parseNumFrac(opts) {
         const backtrack1 = parsePos;
         var parse = false;
-        let val = parseNum({ ...opts, preciceDecimal: true });
+        let val = parseNum(opts);
         if (val === null) {
           let word = parseWord(), sym = word && getSymbol(word);
           if (sym && sym.type === 'parse') {
@@ -1594,7 +1683,7 @@
               parsePos = backtrack1;
               return null;
             }
-            val = [ sym.val, 1 ];
+            val = sym.val;
           }
         }
         const backtrack2 = parsePos;
@@ -1604,8 +1693,7 @@
             parsePos = backtrack2;
             return val;
           }
-          if (denom === 0)  throw "Divide by zero";
-          return [ val[0], denom*val[1] ];
+          return Rat.div(val, denom);
         }
         let num = parseNum({ intOnly: true });
         if (num === null)
@@ -1613,8 +1701,7 @@
         if (take('/'), NOSKIP) {
           let denom = parseNum({ noSkip: true, intOnly: true });
           if (denom !== null) {
-            if (denom === 0) throw "Divide by zero";
-            return [ val[0]*denom + num*val[1], val[1]*denom ];
+            return Rat.add(val, Rat.div(num, denom));
           }
         }
         parsePos = backtrack2;
@@ -1625,7 +1712,7 @@
 
       function numVal(val) {
         if (val?.origin)   // collapse affine values
-          return val.val + val.origin;
+          return Rat.add(val.val, [ val.origin, 1 ]);
         return val.val;
       }
 
@@ -1643,13 +1730,13 @@
           let exp = Number(symSuffix);
           if (exp < 2)
             throw "Bad units exponent";
-          return { ...val, dim: Dim.mul(val.dim, exp), val: Math.pow(numVal(val), exp) };
+          return { ...val, dim: Dim.mul(val.dim, exp), val: Rat.pow(numVal(val), exp) };
         }
         let sym = nonceUnits[name];
         if (sym)
           return sym;
         const display = `'${name}'`;
-        sym = { sym: display, type: 'num', val: NONCE, dim: {}, display, favored: 1, uscu: null };
+        sym = { sym: display, type: 'num', val: [ NONCE, 1 ], dim: {}, display, favored: 1, uscu: null };
         sym.dim['NONCE-'+name] = 1;
         nonceUnits[name] = sym;
         return sym;
@@ -1685,16 +1772,16 @@
       // Parse a unit string
       //    [ '/'? word ]+
 
-      function parseUnitString(chunkVal, opts) {
+      function parseUnitString(val, opts) {
         let implicitValue = false, type = 'num';
-        if (!chunkVal) {
-          chunkVal = [ 1, 1 ];
+        if (!val) {
+          val = [ 1, 1 ];
           // In this case, there's doubt whether we've got a unit string or just a variable,
           // so don't throw an error if it's not a unit; just fail the parse.
           implicitValue = true;
         }
         let backtrack1 = parsePos;
-        let unitVal = 1, unitList = [], dim= {}, origin, uscu;
+        let unitVal = [ 1, 1 ], unitList = [], dim= {}, origin, uscu;
         while (true) {
           const backtrack2 = parsePos;
           let hasSlash = take('/');
@@ -1735,14 +1822,14 @@
           let symVal = sym.val;
           if (hasSlash) {
             dim = Dim.sub(dim, sym.dim);
-            chunkVal = [ chunkVal[0]/symVal, chunkVal[1] ];
+            val = Rat.div(val, symVal);
           } else {
             dim = Dim.add(dim, sym.dim);
-            chunkVal = [ chunkVal[0]*symVal, chunkVal[1] ];
+            val = Rat.mul(val, symVal);
           }
           if (sym.uscu)
             uscu = true;
-          unitVal *= symVal;
+          unitVal = Rat.mul(unitVal, symVal);
           let exp = sym.withExp ?? 1;
           if (hasSlash)
             exp = - exp;
@@ -1754,12 +1841,10 @@
           parsePos = backtrack1;
           return null;
         }
-        let val = chunkVal[0] / chunkVal[1];
-        if (!isFinite(val)) throw "Divide by zero";
         let desc;
         if (unitList.length === 1 && unitList[0][0] === 1)
           desc = unitList[0][1].desc;
-        return { type, val, dim, uscu, origin, desc, chunkVal, unitVal, unitList };
+        return { type, val, dim, uscu, origin, desc, unitVal, unitList };
       }
 
       // Parse a value, which is either a plain number (n) or a sequesnce of
@@ -1769,7 +1854,7 @@
           
       function parseValue(opts) {
         const backtrack = parsePos;
-        let val = 0, dim, origin, type = 'num';
+        let val = [ 0, 1 ], dim, origin, type = 'num';
         let lastUnitVal = Number.POSITIVE_INFINITY;
         let uscu = false;   // consider it metric unless we encounter any non-metric unit
 
@@ -1810,8 +1895,8 @@
             }
             if (res.type === 'num') {
               if (origin && res.origin) throw "Implausible units";
-              chunkVal = res.chunkVal;
-              unitVal = res.unitVal;
+              chunkVal = res.val;
+              unitVal = Rat.number(res.unitVal);
               chunkDim = res.dim;
               origin = res.origin;
               if (res.uscu)
@@ -1828,8 +1913,7 @@
           if (type !== 'parse') {
             if (!Dim.equal(dim, chunkDim))
               throw new ChattyError("Implausible units");
-            val += chunkVal[0] / chunkVal[1];
-            if (!isFinite(val)) throw "Divide by zero";
+            val = Rat.add(val, chunkVal);
             if (unitVal >= lastUnitVal)  throw "Implausible units";
             lastUnitVal = unitVal;
           }
@@ -1891,9 +1975,9 @@
             if (val.type === 'parse')
               return { type: 'parse', op: 'neg', expr: val };
             if (val.type !== 'num') throw new ChattyError("Must be numeric");
-            let resVal = - val.val;
+            let resVal = Rat.neg(val.val);
             if (val.origin)   // special negation of affine values: don't negate the origin value
-              resVal += val.origin
+              retVal = Rat.add(retVal, [ origin, 1 ]);
             return { type: val.type, dim: val.dim, val: resVal, uscu: val.uscu };
           }
           parsePos = backtrack;
@@ -1905,8 +1989,7 @@
             if (val.type === 'fn') throw new ChattyError("can't divide functions");
             if (val.type === 'parse')
               return { type: 'parse', op: 'recip', expr: val };
-            const q = 1/numVal(val);
-            if (!isFinite(q)) throw "Divide by zero";
+            let q = Rat.recip(val.val);
             return { type: val.type, dim: Dim.mul(val.dim, -1), val: q, uscu: val.uscu };
           }
           parsePos = backtrack;
@@ -1937,12 +2020,15 @@
               skipSpaces();
               // As a special case, a function of no arguments can be used as a constant
               if (peekc() !== '('
-                  && val1 instanceof Object && val1.type === 'fn' && val1.params.length === 0)
+                  && val1 instanceof Object && val1.type === 'fn' && val1.params.length === 0) {
                 val = invokeFunction(val1, []);
-              else if (!(val1 instanceof Object && val1.type))
+              } else if (!(val1 instanceof Object && val1.type)) {
+                if (opts?.parse)
+                  return { type: 'parse', sym: word, defined: true }
                 throw new ChattyError(`Unknown variable: "${word}"`);
-              else
+              } else {
                 val = val1;
+              }
             }
           }
           if (val === null)
@@ -2002,8 +2088,8 @@
             throw "Must exponentiate with a scalar";
           if (!Dim.isScalar(val.dim) && numVal(exp) !== Math.trunc(numVal(exp)))
             throw "Cannot exponentiate non-scalars by non-integers";
-          return { type: 'num', dim: Dim.mul(val.dim, exp.val),
-            val: Math.pow(numVal(val), numVal(exp)), uscu: val.uscu };
+          return { type: 'num', dim: Dim.mul(val.dim, Rat.number(exp.val)),
+            val: Rat.pow(numVal(val), numVal(exp)), uscu: val.uscu };
         }
         return val;
       }
@@ -2029,8 +2115,8 @@
             if (val.type === 'parse' || val2.type === 'parse')
               val = { type: 'parse', op: '*', expr1: val, expr2: val2 };
             else if (val.type === 'num' && val2.type === 'num')
-              val = { type: 'num', dim: Dim.add(val.dim, val2.dim), val: numVal(val) * numVal(val2),
-                uscu: val.uscu || val2.uscu };
+              val = { type: 'num', dim: Dim.add(val.dim, val2.dim),
+                  val: Rat.mul(numVal(val), numVal(val2)), uscu: val.uscu || val2.uscu };
             else
               throw "Unknown value type";
           } else if (take('/') || take('\u00F7')) { // '/' or divide sign
@@ -2044,10 +2130,8 @@
             if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '/', expr1: val, expr2: val2 };
             } else if (val.type === 'num' && val2.type === 'num') {
-              const q = numVal (val) / numVal(val2);
-              if (!isFinite(q)) throw "Divide by zero";
-              val = { type: 'num', dim: Dim.sub(val.dim, val2.dim), val: q,
-                uscu: val.uscu || val2.uscu };
+              val = { type: 'num', dim: Dim.sub(val.dim, val2.dim),
+                  val: Rat.div(numVal(val), numVal(val2)), uscu: val.uscu || val2.uscu };
             } else {
               throw "Unknown value type";
             }
@@ -2078,14 +2162,14 @@
               throw new ChattyError("Can't add functions");
             if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '+', expr1: val, expr2: val2 };
-            } else if (numVal(val2) === 0) {
+            } else if (numVal(val2)[0] === 0) {
               // special case for adding 0; keep first val
-            } else if (numVal(val) === 0) {
+            } else if (numVal(val)[0] === 0) {
               val = val2;  // special case for adding 0; take second val
             } else if (val.type === 'num' && val2.type === 'num') {
               if (Dim.equal(val.dim, val2.dim)) 
-                val = { type: 'num', dim: val.dim, val: numVal(val) + numVal(val2),
-                  uscu: val.uscu || val2.uscu };
+                val = { type: 'num', dim: val.dim,
+                  val: Rat.add(numVal(val), numVal(val2)), uscu: val.uscu || val2.uscu };
               else
                 throw new ChattyError("Cannot add different unit types")
             } else {
@@ -2101,12 +2185,12 @@
               throw "Can't subtract functions";
             if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '-', expr1: val, expr2: val2 };
-            } else if (numVal(val2) === 0) {
+            } else if (numVal(val2)[0] === 0) {
               // special case for subtracting 0; take first val
             } else if (val.type === 'num' && val2.type === 'num') {
               if (Dim.equal(val.dim, val2.dim))
-                val = { type: 'num', dim: val.dim, val: numVal(val) - numVal(val2),
-                  uscu: val.uscu && val2.uscu };
+                val = { type: 'num', dim: val.dim,
+                    val: Rat.sub(numVal(val), numVal(val2)), uscu: val.uscu && val2.uscu };
               else
                 throw new ChattyError("Cannot subtract different unit types")
             }
@@ -2159,26 +2243,15 @@
                 }
                 paramNames[p] = true;
               }
-              const saveEnv = environment;
-              try {
-                environment = {};
-                for (const p of params)
-                  environment[p] = { type: 'parse', sym: p, defined: true };
-                skipSpaces();
-                const exprStart = parsePos;
-                let expr = parseExpr(opts);
-                environment = saveEnv;
-                if (expr !== null)
-                  return { type: 'fn', expr: expr, sym: word, defined: true,
-                           params: params, body: parseStr.substr(exprStart) };
-               }
-               catch (e) {
-                 environment = saveEnv;
-                 throw e;
-               }
-             }
-           }
-           parsePos = backtrack;
+              skipSpaces();
+              const exprStart = parsePos;
+              let expr = parseExpr({ ...opts, parse: true });
+              if (expr !== null)
+                return { type: 'fn', expr: expr, sym: word, defined: true,
+                          params: params, body: parseStr.substr(exprStart) };
+            }
+          }
+          parsePos = backtrack;
         }
         let val = parseExpr();
         if (val && take('|')) {
@@ -2315,7 +2388,7 @@
 
       function symString(val, opts) {
         if (Dim.equal(val.dim, { L: 1 }) && val.uscu && !opts?.saveMode) {
-          let [ftStr, inStr, delta] = unitsToUSStringReps(numVal(val));
+          let [ftStr, inStr, delta] = unitsToUSStringReps(Rat.number(numVal(val)));
           let str = `${val.sym} = ${ftStr}${delta}`;
           if (opts?.html)
             return escapeHTML(str);
@@ -2345,15 +2418,15 @@
         document.getElementById('numberResultsDetail').innerHTML = str;
       }
 
-      function showFeetInchesResult(totalUnits, opts) {
-
+      function showFeetInchesResult(val, opts) {
+        let totalUnits = Rat.number(val);
         document.getElementById('results').style.display = '';
         document.getElementById('numberResults').style.display = 'none';
         document.getElementById('error').style.display = 'none';
         document.getElementById('results').style.color = '';
 
-        document.getElementById('resultIn').textContent = val2str(totalUnits/IN);
-        document.getElementById('resultFt').textContent = val2str(totalUnits/FT);
+        document.getElementById('resultIn').textContent = val2str([ totalUnits, IN ]);
+        document.getElementById('resultFt').textContent = val2str([ totalUnits, FT ]);
 
         let [ftStr, inStr, delta] = unitsToUSStringReps(totalUnits);
         document.getElementById('resultFtDetail').textContent = ftStr + delta;
@@ -2367,9 +2440,9 @@
 
         // show metric for good measure
         document.getElementById('resultMeters').textContent =
-          val2str(totalUnits/M);
+          val2str([ totalUnits, M ]);
         document.getElementById('resultMetersMetricFeet').textContent =
-          val2str((totalUnits/M)/(2.54/2.50));
+          val2str([ totalUnits*250, M*254 ])
       }
 
       function unitsToUSStringReps(totalUnits) {
@@ -2413,9 +2486,9 @@
           delta = "";
         } else {
           if (delta < 0)
-            delta = ` - ${val2str(-delta)}"`;
+            delta = ` - ${val2str([ -delta, 1 ])}"`;
           else
-            delta = ` + ${val2str(delta)}"`;
+            delta = ` + ${val2str([ delta, 1 ])}"`;
         }
  
         // format inches
