@@ -847,11 +847,12 @@
       // will be displayed in metric.
 
       const M = 1, KM = 1000*M;
-      const IN10K = 254*M, FT10K = 12*IN10K, MI10K = 5280*FT10K, TENK = 10000;
+      const IN10K = 254*M, FT10K = 12*IN10K, MI10K = 5280*FT10K, N10K = 10000;
       const NMI = 1852*M;
       const SEC = 1, MIN = 60*SEC, HR = 60*MIN; 
       const KG = 1;
-      const LBM = .45359237*KG, LBF = 4.448222*KG*M/(SEC*SEC);  // todo: rationalize?
+      const LBM100M = 45359237*KG, N100M = 100000000;
+      const LBF = 4.448222*KG*M/(SEC*SEC);
       const GAL10K3 = 231*IN10K**3;
       const AMP = 1, KELVIN = 1;
       const BIT = 1, BYTE = 8*BIT;
@@ -873,10 +874,10 @@
       const systemSymbols = {
         // Length (L)
         groupLength: { group: "Length Units" },
-        in: { type: 'num', dim: { L: 1 }, val: [ IN10K, TENK ], reserved: true, uscu: true, alt: ["inch", "inches"] },
-        ft: { type: 'num', dim: { L: 1 }, val: [ 12 * IN10K, TENK ], reserved: true, uscu: true, alt: ["foot", "feet"] },
-        yd: { type: 'num', dim: { L: 1 }, val: [ 3 * FT10K, TENK ], uscu: true, alt: ["yard", "yards"] },
-        mi: { type: 'num', dim: { L: 1 }, val: [ MI10K, TENK ], alt: ["mile", "miles"],
+        in: { type: 'num', dim: { L: 1 }, val: [ IN10K, N10K ], reserved: true, uscu: true, alt: ["inch", "inches"] },
+        ft: { type: 'num', dim: { L: 1 }, val: [ 12 * IN10K, N10K ], reserved: true, uscu: true, alt: ["foot", "feet"] },
+        yd: { type: 'num', dim: { L: 1 }, val: [ 3 * FT10K, N10K ], uscu: true, alt: ["yard", "yards"] },
+        mi: { type: 'num', dim: { L: 1 }, val: [ MI10K, N10K ], alt: ["mile", "miles"],
             reserved: true, uscu: true },
         km: { type: 'num', dim: { L: 1 }, val: KM, alt: ["kilometer", "kilometers"] },
         m:  { type: 'num', dim: { L: 1 }, val: M, reserved: true, alt: ["meter", "meters"] },
@@ -887,7 +888,7 @@
 
         // Area (L^2)
         groupArea: { group: "Area Units" },
-        acre: { type: 'num', dim: { L: 2 }, val: [ 66*FT10K * 660*FT10K, TENK**2 ], reserved: true, uscu: true, alt: ["acres"],
+        acre: { type: 'num', dim: { L: 2 }, val: [ 66*FT10K * 660*FT10K, N10K**2 ], reserved: true, uscu: true, alt: ["acres"],
             desc: "66' \u00D7 660'" },
         hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2, alt: ["hectares"],
             desc: "100 meters \u00D7 100 meters" },
@@ -897,25 +898,25 @@
         //    and, further, differences between the US and Imperial systems.
         //    When in conflict, I've chosen liquid volumes and US units.
         groupVolume: { group: "Volume Units" },
-        gallon: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, TENK**3 ], uscu: true, alt: ["gallons"] },
-        quart: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 4 * TENK**3], uscu: true, alt: ["quarts"] },
-        pint: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 8 * TENK**3 ], uscu: true, alt:["pints"] },
-        cup: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 16 * TENK**3 ], uscu: true, alt: ["cups"] },
-        tbsp: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 256 * TENK**3 ], uscu: true, alt: ["tablespoon", "tablespoons", "tbsps"] },
-        tsp: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 768 * TENK**3 ], uscu: true, alt: ["teaspoon", "teaspoons", "tsps"] },
-        floz: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 128 * TENK**3 ], desc: "fluid ounce", uscu: true },
+        gallon: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, N10K**3 ], uscu: true, alt: ["gallons"] },
+        quart: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 4 * N10K**3], uscu: true, alt: ["quarts"] },
+        pint: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 8 * N10K**3 ], uscu: true, alt:["pints"] },
+        cup: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 16 * N10K**3 ], uscu: true, alt: ["cups"] },
+        tbsp: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 256 * N10K**3 ], uscu: true, alt: ["tablespoon", "tablespoons", "tbsps"] },
+        tsp: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 768 * N10K**3 ], uscu: true, alt: ["teaspoon", "teaspoons", "tsps"] },
+        floz: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 128 * N10K**3 ], desc: "fluid ounce", uscu: true },
         liter: { type: 'num', dim: { L: 3 }, val: [ M**3, 10**3 ], desc: "liter", alt: ["liters", "litre", "litres"] },
         ml: { type: 'num', dim: { L: 3 }, val: [ M**3, 100**3 ], alt: ["milliliter", "millilitre", "milliliters", "millilitres"] },
         cc: { type: 'num', dim: { L: 3 }, val: [ M**3, 100**3 ], desc: "cubic centimeter" },
-        gi: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 32 * TENK**3 ], uscu: true, desc: "gill", alt:["gill", "gills"] },
-        dram: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 128 * TENK**3 * 8 ], uscu: true, alt: ["drams"] },
-        minim: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 128 * TENK**3 * 8 * 60 ], uscu: true, alt: ["minims"] },
-        cord: { type: 'num', dim: { L: 3 }, val: [ 128 * FT10K**3, TENK**3 ], desc: "cord of wood", uscu: true, alt: ["cords"] },
+        gi: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 32 * N10K**3 ], uscu: true, desc: "gill", alt:["gill", "gills"] },
+        dram: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 128 * N10K**3 * 8 ], uscu: true, alt: ["drams"] },
+        minim: { type: 'num', dim: { L: 3 }, val: [ GAL10K3, 128 * N10K**3 * 8 * 60 ], uscu: true, alt: ["minims"] },
+        cord: { type: 'num', dim: { L: 3 }, val: [ 128 * FT10K**3, N10K**3 ], desc: "cord of wood", uscu: true, alt: ["cords"] },
 
         // Mass (M)
         groupMass: { group: "Mass Units" },
-        lb: { type: 'num', dim: { M: 1 }, val: LBM, desc: "pound mass", uscu: true, alt: ["lbs", "pound", "pounds"] },
-        oz: { type: 'num', dim: { M: 1 }, val: [ LBM, 16 ], desc: "ounce mass", uscu: true, alt: ["ounce", "ounces"]},
+        lb: { type: 'num', dim: { M: 1 }, val: [ LBM100M, N100M ], desc: "pound mass", uscu: true, alt: ["lbs", "pound", "pounds"] },
+        oz: { type: 'num', dim: { M: 1 }, val: [ LBM100M, 16 * N100M ], desc: "ounce mass", uscu: true, alt: ["ounce", "ounces"]},
         kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, alt: ["kilogram", "kilograms"] },
         gm: { type: 'num', dim: { M: 1 }, val: [ KG, 1000 ], reserved: true, alt: ["gram", "grams"] },
         mg: { type: 'num', dim: { M: 1 }, val: [ KG, 1000**2 ], alt: ["milligram", "milligrams"]  },
@@ -995,13 +996,13 @@
         W: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ KG * M**2, SEC**3 ], alt: ["watt", "watts"] },
         kW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ 1000 * KG * M**2, SEC**3 ], alt: ["kilowatt", "killowatts"] },
         mW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ KG * M**2, 1000 * SEC**3 ], alt: ["milliwatt", "milliwatts"] },
-        horsepower: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ 550 * FT10K * LBF, TENK * SEC ], desc: "mechanical horsepower", uscu: true },
+        horsepower: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ 550 * FT10K * LBF, N10K * SEC ], desc: "mechanical horsepower", uscu: true },
 
         // Pressure (L^-1 M T^-2)
         groupPressure: { group: "Pressure Units" },
         Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ KG, M * SEC**2 ], alt: ["pascal", "pascals"] },
         kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ 1000 * KG, M * SEC**2 ], alt: ["kilopascal", "kilopascals"] },
-        PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ LBF * TENK**2, IN10K**2 ],
+        PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ LBF * N10K**2, IN10K**2 ],
             desc: "pounds per square inch", uscu: true },
         atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ 101325 * KG, M * SEC**2 ], desc: "atmosphere" },
         bar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ 100000 * KG, M * SEC**2 ], alt: ["bars"] },
@@ -1083,19 +1084,19 @@
         day: { type: 'num', dim: { T: 1 }, val: 24 * HR, uscu: null, alt: ["days"] },
         week: { type: 'num', dim: { T: 1 }, val: 24 * 7 * HR, desc: "7 days", uscu: null, alt: ["weeks"] },
         fortnight: { type: 'num', dim: { T: 1 }, val: 24 * 14 * HR, desc: "2 weeks", uscu: null, alt: ["fortnights"] },
-        link: { type: 'num', dim: { L: 1 }, val: [ 66 * FT10K, 100 * TENK ],  // you'd think 2/3 foot, but no its really .66 ft!
+        link: { type: 'num', dim: { L: 1 }, val: [ 66 * FT10K, 100 * N10K ],  // you'd think 2/3 foot, but no its really .66 ft!
             desc: "surveyor's link", uscu: true, alt: ["links"] },
-        rod: { type: 'num', dim: { L: 1 }, val: [ 66 * FT10K, 4 * TENK ], desc: "surveyor's rod", uscu: true, alt: ["rods"] },
-        chain: { type: 'num', dim: { L: 1 }, val: [ 66 * FT10K, TENK ], desc: "surveyor's chain", uscu: true, alt: ["chains"] },
-        furlong: { type: 'num', dim: { L: 1 }, val: [ 660 * FT10K, TENK ], uscu: true, alt: ["furlongs"] },
-        township: { type: 'num', dim: { L: 2 }, val: [ (6 * MI10K)**2, TENK**2 ], uscu: true, alt: ["townships"] },
+        rod: { type: 'num', dim: { L: 1 }, val: [ 66 * FT10K, 4 * N10K ], desc: "surveyor's rod", uscu: true, alt: ["rods"] },
+        chain: { type: 'num', dim: { L: 1 }, val: [ 66 * FT10K, N10K ], desc: "surveyor's chain", uscu: true, alt: ["chains"] },
+        furlong: { type: 'num', dim: { L: 1 }, val: [ 660 * FT10K, N10K ], uscu: true, alt: ["furlongs"] },
+        township: { type: 'num', dim: { L: 2 }, val: [ (6 * MI10K)**2, N10K**2 ], uscu: true, alt: ["townships"] },
         are: { type: 'num', dim: { L: 2 }, val: (10 * M)**2, desc: "10 meters \u00D7 10 meters" },
-        grain: { type: 'num', dim: { M: 1 }, val: [ LBM, 7000 ], uscu: true },
-        stone: { type: 'num', dim: { M: 1 }, val: 14 * LBM, uscu: true, desc: "UK stone" }, // no alt "stones"
-        hundredweight: { type: 'num', dim: { M: 1 }, val: 112 * LBM, uscu: true,
+        grain: { type: 'num', dim: { M: 1 }, val: [ LBM100M, 7000 * N100M ], uscu: true },
+        stone: { type: 'num', dim: { M: 1 }, val: [ 14 * LBM100M, N100M ], uscu: true, desc: "UK stone" }, // no alt "stones"
+        hundredweight: { type: 'num', dim: { M: 1 }, val: [ 112 * LBM100M, N100M ], uscu: true,
             desc: "UK hundredweight, about 51 kg" },  // in the US it's 100lb, but nobody uses it so...
-        longton: { type: 'num', dim: { M: 1 }, val: 2240 * LBM, uscu: true, alt: ["longtons"], desc: "UK long ton" },
-        ton: { type: 'num', dim: { M: 1 }, val: 2000 * LBM, uscu: true, alt: ["tons"], desc: "US ton" },
+        longton: { type: 'num', dim: { M: 1 }, val: [ 2240 * LBM100M, N100M ], uscu: true, alt: ["longtons"], desc: "UK long ton" },
+        ton: { type: 'num', dim: { M: 1 }, val: [ 2000 * LBM100M, N100M ], uscu: true, alt: ["tons"], desc: "US ton" },
         tonne: { type: 'num', dim: { M: 1 }, val: 1000 * KG, alt: ["tonnes"], desc: "metric ton" },
         carat: { type: 'num', dim: { M: 1 }, val: [ 200 * KG, 1000**2 ], alt: ["carats"] },
         league: { type: 'num', dim: { L: 1 }, val: 3 * NMI, uscu: true, alt: ["leagues"], desc: "3 nautical miles" },
@@ -1552,7 +1553,7 @@
           if (!isFinite(totalInches))
             throw new MessageError("Divide by zero")
 
-          showFeetInchesResult([ totalInches*IN10K, TENK ], { updateExpr: true });
+          showFeetInchesResult([ totalInches*IN10K, N10K ], { updateExpr: true });
         }
         catch (e) {
           showError(e);
@@ -1893,13 +1894,13 @@
           const backtrackQuote = parsePos;
           if (take("'") && !ALPHA.includes(peekc())) {
             chunkDim = { L: 1 };
-            unitVal = FT10K/TENK;
-            chunkVal = [ chunkVal[0]*FT10K, chunkVal[1]*TENK ];
+            unitVal = FT10K/N10K;
+            chunkVal = [ chunkVal[0]*FT10K, chunkVal[1]*N10K ];
             uscu = true;
           } else if (take('"') && !ALPHA.includes(peekc())) {
             chunkDim = { L:1 };
-            unitVal = IN10K/TENK;
-            chunkVal = [ chunkVal[0]*IN10K, chunkVal[1]*TENK ];
+            unitVal = IN10K/N10K;
+            chunkVal = [ chunkVal[0]*IN10K, chunkVal[1]*N10K ];
             uscu = true;
           } else {
             parsePos = backtrackQuote; // un-eat the quote in case this is a nonce unit
@@ -2442,8 +2443,8 @@
         document.getElementById('error').style.display = 'none';
         document.getElementById('results').style.color = '';
 
-        document.getElementById('resultIn').textContent = val2str([ totalUnits * TENK, IN10K ]);
-        document.getElementById('resultFt').textContent = val2str([ totalUnits * TENK, FT10K ]);
+        document.getElementById('resultIn').textContent = val2str([ totalUnits * N10K, IN10K ]);
+        document.getElementById('resultFt').textContent = val2str([ totalUnits * N10K, FT10K ]);
 
         let [ftStr, inStr, delta] = unitsToUSStringReps(totalUnits);
         document.getElementById('resultFtDetail').textContent = ftStr + delta;
@@ -2463,7 +2464,7 @@
       }
 
       function unitsToUSStringReps(totalUnits) {
-        let totalInches = TENK*totalUnits/IN10K;
+        let totalInches = N10K*totalUnits/IN10K;
         let minus = "";
         if (totalInches < 0) {
           totalInches = -totalInches;
