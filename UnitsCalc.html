@@ -399,7 +399,8 @@
             <td> 1/4 mi2 / acres
             <td> The number of acres in a quarter of a square mile
         </table>
-        <p> Just for fun, try <code>furlongs/fortnight</code>, <code>9600 baud</code> or <code>gallons/cup</code>.
+        <p> Just for fun, try <code>furlongs/fortnight</code>, <code>9600 baud</code>, <code>gallons/cup</code>, or
+          <code>horsepower/g</code>.
         <h2> Terms </h2>
         <p> Expressions are built up out of <i>terms</i> which are either
           <ul>
@@ -647,6 +648,8 @@
         toString() { return this.message; }
       }
 
+      class OverflowError extends MessageError {};
+
       // Errors that are too chatty to show while typing.
       //   (Error will be shown if the user hits "enter.")
       class ChattyError extends MessageError {
@@ -769,6 +772,8 @@
             return [ 0, 1 ];
           if (a[1] === 0)
             throw new MessageError("Divide by zero");
+          if (!isFinite(a[0]) || !isFinite(a[1]))
+            throw new OverflowError("Numeric overflow");
           let g = gcd(...a);
           let denom = a[1]/g;
           if (denom !== Math.trunc(denom)) { // makes sure the denominator is integral
@@ -801,7 +806,10 @@
             b = -b;
             a = [ a[1], a[0] ];
           }
-          return [ a[0]**b, a[1]**b ];
+          let num = a[0]**b, denom = a[1]**b;
+          if (!isFinite(num) || !isFinite(denom))
+            throw new OverflowError("Exponent too large");
+          return [ num, denom ];
         }
 
         static add(a, b, factor = 1) {
@@ -851,8 +859,8 @@
       const NMI = 1852*M;
       const SEC = 1, MIN = 60*SEC, HR = 60*MIN; 
       const KG = 1;
-      const LBM100M = 45359237*KG, N100M = 100000000;
-      const LBF = 4.448222*KG*M/(SEC*SEC);  // Can't be rationalized since it depends on "g"
+      const EARTHG = 9.80665, LBM100M = 45359237*KG, N100M = 100000000;
+      const LBF = EARTHG*0.45359237*KG*M/(SEC*SEC);  // Can't be rationalized since it depends on "g"
       const GAL10K3 = 231*IN10K**3;
       const AMP = 1, KELVIN = 1;
       const BIT = 1, BYTE = 8*BIT;
@@ -915,7 +923,7 @@
 
         // Mass (M)
         groupMass: { group: "Mass Units" },
-        lb: { type: 'num', dim: { M: 1 }, val: [ LBM100M, N100M ], desc: "pound mass", uscu: true, alt: ["lbs", "pound", "pounds"] },
+        lb: { type: 'num', dim: { M: 1 }, val: [ LBM100M, N100M ], desc: "pound mass", uscu: true, alt: ["lbs", "pound", "pounds", "lbm"] },
         oz: { type: 'num', dim: { M: 1 }, val: [ LBM100M, 16 * N100M ], desc: "ounce mass", uscu: true, alt: ["ounce", "ounces"]},
         kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, alt: ["kilogram", "kilograms"] },
         gm: { type: 'num', dim: { M: 1 }, val: [ KG, 1000 ], reserved: true, alt: ["gram", "grams"] },
@@ -1073,7 +1081,7 @@
             desc: "astronomy, parallax of one arcsecond", alt: ["parsecs"] },
         barn: { type: 'num', dim: { L: 2 }, val: 10e-28 * M**2, alt: ["barns"] }, // Nuclear physicist in the house?
         darcy: { type: 'num', dim: { L: 2 }, val: 10e-12 * M**2, desc: "hydraulic permeability" },
-        g: { type: 'num', dim: { L: 1, T:-2 }, val: [ 9.80665 * M, SEC**2 ],
+        g: { type: 'num', dim: { L: 1, T:-2 }, val: [ EARTHG * M, SEC**2 ],
             desc: "standard gravity (earth)"},
         G: { type: 'num', dim: { L: 3, M: -1, T:-2 }, val: [ 6.6743e-11 * M**3, KG * SEC**2 ],
             desc: "universal gravitational constant" },
@@ -1251,10 +1259,12 @@
             body: `#BuiltinFunction-${val.name}#` };
         if (!val) {
           // special case to create pseudo-variables for exponentiated units.
-          // there's no need for more than one digitl that would surely be a user error
-          if (symName.length > 1 && DIGITS.includes(symName.charAt(symName.length-1))) {
-            const symPrefix = symName.substr(0, symName.length-1);
-            const symSuffix = symName.substr(symName.length-1);
+          let pos = symName.length;
+          while (pos > 1 && DIGITS.includes(symName.charAt(pos-1)))
+            pos -= 1;
+          if (pos < symName.length) {
+            const symPrefix = symName.substr(0, pos);
+            const symSuffix = symName.substr(pos);
             val = getSymbol(symPrefix);
             let exp = Number(symSuffix);
             if (val && exp > 1) {
@@ -1346,34 +1356,50 @@
             uscu = true;
           let dim = val.dim;
           val = numVal(val);
-          function describeUnit(unit) {
-            let normSquared = Dim.normSquared(dim);
-            let exp = 0, unitExp = 0;
-            for (let i = 1; i < 100; ++i) {
-              let normSquaredPos = Dim.normSquared(Dim.add(dim, unit.dim, -i));
-              let normSquaredNeg = Dim.normSquared(Dim.add(dim, unit.dim, i));
-              if (normSquaredPos < normSquared) {
-                normSquared = normSquaredPos;
-                exp = i;
-              } else if (normSquaredNeg < normSquared) {
-                normSquared = normSquaredNeg;
-                exp = -i;
-              } else {
-                break;
+          function describeUnit(unit, opts) {
+            try {
+              let normSquared = Dim.normSquared(dim), gratuitySquared = 0;
+              let unitExp = 0;
+              let measures = {}, smallest = Number.POSITIVE_INFINITY
+              for (const measure in dim)
+                measures[measure] = true;
+              for (const measure in unit.dim)
+                measures[measure] = true;
+              for (const measure in measures) {
+                if (!unit.dim[measure])
+                  continue;
+                if (!dim[measure])  // gratuitous introduced dimensions
+                  gratuitySquared += unit.dim[measure]**2;
+                let q = dim[measure]/unit.dim[measure];
+                if (q < smallest)
+                  smallest = q;
               }
-            }
-            if (exp === 0)
+              let exp = Math.trunc(smallest);
+              if (!isFinite(smallest)) {
+                if (!opts?.forceUnit)
+                  return null;
+                exp = 1;
+              }
+              for (const ue of Object.values(unit.dim))
+                if (ue)
+                  unitExp += ue;
+              const reduced = Dim.add(dim, unit.dim, -exp);
+              const reducedNDims = Dim.nDims(reduced);
+              if (normSquared <= Dim.normSquared(reduced) && !opts?.forceUnit)
                 return null;
-            for (const ue of Object.values(unit.dim))
-              if (ue)
-                unitExp += ue;
-            const reduced = Dim.add(dim, unit.dim, -exp);
-            const reducedNDims = Dim.nDims(reduced);
-            let origin = unit.origin ?? [ 0, 1 ];
-            let newVal = Rat.div(Rat.sub(val, origin), Rat.pow(unit.val, exp));
-            let newNum = Rat.number(newVal);
-            let favored = unit.favored ?? 0;
-            return { unit, exp, unitExp, newVal, newNum, normSquared, reduced, favored, reducedNDims };
+              let origin = unit.origin ?? [ 0, 1 ];
+              let newVal = Rat.div(Rat.sub(val, origin), Rat.pow(unit.val, exp));
+              let newNum = Rat.number(newVal);
+              let favored = unit.favored ?? 0;
+              // A bunch of stuff that can be used in the sort function.
+              // TBH, this is pretty heuristic.
+              return { unit, exp, unitExp, newVal, newNum, normSquared, reduced, favored, gratuitySquared, reducedNDims };
+            }
+            catch (e) {
+              if (e instanceof OverflowError) // exponentiation failed somewhere along the line
+                return null;
+              throw e;  // rethrow
+            }
           }
           function applyDesc(unitDesc) {
             let unitList = unitDesc.unit.unitList ?? [ [ 1, unitDesc.unit ] ];
@@ -1403,10 +1429,9 @@
             dim = unitDesc.reduced;
           }
           if (displayUnits) {
-            const desc = describeUnit(displayUnits);
-            if (!desc)
-              throw new MessageError("Value cannot be displayed in given units");
+            const desc = describeUnit(displayUnits, { forceUnit: true } );
             applyDesc(desc);
+            displayUnits = null;
           }
           let allowedCandidateUnits = candidateUnits;
           if (dim.L && dim.M || dim.A || dim.DC) {
@@ -1494,7 +1519,6 @@
             if (unitDescs.length < 1)
               throw new InternalError("Insufficient basis units");
             applyDesc(unitDescs[0]);
-            displayUnits = undefined;
           }
         }
         val = Rat.number(val);   // Finally, smash it into a JS number
@@ -1736,9 +1760,12 @@
 
       function getNonceUnit(name) {
         // It's preferable to write 'duck'2 to 'duck2' but we'll allow it anyway.
-        if (name.length > 1 && DIGITS.includes(name.charAt(name.length-1))) {
-          const symPrefix = name.substr(0, name.length-1);
-          const symSuffix = name.substr(name.length-1);
+        let pos = name.length;
+        while (pos > 1 && DIGITS.includes(name.charAt(pos-1)))
+          pos -= 1;
+        if (pos < name.length) {
+          const symPrefix = name.substr(0, pos);
+          const symSuffix = name.substr(pos);
           let val = getNonceUnit(symPrefix);
           let exp = Number(symSuffix);
           if (exp < 2)
@@ -1769,8 +1796,9 @@
             if (!word || !take(qchar, NOSKIP))
               throw new ChattyError(peekc() === null ? "Incomplete input" : "Bad user unit" );
             let sym = getNonceUnit(word);
-            if (DIGITS.includes(peekc())) {
-              let exp = Number(getc());
+            let exp = parseNum({ noSkip:true, intOnly: true });
+            if (exp !== null) {
+              exp = Rat.number(exp);
               if (exp < 2)
                 throw new MessageError("Bad units exponent");
               return { ...sym, dim: Dim.mul(sym.dim, exp), val: Rat.pow(numVal(sym), exp) };
