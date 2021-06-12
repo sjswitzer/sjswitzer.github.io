@@ -1521,6 +1521,44 @@
             applyDesc(unitDescs[0]);
           }
         }
+
+        // Now, should it be represented as a (mixed) fraction?
+        val = Rat.reduce(val);
+        let num = val[0], denom = val[1];
+        let intpart = Math.trunc(num/denom);
+        num -= intpart*denom;
+        let asFrac = false;
+        if (num === Math.trunc(num)) { // integral numerator
+          if (num == 1 || num <= 20 && denom <= 20) {
+            asFrac = true;
+          } else {
+            let l2 = Math.log2(Math.abs(denom));
+            if (l2 === Math.trunc(l2) && l2 <= 256) {
+              asFrac = true;
+            } else {
+              let l10 = Math.log10(Math.abs(denom));
+              if (l10 === Math.trunc(l10) && l10 <= 10000)
+                asFrac = true;
+            }
+          }
+        }
+        if (asFrac) {
+          let neg = num < 0;
+          let str = "";
+          if (neg) {
+            num = -num;
+            str += "-";
+          }
+          if (intpart !== 0 || num === 0) {
+            str += String(intpart);
+            if (num)
+              str += " ";
+          }
+          if (num !== 0)
+            str += String(num) + "/" + String(denom);
+          return str + unitsStr + invUnitsStr;
+        }
+
         val = Rat.number(val);   // Finally, smash it into a JS number
         if (opts?.saveMode) {
           // full precision value
@@ -2668,6 +2706,10 @@
             delete systemSymbols[name];
             continue;
           }
+          if (typeof sym.val === 'number')
+            sym.val = [ sym.val, 1 ];
+          if (sym.val)
+            sym.val = Rat.reduce(sym.val);
           if (sym.type !== 'num' || sym.altOf || sym.display === null)
             continue;
           let alts = sym.alt ?? [];
