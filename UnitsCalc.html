@@ -850,8 +850,8 @@
       const IN10K = 254*M, FT10K = 12*IN10K, MI10K = 5280*FT10K, TENK = 10000;
       const NMI = 1852*M;
       const SEC = 1, MIN = 60*SEC, HR = 60*MIN; 
-      const GM = 1, KG = 1000*GM;
-      const LBM = 453.59237*GM, LBF = 4.448222*KG*M/(SEC*SEC);  // todo: rationalize?
+      const KG = 1;
+      const LBM = .45359237*KG, LBF = 4.448222*KG*M/(SEC*SEC);  // todo: rationalize?
       const GAL10K3 = 231*IN10K**3;
       const AMP = 1, KELVIN = 1;
       const BIT = 1, BYTE = 8*BIT;
@@ -917,9 +917,9 @@
         lb: { type: 'num', dim: { M: 1 }, val: LBM, desc: "pound mass", uscu: true, alt: ["lbs", "pound", "pounds"] },
         oz: { type: 'num', dim: { M: 1 }, val: [ LBM, 16 ], desc: "ounce mass", uscu: true, alt: ["ounce", "ounces"]},
         kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, alt: ["kilogram", "kilograms"] },
-        gm: { type: 'num', dim: { M: 1 }, val: GM, reserved: true, alt: ["gram", "grams"] },
-        mg: { type: 'num', dim: { M: 1 }, val: [ GM, 1000 ], alt: ["milligram", "milligrams"]  },
-        ug: { type: 'num', dim: { M: 1 }, val: [ GM, 1000**2 ], display: MICROSYM+"g", alt: ["microgram", "micrograms"] },
+        gm: { type: 'num', dim: { M: 1 }, val: [ KG, 1000 ], reserved: true, alt: ["gram", "grams"] },
+        mg: { type: 'num', dim: { M: 1 }, val: [ KG, 1000**2 ], alt: ["milligram", "milligrams"]  },
+        ug: { type: 'num', dim: { M: 1 }, val: [ KG, 1000**3 ], display: MICROSYM+"g", alt: ["microgram", "micrograms"] },
         
         // Time (T)
         groupTime: { group: "Time Units" },
@@ -1097,7 +1097,7 @@
         longton: { type: 'num', dim: { M: 1 }, val: 2240 * LBM, uscu: true, alt: ["longtons"], desc: "UK long ton" },
         ton: { type: 'num', dim: { M: 1 }, val: 2000 * LBM, uscu: true, alt: ["tons"], desc: "US ton" },
         tonne: { type: 'num', dim: { M: 1 }, val: 1000 * KG, alt: ["tonnes"], desc: "metric ton" },
-        carat: { type: 'num', dim: { M: 1 }, val: [ 200 * GM, 1000 ], alt: ["carats"] },
+        carat: { type: 'num', dim: { M: 1 }, val: [ 200 * KG, 1000**2 ], alt: ["carats"] },
         league: { type: 'num', dim: { L: 1 }, val: 3 * NMI, uscu: true, alt: ["leagues"], desc: "3 nautical miles" },
         nmi: { type: 'num', dim: { L: 1 }, val: NMI, uscu: true, desc: "nautical mile" },
         knot: { type: 'num', dim: { L: 1, T: -1 }, val: [ NMI, HR ], uscu: true, alt: ["knots"], desc: "nautical mile per hour" },
