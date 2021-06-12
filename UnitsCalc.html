@@ -2310,6 +2310,7 @@
           return;
         val = { ...val, defined: undefined, desc: undefined,
                 display: undefined, reserved: undefined, alt: undefined };
+        delete userSymbols[sym];  // remove from list so new value now shows up first (in reverse listing)
         userSymbols[sym] = val;
       }
 
@@ -2318,7 +2319,7 @@
         try {
           let exprStr = document.getElementById('expr').value;
           if (exprStr.trim() === "")
-            showAssignResult("&nbsp;");
+            showAssignResult("&nbsp;");  // clear the input field
           let val = parseInputStatement(exprStr);
           if (val !== null) {
             if (opts?.doAssigns && val.defined) {
