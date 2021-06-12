@@ -517,6 +517,7 @@
           <ul>
             <li> How many watts in 10 horsepower? <code>10 horsepower | W</code>
             <li> How many tablespoons in a cup? <code>cup | tbsp</code>
+            <li> How many cups in a tablespoon? <code>tbsp | cup</code>
             <li> Sea-level air pressure in PSI? <code>atm | PSI</code>
             <li> What's 20 degrees celsius in fahrenheit? <code>20 celsius | fahrenheit</code>
             <li> What about absolute zero? <code>0K | degf</code>
@@ -1350,12 +1351,16 @@
         if (opts?.describe && val.desc && !displayUnits)
           descStr = ` (${val.desc})`;
         let unitsStr = "", invUnitsStr = "";
+        let noFrac = false;
         if (val.val !== undefined) {
           let uscu = !!val.uscu;
           if (displayUnits?.uscu)
             uscu = true;
           let dim = val.dim;
           val = numVal(val);
+          // Certain kinds of units should not be displayed as fractions
+          noFrac = dim.A || dim.Q || dim.RAD || dim.BIT || dim.CD
+              || !uscu && (dim.L || dim.M);
           function describeUnit(unit, opts) {
             try {
               let normSquared = Dim.normSquared(dim), gratuitySquared = 0;
@@ -1385,7 +1390,8 @@
                   unitExp += ue;
               const reduced = Dim.add(dim, unit.dim, -exp);
               const reducedNDims = Dim.nDims(reduced);
-              if (normSquared <= Dim.normSquared(reduced) && !opts?.forceUnit)
+              const reducedNormSquared = Dim.normSquared(reduced);
+              if (normSquared <= reducedNormSquared && !opts?.forceUnit)
                 return null;
               let origin = unit.origin ?? [ 0, 1 ];
               let newVal = Rat.div(Rat.sub(val, origin), Rat.pow(unit.val, exp));
@@ -1393,7 +1399,7 @@
               let favored = unit.favored ?? 0;
               // A bunch of stuff that can be used in the sort function.
               // TBH, this is pretty heuristic.
-              return { unit, exp, unitExp, newVal, newNum, normSquared, reduced, favored, gratuitySquared, reducedNDims };
+              return { unit, exp, unitExp, newVal, newNum, reducedNormSquared, reduced, favored, gratuitySquared, reducedNDims };
             }
             catch (e) {
               if (e instanceof OverflowError) // exponentiation failed somewhere along the line
@@ -1479,7 +1485,7 @@
                   return diff;
 
                 // The closer to scalar the better
-                diff = a.normSquared - b.normSquared;
+                diff = a.reducedNormSquared - b.reducedNormSquared;
                 if (diff !== 0)
                   return diff;
 
@@ -1528,17 +1534,18 @@
         let intpart = Math.trunc(num/denom);
         num -= intpart*denom;
         let asFrac = false;
-        if (num === Math.trunc(num)) { // integral numerator
-          if (num == 1 || num <= 20 && denom <= 20) {
+        if (!noFrac && num === Math.trunc(num)) { // integral numerator
+          if (num == 1 || num <= 12 && denom <= 12) {
             asFrac = true;
           } else {
             let l2 = Math.log2(Math.abs(denom));
             if (l2 === Math.trunc(l2) && l2 <= 256) {
               asFrac = true;
             } else {
-              let l10 = Math.log10(Math.abs(denom));
-              if (l10 === Math.trunc(l10) && l10 <= 10000)
-                asFrac = true;
+              // Not really a good idea:
+              // let l10 = Math.log10(Math.abs(denom));
+              // if (l10 === Math.trunc(l10) && l10 <= 10000)
+              //   asFrac = true;
             }
           }
         }
