@@ -1072,7 +1072,9 @@
         // Interesting constants and units (various)
         groupVarious: { group: "Constants" },
         pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
+        unit: { type: 'num', dim: {}, val: 1: display: none, alt: ["u"] },  // to allow "1 1/2 u"
         tau: { type: 'num', dim: {}, val: 2 * Math.PI, display: TAUSYM, desc: `2${PISYM}` },
+        // Since SI units were redefined in 2019, a dalton is almost but not precicely 1 gm/mol
         mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number", alt: ["mols"] },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27 * KG },
         boltz: { type: 'num', dim: { L: 2, M: 1, T:-2, Q: -1 }, val: [ 1.380649e-23 * KG * M**2, SEC**2 * KELVIN ],
