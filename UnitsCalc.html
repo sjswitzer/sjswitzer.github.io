@@ -742,11 +742,13 @@
       }
 
       function gcd(...params) {   // if the arguments can't be processed as int32, returns 1
-        let aa = Math.abs(params[0]);
-        let a = Math.trunc(aa);
-        if (aa !== a) return 1;
+        let a = params[0];
+        if (a < 0n)
+          a = -a;
         for (let i = params.length-1; i > 0; --i) {
-          let ab = Math.abs(params[i]);
+          let b = params[i];
+          if (b < 0n)    // XXX
+            b = -b;
           let b = Math.trunc(ab);
           if (ab !== b) return 1;
           while (b !== 0) {
@@ -770,15 +772,23 @@
 
         // Reduces and normalizes a rational.
         // The denominator will always be a BigInt
-        static reduce(a) {
+        static normalize(a) {
           let num = a[0], denom = a[1];
-          if (num === 0n)
+          if (num === 0n || num === 0)
             return [ 0n, 1n ];
+          if (typeof denom !== 'bigint') {
+            if (denom === Math.trunc(denom))
+              denom = BigInt(denom);
+            else
+              num = Number(num)/denom, denom = 1n;
+          }
+          if (denom < 0n)
+             num = -num, denom = -denom;
           if (denom === 0n)
             throw new MessageError("Divide by zero");
           if (num === 'number') {
             if (num !== Math.trunc(num))
-              return a;
+              return [ num, denom ];
             num = BigInt(num);
           }
           let g = gcd(num, denom);
@@ -800,33 +810,33 @@
 
         static mul(a, b) {
           if (typeof a[0] === 'number' || typeof b[0] === 'number')
-           return Rat.reduce([ Number(a[0])*Number(b[0]), a[1]*b[1] ]);
-          return Rat.reduce([ a[0]*b[0], a[1]*b[1] ]);
+            return Rat.normalize([ Number(a[0])*Number(b[0]), a[1]*b[1] ]);
+          return Rat.normalize([ a[0]*b[0], a[1]*b[1] ]);
         }
         static div(a, b) {
           if (typeof a[1] === 'number' || typeof b[0] === 'number')
-            return Rat.reduce([ Number(a[0])*Number(b[1])/Number(b[0]), a[1] ]);
-          return Rat.reduce([ a[0]*b[1], a[1]*b[0] ]);
+            return Rat.normalize([ Number(a[0])*Number(b[1])/Number(b[0]), a[1] ]);
+          return Rat.normalize([ a[0]*b[1], a[1]*b[0] ]);
         }
         static pow(a, b) {
           if (b[0] !== undefined)
             b = Number(b[0])/Number(b[1]);
           if (!isFinite(b))
             throw new MessageError("Divide by zero");
-          if (b === Math.trunc(b) && typeof [0] === 'bigint') {
+          if (b === Math.trunc(b) && typeof a[0] === 'bigint') {
             b = BigInt(b);
             if (b < 0n)
               return [ a[1]**-b, a[0]**-b ];
             return [ a[0]**b, a[1]**b ];
           }
-          return [ Number(a[0]/Numbera[1])**b, 1n ];
+          return [ Number(a[0]/Number[1])**b, 1n ];
         }
 
         static add(a, b, factor = 1) {
           if (typeof a[0] === 'number' || typeof a[1] === 'number')
             return [ Number(a[0])/Number(a[1]) + Number(b[0])/Number(b[1]), 1n ];
-          let res = [ a[0]*b[1] + factor*b[0]*a[1], a[1]*b[1] ];
-          return Rat.reduce(res);
+          let res = [ a[0]*b[1] + BigInt(factor)*b[0]*a[1], a[1]*b[1] ];
+          return Rat.normalize(res);
         }
         static sub(a, b) { return Rat.add(a, b, -1); }
         static sqrt(a) { return [ Math.sqrt(Rat.number(a)), 1n ]; }
@@ -838,11 +848,7 @@
           return [ 0n, 1n ];
         }
         static neg(a) { return [ -a[0], a[1] ]; }
-        static recip(a) {
-          if (a[0] === 0)
-            throw new MessageError("Divide by zero");
-          return [ a[1], a[0] ];
-        }
+        static recip(a) { return Rat.normalize([ a[1], a[0] ]); }
       }
 
       // A curious thing worth noting: It turns out that fractions of the form
@@ -1374,7 +1380,7 @@
           if (displayUnits?.uscu)
             uscu = true;
           let dim = val.dim;
-          val = numVal(val);
+          val = Rat.normalize(numVal(val));
           // Certain kinds of units should not be displayed as fractions
           noFrac = Dim.isScalar(dim) || dim.A || dim.Q || dim.RAD || dim.BIT || dim.CD
               || !uscu && (dim.L || dim.M);
@@ -1551,7 +1557,6 @@
         }
 
         // Now, should it be represented as a (mixed) fraction?
-        val = Rat.reduce(val);
         let num = val[0], denom = val[1];
         let intpart = Math.trunc(num/denom);
         num -= intpart*denom;
