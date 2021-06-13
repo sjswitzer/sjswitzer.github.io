@@ -101,7 +101,7 @@
         position: absolute;
         display: none;
         top: 10%;
-        left: 25%;
+        left: 30%;
         right: 16px;
         bottom: 16px;
         border: 2px solid black;
@@ -1052,13 +1052,13 @@
         pF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: [ SEC**4 * AMP**2, 1000**4 * KG * M**2 ],
             alt: ["picofarad", "picofarads"] },
         Wb: { type: 'num', dim: { M: 1, L: 2, T: -2, A: -1 }, val: [ KG * M**2, SEC**2 * AMP ],
-            desc: "weber, magnetic flux" },
+            desc: "weber, magnetic flux", alt: ["weber"] },
         T: { type: 'num', dim: { M: 1, T: -2, A: -1 }, val: [ KG, SEC**2 * AMP ],
-            desc: "tesla, magnetic flux density" },
+            desc: "tesla, magnetic flux density", alt: ["tesla"] },
         gauss: { type: 'num', dim: { M: 1, T: -2, A: -1 }, val: [ KG, 10000 * SEC**2 * AMP ],
-            desc: "gauss, magnetic flux density" },
+            desc: "gauss, magnetic flux density", alt: ["gauss"] },
         H: { type: 'num', dim: { M: 1, L: 2, T: -2, A: -2 }, val: [ KG * M**2, SEC**2 * AMP**2 ],
-            desc: "henry, mutual inductance " },
+            desc: "henry, mutual inductance ", alt: ["henry"] },
 
         // Lumosity (CD...)
         groupLuminosity: { group: "Lumosity Units" },
@@ -1339,12 +1339,12 @@
         'tsp', 'tbsp', 'floz', 'cup', 'pint', 'quart', 'gallon',
         'lbf', 'oz', 'lb',
         'um', 'mm', 'cm', 'm', 'km', 'ml', 'liter',
-        'gm', 'kg',
+        'kg', 'gm', 'mg', 'ug',
         'min', 'hr', // 'us', 'ms' -- don't include or you get m/s as um/us!
       ]);
       const candidateUnitsMKS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'kg', 'm' ]);
       const candidateUnitsCGS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'gm', 'cm' ]);
-      const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'lbf', 'ft', 'lb' ]);
+      const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'lbf', 'ft', 'in', 'lb' ]);
 
       function val2str(val, opts) {
         let descStr = "", displayUnits = val.displayUnits;
@@ -1359,13 +1359,13 @@
           let dim = val.dim;
           val = numVal(val);
           // Certain kinds of units should not be displayed as fractions
-          noFrac = dim.A || dim.Q || dim.RAD || dim.BIT || dim.CD
+          noFrac = Dim.isScalar(dim) || dim.A || dim.Q || dim.RAD || dim.BIT || dim.CD
               || !uscu && (dim.L || dim.M);
           function describeUnit(unit, opts) {
             try {
               let normSquared = Dim.normSquared(dim), gratuitySquared = 0;
               let unitExp = 0;
-              let measures = {}, smallest = Number.POSITIVE_INFINITY
+              let measures = {}, smallest = Number.POSITIVE_INFINITY, positivity = 0;
               for (const measure in dim)
                 measures[measure] = true;
               for (const measure in unit.dim)
@@ -1376,15 +1376,22 @@
                 if (!dim[measure])  // gratuitous introduced dimensions
                   gratuitySquared += unit.dim[measure]**2;
                 let q = dim[measure]/unit.dim[measure];
+                q = Math.trunc(q);
+                positivity += Math.sign(q);
+                q = Math.abs(q);
                 if (q < smallest)
                   smallest = q;
               }
-              let exp = Math.trunc(smallest);
+              let exp = smallest;
+              if (positivity < 0)
+                exp = -exp;
               if (!isFinite(smallest)) {
                 if (!opts?.forceUnit)
                   return null;
                 exp = 1;
               }
+              if (exp === 0)
+                return null;
               for (const ue of Object.values(unit.dim))
                 if (ue)
                   unitExp += ue;
@@ -1535,7 +1542,7 @@
         num -= intpart*denom;
         let asFrac = false;
         if (!noFrac && num === Math.trunc(num)) { // integral numerator
-          if (num == 1 || num <= 12 && denom <= 12) {
+          if (num === 1 || num <= 12 && denom <= 12) {
             asFrac = true;
           } else {
             let l2 = Math.log2(Math.abs(denom));
@@ -1563,7 +1570,7 @@
           }
           if (num !== 0)
             str += String(num) + "/" + String(denom);
-          return str + unitsStr + invUnitsStr;
+          return str + unitsStr + invUnitsStr + descStr;
         }
 
         val = Rat.number(val);   // Finally, smash it into a JS number
