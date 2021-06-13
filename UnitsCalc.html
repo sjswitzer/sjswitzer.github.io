@@ -769,27 +769,31 @@
         // Reduces and normalizes a rational.
         // The denominator will always be an int32.
         static reduce(a) {
-          if (a[0] === 0)
+          let num = a[0], denom = a[1];
+          if (num === 0)
             return [ 0, 1 ];
-          if (a[1] === 0)
+          if (denom === 0)
             throw new MessageError("Divide by zero");
-          if (!isFinite(a[0]) || !isFinite(a[1]))
+          if (!isFinite(num) || !isFinite(denom))
             throw new OverflowError("Numeric overflow");
-          let g = gcd(...a);
-          let denom = a[1]/g;
-          if (denom !== Math.trunc(denom)) { // makes sure the denominator is integral
-            let num =  a[0]/a[1];
+          if (denom < 0) {
+            denom = -denom;
+            num = -num;
+          }
+          let g = gcd(num, denom);
+          let newDenom = denom/g;
+          if (newDenom !== Math.trunc(newDenom)) { // makes sure the denominator is integral
+            num =  num/denom;
             if (!isFinite(num)) throw new MessageError("Divide by zero"); 
             return [ num, 1 ];
           }
-          if (denom < 0)  // keep denominator  60
-            return [ -a[0]/g, -denom ];
-          return [ a[0]/g, denom ];
+          return [ num/g, newDenom ];
         }
 
         static cmp(a, b) {
           // avoid division:  n1/d1 - n2/d2 = (n1*d2 - n2/d1)/(d1*d2)
-          return a[0]*b[1] - b[0]*a[1] * Math.sign(a[1]*b[1]);
+          // note: denom is never negative
+          return a[0]*b[1] - b[0]*a[1];
         }
 
         static mul(a, b) {
@@ -808,9 +812,7 @@
             a = [ a[1], a[0] ];
           }
           let num = a[0]**b, denom = a[1]**b;
-          if (!isFinite(num) || !isFinite(denom))
-            throw new OverflowError("Exponent too large");
-          return [ num, denom ];
+          return Rat.reduce([ num, denom ]);
         }
 
         static add(a, b, factor = 1) {
@@ -823,11 +825,7 @@
         static abs(a) { return [ Math.abs(a[0]), Math.abs(a[1])]; }
         static sign(a) { return [ Math.sign(a[0]) * Math.sign(a[1]), 1 ]; }
         static neg(a) { return [ -a[0], a[1] ]; }
-        static recip(a) {
-          if (a[1] === 0)
-            throw new MessageError("Divide by zero");
-          return [ a[1], a[0] ];
-        }
+        static recip(a) { return Rat.reduce([ a[1], a[0] ]); }
       }
 
       // A curious thing worth noting: It turns out that fractions of the form
