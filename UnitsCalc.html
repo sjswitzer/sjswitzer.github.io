@@ -1246,6 +1246,8 @@
         },
       };
 
+      addBuiltinSymbolsHelp(); // This also conditions the systemSymbols definitions
+
       for (const [name, sym] of Object.entries(systemSymbols)) {
         if (sym.alt)
           for (const alt of sym.alt)
@@ -1555,7 +1557,7 @@
             Log(2, (level) =>  // use a function here to defer evaluation unless we're logging
                 "======== " + parseStr + " unit candidates for " + val + " " +
                 JSON.stringify(dim) + " ========\n" +
-                JSON.stringify(unitDescs, (k, v) => typeof v === 'bigint' ? Number(v) : v, 2));
+                JSON.stringify(unitDescs, (k, v) => typeof v === 'bigint' ? String(v)+"n" : v, 2));
             if (unitDescs.length < 1)
               throw new InternalError("Insufficient basis units");
             applyDesc(unitDescs[0]);
@@ -1593,10 +1595,10 @@
           }
           if (intpart !== 0n || num === 0n) {
             str += String(intpart);
-            if (num)
+            if (num !== 0n)
               str += " ";
           }
-          if (num !== 0)
+          if (num !== 0n)
             str += String(num) + "/" + String(denom);
           return str + unitsStr + invUnitsStr + descStr;
         }
@@ -2787,7 +2789,6 @@
         catch (e) {}
         updateResult();
         addExampleStuffs();
-        addBuiltinSymbolsHelp();
       });
 
       window.addEventListener("beforeunload", function(evt) {
