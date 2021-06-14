@@ -155,7 +155,7 @@
         font-weight: bold;
         font-family: caption, sans-serif;
         color: #444444;  /* subtle graying to offset the boldness */
-      } 
+      }
       div.help code.abstract {
         font-style: italic;
       }
@@ -229,7 +229,7 @@
         border-radius: 5px;
         margin-right: .5em;
         color: white;
-        transition: 0.1s;     
+        transition: 0.1s;
       }
 
       p.user-def > span.delete-button:before {
@@ -327,7 +327,7 @@
       </div>
     </div>
     <div class="help" id="help-expr">
-      <span class="close-button" onclick="showHelp()"></span> 
+      <span class="close-button" onclick="showHelp()"></span>
       <div>
         <h2> Expressions </h2>
         <p> Expressions can contain numbers, units and the operators
@@ -336,12 +336,12 @@
             Multiplication and division are performed before addition and subtraction, and
             parenthesis can be used for grouping. Spaces are generally optional.
         <p> Units include:
-            <code>ft</code> <code>'</code> <code>in</code> <code>"</code> 
+            <code>ft</code> <code>'</code> <code>in</code> <code>"</code>
             <code>m</code> and <code>cm</code>.
         <p> As you type, the expression might be momentarily unparsable, e.g.,
-            &ldquo;<code>3'+</code>&rdquo;, until you finish typing. 
+            &ldquo;<code>3'+</code>&rdquo;, until you finish typing.
             The results box will be grayed out while that happens.
-            It would be too noisy to alert each of these errors, but if you don't 
+            It would be too noisy to alert each of these errors, but if you don't
             know why it's grayed out, you can hit &ldquo;enter&rdquo; to see an error message.
         <p> In these help boxes most sample expressions, like
             <code>11'4"/2</code>, can be clicked to evaluate the expression.
@@ -479,28 +479,28 @@
             <th> Function
             <th> Description
           <tr>
-            <td> mean(x,y,&hellip;) 
+            <td> mean(x,y,&hellip;)
             <td> The average of a set of numbers or lengths
           <tr>
-            <td> sum(x,y,&hellip;) 
+            <td> sum(x,y,&hellip;)
             <td> The average of a set of numbers or lengths
           <tr>
-            <td> hyp(x,y,&hellip;) 
+            <td> hyp(x,y,&hellip;)
             <td> The hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
           <tr>
-            <td> sqrt(x) 
+            <td> sqrt(x)
             <td> Square root
           <tr>
-            <td> cbrt(x) 
+            <td> cbrt(x)
             <td> Cube root
           <tr>
-            <td> sin(angle) 
+            <td> sin(angle)
             <td> Sine of an <i>angle</i> (must be units of radian or degree)
           <tr>
-            <td> cos(angle) 
+            <td> cos(angle)
             <td> Cosine of an <i>angle</i> (must be units of radian or degree)
           <tr>
-            <td> atan2(y, x) 
+            <td> atan2(y, x)
             <td> Returns the <i>angle</i> corresponding to the slope y/x, even when x is zero.
                  More formally, it's the angle from the x-axis of the vector (x,y).
         </table>
@@ -513,7 +513,7 @@
             then a unit or series of units.
             For instance, <code>100 km/hr | mi</code> displays the speed in miles/minute.
             <code>100 km/hr | mi/hr</code> displays the speed in terms of miles/hour.
-        <p> 
+        <p>
           <ul>
             <li> How many watts in 10 horsepower? <code>10 horsepower | W</code>
             <li> How many tablespoons in a cup? <code>cup | tbsp</code>
@@ -715,7 +715,7 @@
 
         // If a dimension can be evenly divided, the new dimension, else null
         // We don't allow fractal dimensions in this town.
-        static div(dim = {}, n) { 
+        static div(dim = {}, n) {
         let ret = {};
           for (const measure in dim) {
             const expDiv = dim[measure]/n;
@@ -883,7 +883,7 @@
       const M = 1, KM = 1000*M;
       const IN5K = 127*M, FT5K = 12*IN5K, MI5K = 5280*FT5K, N5K = 5000;
       const NMI = 1852*M;
-      const SEC = 1, MIN = 60*SEC, HR = 60*MIN; 
+      const SEC = 1, MIN = 60*SEC, HR = 60*MIN;
       const KG = 1;
       const EARTHG = 9.80665, LBM100M = 45359237 * KG, N100M = 100000000;
       const LBFS2 = EARTHG * 0.45359237 * KG * M;
@@ -899,7 +899,7 @@
       const MICROSYM = "\u00B5", OHMSYM = "\u2126", PISYM = "\uD835\uDF0B", TAUSYM = "\uD835\uDF0F";
       const ALPHA =
         "abcdefghijklmnopqrstuvwxyz" +
-        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + 
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
         MICROSYM + OHMSYM + TAUSYM + PISYM;
       const ALPHANUM = ALPHA + DIGITS;
 
@@ -955,7 +955,7 @@
         gm: { type: 'num', dim: { M: 1 }, val: [ KG, 1000 ], reserved: true, alt: ["gram", "grams"] },
         mg: { type: 'num', dim: { M: 1 }, val: [ KG, 1000**2 ], alt: ["milligram", "milligrams"]  },
         ug: { type: 'num', dim: { M: 1 }, val: [ KG, 1000**3 ], display: MICROSYM+"g", alt: ["microgram", "micrograms"] },
-        
+
         // Time (T)
         groupTime: { group: "Time Units" },
         hr: { type: 'num', dim: { T: 1 }, val: HR, uscu: null, alt: ["hour", "hours", "hrs"] },
@@ -1151,7 +1151,7 @@
 
         // General n-dimensional hypotenuse
         hyp: function Hypotenuse(...params) {
-          if (params.length < 1)	
+          if (params.length < 1)
             return { type: 'num', dim: {}, val: 0 };
           let res = reduceParamVals(this.sym, Rat.ZERO, params,
               (accum, val) => Rat.add(accum, Rat.mul(val, val)));
@@ -1239,14 +1239,14 @@
         CGS: function SetCGS() { unitsSystem = 'cgs'; return { type: 'num', dim: {}, val: Rat.ZERO }; },
 
         // For debugging, call saveUserSymbols.
-        //    (it's hard to debug when the window is closing) 
+        //    (it's hard to debug when the window is closing)
         SAVE: function DebugSaveSyms() { saveUserSymbols(); return { type: 'num', dim: {}, val: Rat.ZERO }; },
 
         // Set logging level
         LOGGING: function SetLogLevel(...params) {
           if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
           let val = params[0];
-          if (val.type !== 'num' || !Dim.isScalar(val.dim) || numVal(val) < 0 ) 
+          if (val.type !== 'num' || !Dim.isScalar(val.dim) || numVal(val) < 0 )
             throw new MessageError(`${this.sym}(x): Illegal parameter`);
           let oldLevel = logLevel;
           logLevel = Rat.number(numVal(val));
@@ -1361,7 +1361,7 @@
       // favorability. So it's important to have 'sr' before 'radian', for example.
       const commonUnits = [ // Ensure a covering basis of units in all cases
         'A', 'mA', 'uA', 'V', 'kV', 'mV','uV', 'Wb',
-        'ohm', 'kohm', 'F', 'mF', 'uF', 'nF', 'pF', 
+        'ohm', 'kohm', 'F', 'mF', 'uF', 'nF', 'pF',
         'bit', 'byte',
         'KB',  'MB',  'GB',  'TB',  'PB',  'EB',
         // seconds come after electrical and information units so that a coulomb
@@ -1400,33 +1400,32 @@
               || !uscu && (dim.L || dim.M);
           function describeUnit(unit, opts) {
             try {
-              let normSquared = Dim.normSquared(dim), gratuitySquared = 0;
+              let normSquared = Dim.normSquared(dim);
               let unitExp = 0;
-              let measures = {}, smallest = Number.POSITIVE_INFINITY, positivity = 0;
+              let measures = {}, smallest = Number.POSITIVE_INFINITY, dotProduct = 0;
               for (const measure in dim)
                 measures[measure] = true;
               for (const measure in unit.dim)
                 measures[measure] = true;
               for (const measure in measures) {
-                if (!unit.dim[measure])
+                if (!dim[measure] || !unit.dim[measure])
                   continue;
-                if (!dim[measure])  // gratuitous introduced dimensions
-                  gratuitySquared += unit.dim[measure]**2;
+                dotProduct += (dim[measure] ?? 0) * unit.dim[measure];
                 let q = dim[measure]/unit.dim[measure];
-                q = Math.trunc(q);
-                positivity += Math.sign(q);  // TODO: is this right?
-                q = Math.abs(q);
+                q = Math.abs(Math.trunc(q));
                 if (q < smallest)   // TODO: exclude zero?
                   smallest = q;
               }
               let exp = smallest;
-              if (positivity < 0)
+              if (dotProduct < 0)
                 exp = -exp;
               if (exp === 0 || !isFinite(smallest)) {
                 if (!opts?.forceUnit)
                   return null;
                 exp = 1;
               }
+              // unit applied "exp" times; also ensures dotProduct is >= 0 unless forced
+              dotProduct = dotProduct * exp;
               for (const ue of Object.values(unit.dim))
                 if (ue)
                   unitExp += ue;
@@ -1441,7 +1440,8 @@
               let favored = unit.favored ?? 0;
               // A bunch of stuff that can be used in the sort function.
               // TBH, this is pretty heuristic.
-              return { unit, exp, unitExp, newVal, newNum, reducedNormSquared, reduced, favored, gratuitySquared, reducedNDims };
+              return { unit, exp, unitExp, newVal, newNum, reducedNormSquared, reduced, favored,
+                  reducedNDims, dotProduct };
             }
             catch (e) {
               if (e instanceof OverflowError) // exponentiation failed somewhere along the line
@@ -1452,7 +1452,7 @@
           function applyDesc(unitDesc) {
             let unitList = unitDesc.unit.unitList ?? [ [ 1, unitDesc.unit ] ];
             for (let [exp, unit] of unitList) {
-              let str = " "; 
+              let str = " ";
               let displayExp = exp = unitDesc.exp * exp;
               if (displayExp < 0) {
                 displayExp = -displayExp;
@@ -1522,7 +1522,12 @@
                 let diff = b.favored - a.favored;
                 if (diff !== 0)
                   return diff;
-
+            /**/
+                // Bigget dot product is better (smaller comparison result)
+                diff = b.dotProduct - a.dotProduct;
+                if (diff !== 0)
+                  return diff;
+            /*/
                 // The fewer independend dimensions remaining, the better
                 diff = a.reducedNDims - b.reducedNDims;
                 if (diff !== 0)
@@ -1532,7 +1537,7 @@
                 diff = a.reducedNormSquared - b.reducedNormSquared;
                 if (diff !== 0)
                   return diff;
-
+            /**/
                 // Favor units that reduce the denominator
                 let expDiff = Math.sign(a.exp * a.unitExp) - Math.sign(b.exp * b.unitExp);
                 if (expDiff !== 0)
@@ -1588,10 +1593,10 @@
               if (lg2 === Math.trunc(lg2) && lg2 <= 10) {
                 asFrac = true;
               } else {
-                // Not really a good idea; decimal notation is straight-up better:
-                // let l10 = Math.log10(Number(denom));
-                // if (l10 === Math.trunc(l10) && l10 <= 10000)
-                //   asFrac = true;
+                // But fovor decimal for things like 0.001
+                let l10 = Math.log10(Number(denom));
+                if (l10 === Math.trunc(l10))
+                  asFrac = false;
               }
             }
           }
@@ -1791,7 +1796,7 @@
           if (nDigits > 0) {
             return [ val, div ];
           }
-          parsePos = backtrack;    
+          parsePos = backtrack;
         }
         return null;
       }
@@ -1927,7 +1932,7 @@
             }
             sym = getSymbol(word);
             if (!sym && opts?.parse)
-              sym = { type: 'parse', word }; 
+              sym = { type: 'parse', word };
 
             if (!sym) {
               if (!implicitValue)
@@ -1941,12 +1946,15 @@
             unitList.push([ 1, sym ]);
             continue;
           }
+          // Affine units can't combine with other units at all
+          if (origin || sym.origin && unitList.length > 0)
+            throw new MessageError(`Implausible units`);
           if (sym.origin && !hasSlash) {
             // Affine units must appear alone with no exponents or in the denominator.
             // Affine units can only have a +1 exponent or a negative exponent.
             // We ignore the offset for negative exponents because a unit in the denominator
             // is like differentiation and constants dissapear.
-            if (unitList.length > 0 || sym.withExp) throw new MessageError(`Bad unit: ${sym.sym}`);
+            if (sym.withExp) throw new MessageError(`Bad unit: ${sym.sym}`);
             origin = sym.origin;
           }
           if (!sym.val) {
@@ -1987,7 +1995,7 @@
       // number-fractions (nf) each followed by a unit:
       //    n
       //    [ nf [ "'" | '"' | unitstring ] ]+
-          
+
       function parseValue(opts) {
         const backtrack = parsePos;
         let val = Rat.ZERO, dim, origin, type = 'num';
@@ -2016,6 +2024,7 @@
             chunkDim = { L: 1 };
             unitVal = Number(FT5K)/Number(N5K);
             chunkVal = Rat.mul(chunkVal, [ BigInt(FT5K), BigInt(N5K) ]);
+            uscu = true;
           } else if (take('"') && !ALPHA.includes(peekc())) {
             chunkDim = { L:1 };
             unitVal = Number(IN5K)/Number(N5K);
@@ -2029,7 +2038,8 @@
               break;
             }
             if (res.type === 'num') {
-              if (origin && res.origin) throw new MessageError("Implausible units");
+              // can't combine affine units with anything else
+              if (origin || dim && res.origin) throw new MessageError("Implausible units");
               chunkVal = res.val;
               unitVal = Rat.number(res.unitVal);
               chunkDim = res.dim;
@@ -2112,7 +2122,7 @@
             if (val.type !== 'num') throw new ChattyError("Must be numeric");
             let resVal = Rat.neg(val.val);
             if (val.origin)   // special negation of affine values: don't negate the origin value
-              retVal = Rat.add(retVal, [ BigInt(origin), 1n ]);
+              resVal = Rat.add(resVal, val.origin);
             return { type: val.type, dim: val.dim, val: resVal, uscu: val.uscu };
           }
           parsePos = backtrack;
@@ -2303,7 +2313,7 @@
             } else if (numVal(val)[0] === 0) {
               val = val2;  // special case for adding 0; take second val
             } else if (val.type === 'num' && val2.type === 'num') {
-              if (Dim.equal(val.dim, val2.dim)) 
+              if (Dim.equal(val.dim, val2.dim))
                 val = { type: 'num', dim: val.dim,
                   val: Rat.add(numVal(val), numVal(val2)), uscu: val.uscu || val2.uscu };
               else
@@ -2324,11 +2334,15 @@
             } else if (numVal(val2)[0] === 0) {
               // special case for subtracting 0; take first val
             } else if (val.type === 'num' && val2.type === 'num') {
-              if (Dim.equal(val.dim, val2.dim))
+              if (Dim.equal(val.dim, val2.dim)) {
+                // Ignore origin in second argument so that 50 degc - 1 degf makes sense
+                if (val2.origin)
+                  val2 = { ...val2, origin: undefined };
                 val = { type: 'num', dim: val.dim,
                     val: Rat.sub(numVal(val), numVal(val2)), uscu: val.uscu && val2.uscu };
-              else
-                throw new ChattyError("Cannot subtract different unit types")
+              } else {
+                throw new ChattyError("Cannot subtract different unit types");
+              }
             }
             else {
               throw new MessageError("Unknown value type");
@@ -2476,7 +2490,7 @@
         }
 
         // Gray out the result since we can't parse correctly right now
-        document.getElementById('results').style.color = '#aaaaaa';  
+        document.getElementById('results').style.color = '#aaaaaa';
         document.getElementById('numberResults').style.color = '#aaaaaa';
       }
 
@@ -2628,7 +2642,7 @@
           else
             delta = ` + ${val2str([ delta, 1n ])}"`;
         }
- 
+
         // format inches
         let inStr = minus;
         sp = "";
@@ -2764,6 +2778,8 @@
             sym.val = [ sym.val, 1n ];
           if (sym.val)
             sym.val = Rat.normalize(sym.val);
+          if (sym.origin)
+            sym.origin = Rat.normalize(sym.origin);
           if (sym.type !== 'num' || sym.altOf || sym.display === null)
             continue;
           let alts = sym.alt ?? [];
