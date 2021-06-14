@@ -32,7 +32,7 @@
       }
       @media (hover: none) {
         body, table th, table td {
-          font: 150% caption, sans-serif !important;
+          font: 170% caption, sans-serif !important;
         }
       }
 
@@ -55,8 +55,8 @@
         padding: 1px 4px;
       }
       @media (hover: none) {
-        input[type="text"] {
-          font-size: 200% !important;
+        div.command-row {
+          font-size: 200%;
         }
       }
 
@@ -282,7 +282,7 @@
         <input type="text" pattern="\d*" oninput="updateResult()" size="3" id="div" value="">
       </div>
       <div class="layout-row">
-        <div class="expands">
+        <div class="expands command-row">
           <input style="width: 100%;" type="text" id="expr" value=""
             autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="none"
             oninput="updateParse()" onchange="updateParse({ doAssigns: true, userHitEnter: true })">
