@@ -528,7 +528,7 @@
             <li> What's <code>pi/4</code> radians in degrees? <code>pi/4 radians | degrees</code>
             <li> How much does it cost to run a 100 watt lightbulb for a year,
                  assuming electricity costs $0.20 per kilowatt hour?
-                 <code>.20 'dollars' / kW hr * 100 watts * 355 days</code>, about $170
+                 <code>.20 'dollars' / kW hr * 100 watts * 365 days</code>, about $175
             <li> Alternatively, it's about $1.75 per watt per year
                  <code>.20 'dollars' / kW hr * watt * 365 days</code>
             <li> What's 45 mpg as km/liter? <code>45 mi/gallon | km/liter</code>
@@ -917,8 +917,8 @@
         m:  { type: 'num', dim: { L: 1 }, val: M, reserved: true, alt: ["meter", "meters"] },
         cm: { type: 'num', dim: { L: 1 }, val: [ M, 100n ], reserved: true, alt: ["centimeter", "centimeters"] },
         mm: { type: 'num', dim: { L: 1 }, val: [ M, 1000n ], alt: ["millimeter", "millimeters"] },
-        nm: { type: 'num', dim: { L: 1 }, val: [ M, 1000n**2n ], alt: ["nanometer", "nanometers"] },
         um: { type: 'num', dim: { L: 1 }, val: [ M, 1000n**2n ], display: MICROSYM+"m", alt: ["micrometer", "micrometers"] },
+        nm: { type: 'num', dim: { L: 1 }, val: [ M, 1000n**3n ], alt: ["nanometer", "nanometers"] },
 
         // Area (L^2)
         groupArea: { group: "Area Units" },
@@ -964,7 +964,11 @@
             alt: ["second", "seconds", "sec", "secs"] },
         ms: { type: 'num', dim: { T: 1 }, val: [ SEC, 1000n ], uscu: null, alt: ["millisecond", "milliseconds"] },
         us: { type: 'num', dim: { T: 1 }, val: [ SEC, 1000n**2n ], uscu: null, display: MICROSYM+"s", alt: ["microsecond", "microseconds"] },
-        hz: { type: 'num', dim: { T: -1 }, val: [ 1n, SEC ], desc: "hertz", uscu: null, alt: ["hertz"] },
+        ns: { type: 'num', dim: { T: 1 }, val: [ SEC, 1000n**3n ], uscu: null, alt: ["nanosecond", "nanoseconds"] },
+        Hz: { type: 'num', dim: { T: -1 }, val: [ 1n, SEC ], desc: "hertz", uscu: null, alt: ["hertz"] },
+        kHz: { type: 'num', dim: { T: -1 }, val: [ 1000n, SEC ], desc: "kilohertz", uscu: null },
+        MHz: { type: 'num', dim: { T: -1 }, val: [ 1000n**2n, SEC ], desc: "megahertz", uscu: null },
+        GHz: { type: 'num', dim: { T: -1 }, val: [ 1000n**3n, SEC ], desc: "gigahertz", uscu: null },
 
         // Temperature (Q)
         groupTemperature: { group: "Temperature Units" },
@@ -1049,8 +1053,8 @@
         //   http://www.ebyte.it/library/educards/sidimensions/SiDimensionsAlfaList.html
         groupElectrical: { group: "Electrical Units" },
         A: { type: 'num', dim: { A: 1 }, val: AMP, reserved: true, alt: ["ampere", "amperes", "amp", "amps"]  },
-        mA: { type: 'num', dim: { A: 1 }, val: [ AMP, 1000 ], alt: ["milliampere", "milliamperes"] },
-        uA: { type: 'num', dim: { A: 1 }, val: [ AMP, 1000**2 ], display: MICROSYM+"A", alt: ["microampere", "microamperes"] },
+        mA: { type: 'num', dim: { A: 1 }, val: [ AMP, 1000n ], alt: ["milliampere", "milliamperes"] },
+        uA: { type: 'num', dim: { A: 1 }, val: [ AMP, 1000n**2n ], display: MICROSYM+"A", alt: ["microampere", "microamperes"] },
         V: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: [KG * M**2n, SEC**3n * AMP ],
             alt: ["volt", "volts"] },
         kV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: [ 1000n * KG * M**2n, SEC**3n * AMP ],
@@ -1409,15 +1413,15 @@
                   gratuitySquared += unit.dim[measure]**2;
                 let q = dim[measure]/unit.dim[measure];
                 q = Math.trunc(q);
-                positivity += Math.sign(q);  // XXX is this right?
+                positivity += Math.sign(q);  // TODO: is this right?
                 q = Math.abs(q);
-                if (q < smallest)   // xxx exclude zero?
+                if (q < smallest)   // TODO: exclude zero?
                   smallest = q;
               }
               let exp = smallest;
               if (positivity < 0)
                 exp = -exp;
-              if (exp == 0 || !isFinite(smallest)) {
+              if (exp === 0 || !isFinite(smallest)) {
                 if (!opts?.forceUnit)
                   return null;
                 exp = 1;
@@ -1467,6 +1471,8 @@
                 invUnitsStr += str;
               else
                 unitsStr += str;
+              if (unit.nonce)
+                noFrac = true;
             }
             val = unitDesc.newVal;
             dim = unitDesc.reduced;
@@ -1777,7 +1783,6 @@
                 parsePos = backtrack;
                 throw new Error(`System error: bad number: ${str}`);
               }
-              // XXX was: return val;  backport to master if this isn't merged.
               return [ val, 1n ];
             }
           }
@@ -1862,7 +1867,7 @@
         if (sym)
           return sym;
         const display = `'${name}'`;
-        sym = { sym: display, type: 'num', val: [ NONCE, 1n ], dim: {}, display, favored: 1, uscu: null };
+        sym = { sym: display, type: 'num', val: [ NONCE, 1n ], dim: {}, display, favored: 1, uscu: null, nonce: true };
         sym.dim['NONCE-'+name] = 1;
         nonceUnits[name] = sym;
         return sym;
