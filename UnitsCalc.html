@@ -777,7 +777,7 @@
         static MINUSONE = [ -1n, 1n ];
 
         // Reduces and normalizes a rational.
-        // The denominator will always be a BigInt
+        // The denominator will always be a positive BigInt
         static normalize(a) {
           let num = a[0], denom = a[1];
           if (typeof denom !== 'bigint') {
@@ -814,12 +814,12 @@
 
         static mul(a, b) {
           if (typeof a[0] === 'number' || typeof b[0] === 'number')
-            return Rat.normalize([ Number(a[0])*Number(b[0]), a[1]*b[1] ]);
+            return Rat.normalize([ Number(a[0])*Number(b[0]), a[1]*b[1] ]); // Normalize to keep denom > 0
           return Rat.normalize([ a[0]*b[0], a[1]*b[1] ]);
         }
         static div(a, b) {
           if (typeof a[0] === 'number' || typeof b[0] === 'number')
-            return Rat.normalize([ Number(a[0])*Number(b[1])/Number(b[0]), a[1] ]);
+            return Rat.normalize([ Number(a[0])*Number(b[1])/Number(b[0]), a[1] ]); // Normalize might make num a BigInt
           return Rat.normalize([ a[0]*b[1], a[1]*b[0] ]);
         }
         static pow(a, b) {
@@ -833,24 +833,26 @@
               return [ a[1]**-b, a[0]**-b ];
             return [ a[0]**b, a[1]**b ];
           }
-          return [ (Number(a[0])/Number(a[1]))**b, 1n ];
+          return Rat.normalize([ (Number(a[0])/Number(a[1]))**b, 1n ]);
         }
 
         static add(a, b, factor = 1) {
           if (typeof a[0] === 'number' || typeof b[0] === 'number')
-            return [ Number(a[0])/Number(a[1]) + Number(b[0])/Number(b[1]), 1n ];
+            return Rat.normalize([ Number(a[0])/Number(a[1]) + Number(b[0])/Number(b[1]), 1n ]);
+          // an/ad + f * bn/bd === (an * bd + f * bn*ad)/(ad/bd)
           let res = [ a[0]*b[1] + BigInt(factor)*b[0]*a[1], a[1]*b[1] ];
           return Rat.normalize(res);
         }
         static sub(a, b) { return Rat.add(a, b, -1); }
         static sqrt(a) { return [ Math.sqrt(Rat.number(a)), 1n ]; }
         static cbrt(a) { return [ Math.cbrt(Rat.number(a)), 1n ]; }
-        static abs(a) { return [ Rat.sign(a[0])*a[0], a[1]]; }
-        static sign(a) {
-          if (a[0] < 0) return Rat.MINUSONE;
-          if (a[0] > 0) return Rat.ONE;
-          return Rat.ZERO;
+        static abs(a) { return [ Rat.nsign(a)*a[0], a[1]]; }
+        static nsign(a) {
+          if (a[0] < 0) return -1n;
+          if (a[0] > 0) return 1n;
+          return 0n;
         }
+        static sign(a) { return [ Rat.nsign(a), 1n]; }
         static neg(a) { return [ -a[0], a[1] ]; }
         static recip(a) { return Rat.normalize([ a[1], a[0] ]); }
       }
@@ -1200,7 +1202,7 @@
           let val = params[0];
           if (val.type !== 'num') throw new MessageError(`${this.sym}(x): Illegal parameter`);
           let dim = Dim.div(val.dim, 3);
-          if (! dim) throw new MessageError(`${this.sym}(x): parameter must have even units`);
+          if (! dim) throw new MessageError(`${this.sym}(x): parameter units must be power of three`);
           return { type: 'num', dim, val: Rat.cbrt(numVal(val)), uscu: val.uscu };
         },
 
@@ -1401,7 +1403,6 @@
           function describeUnit(unit, opts) {
             try {
               let normSquared = Dim.normSquared(dim);
-              let unitExp = 0;
               let measures = {}, smallest = Number.POSITIVE_INFINITY, dotProduct = 0;
               for (const measure in dim)
                 measures[measure] = true;
@@ -1424,24 +1425,25 @@
                   return null;
                 exp = 1;
               }
-              // unit applied "exp" times; also ensures dotProduct is >= 0 unless forced
+              // Unit applied "exp" times; also ensures dotProduct is >= 0 unless forced.
+              // The dot product measures how aligned the units vectors are; the projection
+              // each vector on the other. Orthagonal units ha a product of zero; negative
+              // dot products mean anti-aligned, but we flipped the exponent's sign in that case.
               dotProduct = dotProduct * exp;
-              for (const ue of Object.values(unit.dim))
-                if (ue)
-                  unitExp += ue;
-              const reduced = Dim.add(dim, unit.dim, -exp);
-              const reducedNDims = Dim.nDims(reduced);
-              const reducedNormSquared = Dim.normSquared(reduced);
+              const reducedDim = Dim.add(dim, unit.dim, -exp);
+              const reducedNormSquared = Dim.normSquared(reducedDim);
               if (normSquared <= reducedNormSquared && !opts?.forceUnit)
                 return null;
               let origin = unit.origin ?? Rat.ZERO;
               let newVal = Rat.div(Rat.sub(val, origin), Rat.pow(unit.val, exp));
               let newNum = Rat.number(newVal);
+              // Basically the number of digits left of the decimal or zeros to the right
+              // It's a measure of "how far from one" the valus is.
+              let digits = Math.abs(Math.log10(Math.abs(newNum)));
               let favored = unit.favored ?? 0;
               // A bunch of stuff that can be used in the sort function.
-              // TBH, this is pretty heuristic.
-              return { unit, exp, unitExp, newVal, newNum, reducedNormSquared, reduced, favored,
-                  reducedNDims, dotProduct };
+              return { unit, exp, newVal, newNum, reducedDim, reducedNormSquared,
+                favored, dotProduct, digits };
             }
             catch (e) {
               if (e instanceof OverflowError) // exponentiation failed somewhere along the line
@@ -1476,7 +1478,7 @@
                 noFrac = true;
             }
             val = unitDesc.newVal;
-            dim = unitDesc.reduced;
+            dim = unitDesc.reducedDim;
           }
           if (displayUnits) {
             const desc = describeUnit(displayUnits, { forceUnit: true } );
@@ -1522,27 +1524,24 @@
                 let diff = b.favored - a.favored;
                 if (diff !== 0)
                   return diff;
-            /**/
-                // Bigget dot product is better (smaller comparison result)
+
+              /* reducing the norm of the result works better than increasing the dot product
+                // Larger dot product is better (smaller comparison result)
                 diff = b.dotProduct - a.dotProduct;
                 if (diff !== 0)
                   return diff;
-            /*/
-                // The fewer independend dimensions remaining, the better
-                diff = a.reducedNDims - b.reducedNDims;
-                if (diff !== 0)
-                  return diff;
+              */
 
-                // The closer to scalar the better
+                // Smaller resulting norm is better
                 diff = a.reducedNormSquared - b.reducedNormSquared;
                 if (diff !== 0)
                   return diff;
-            /**/
-                // Favor units that reduce the denominator
-                let expDiff = Math.sign(a.exp * a.unitExp) - Math.sign(b.exp * b.unitExp);
-                if (expDiff !== 0)
-                  return expDiff;
 
+                // Favor units in the denominator (typically time)
+                diff = Math.sign(a.exp) - Math.sign(b.exp);
+                if (diff !== 0)
+                  return diff;
+                  
                 // Values greater than 1 get a special bonus in the calculation below.
                 // The idea is that anything over a meter should be expressed in meters
                 // and less in lower units. But the inverse of cord (/cord) comes out
@@ -1552,8 +1551,8 @@
                 const aa = Math.abs(a.newNum), ab = Math.abs(b.newNum);
 
                 // Values closer to 1 win. log10 is number of digits basically
-                let va = Math.abs(Math.log10(Math.abs(a.newNum))) - (aa >= 1 ? 5 : 0);
-                let vb = Math.abs(Math.log10(Math.abs(b.newNum))) - (ab >= 1 ? 5 : 0);
+                let va = a.digits - (aa >= 1 ? 5 : 0);
+                let vb = b.digits - (ab >= 1 ? 5 : 0);
                 if (!isFinite(va) || !isFinite(vb)) {
                   if (isFinite(va))
                     return -1;
@@ -1588,15 +1587,15 @@
           if (!noFrac) { // integral numerator
             if (num === 1n || num <= 12n && denom <= 12n) {
               asFrac = true;
+              // But favor decimal for things like 0.001
+              let l10 = Math.log10(Number(denom));
+              if (l10 === Math.trunc(l10))
+                asFrac = false;
             } else {
               let lg2 = Math.log2(Number(denom));
               if (lg2 === Math.trunc(lg2) && lg2 <= 10) {
                 asFrac = true;
               } else {
-                // But fovor decimal for things like 0.001
-                let l10 = Math.log10(Number(denom));
-                if (l10 === Math.trunc(l10))
-                  asFrac = false;
               }
             }
           }
