@@ -821,13 +821,16 @@
             b = Number(b[0])/Number(b[1]);
           if (!isFinite(b))
             throw new MessageError("Divide by zero");
-          if (b === Math.trunc(b) && typeof a[0] === 'bigint') {
-            b = BigInt(b);
-            if (b < 0n)
-              return [ a[1]**-b, a[0]**-b ];
-            return [ a[0]**b, a[1]**b ];
+          if (b === Math.trunc(b)) {
+            let bn = BigInt(b);
+            if (typeof a[0] === 'bigint') {
+              if (bn < 0n)
+                return [ a[1]**-bn, a[0]**-bn ];
+              return [ a[0]**bn, a[1]**bn ];
+            }
+            return Rat.normalize([ Number(a[0])**b, a[1]**bn ]);
           }
-          return Rat.normalize([ (Number(a[0])/Number(a[1]))**b, 1n ]);
+          return Rat.normalize([ Number(a[0])/Number(a[1])**b, 1n ]);
         }
 
         static add(a, b, factor = 1) {
@@ -2811,13 +2814,6 @@
         document.getElementById('builtin-symbols').innerHTML = html;
       }
 
-      window.addEventListener('load', function onLoad(evt) {
-        try { loadUserSymbols(); } // inconvenient to crash while loading
-        catch (e) {}
-        updateResult();
-        addExampleStuffs();
-      });
-
       window.addEventListener("beforeunload", function(evt) {
         saveUserSymbols();
       });
@@ -2827,6 +2823,11 @@
         if (evt.key === "Escape" || evt.key === "Esc" || evt.keyCode === 27)
           showHelp();
       });
+
+      addExampleStuffs();
+      document.getElementById('ft').value = "5";
+      updateResult();
+      try { loadUserSymbols(); } catch (e) {} // inconvenient to crash while loading
    </script>
   </body>
 </html>
