@@ -673,15 +673,10 @@
 
       class Dim {
         static isScalar(dim) {
-          return Dim.nDims(dim) === 0;
-        }
-
-        static nDims (dim) {
-          let n = 0;
           for (const measure in dim)
             if (dim[measure] !== 0)
-              n += 1;
-          return n;
+              return false;
+          return true;;
         }
 
         static normSquared(dim) {
@@ -774,7 +769,6 @@
 
         static ZERO = [ 0n, 1n ];
         static ONE = [ 1n, 1n ];
-        static MINUSONE = [ -1n, 1n ];
 
         // Reduces and normalizes a rational.
         // The denominator will always be a positive BigInt
@@ -1436,6 +1430,12 @@
                 return null;
               let origin = unit.origin ?? Rat.ZERO;
               let newVal = Rat.div(Rat.sub(val, origin), Rat.pow(unit.val, exp));
+              let expSum = 0, nDims = 0;
+              for (const measure in reducedDim) {
+                expSum += Math.abs(reducedDim[measure]);
+                if (reducedDim[measure])
+                  nDims += 1;
+              }
               let newNum = Rat.number(newVal);
               // Basically the number of digits left of the decimal or zeros to the right
               // It's a measure of "how far from one" the valus is.
@@ -1443,7 +1443,7 @@
               let favored = unit.favored ?? 0;
               // A bunch of stuff that can be used in the sort function.
               return { unit, exp, newVal, newNum, reducedDim, reducedNormSquared,
-                favored, dotProduct, digits };
+                favored, dotProduct, digits, expSum, nDims };
             }
             catch (e) {
               if (e instanceof OverflowError) // exponentiation failed somewhere along the line
@@ -1522,25 +1522,29 @@
 
                 // Favored units
                 let diff = b.favored - a.favored;
-                if (diff !== 0)
-                  return diff;
+                if (diff !== 0) return diff;
 
-              /* reducing the norm of the result works better than increasing the dot product
-                // Larger dot product is better (smaller comparison result)
-                diff = b.dotProduct - a.dotProduct;
-                if (diff !== 0)
-                  return diff;
-              */
+                // This didn't work as well as the simpler tests below.
+                //
+                //  // Larger dot product is better (smaller comparison result)
+                //  diff = b.dotProduct - a.dotProduct;
+                //  if (diff !== 0) return diff;
+                //
+                //  // Smaller resulting norm is better
+                //  diff = a.reducedNormSquared - b.reducedNormSquared;
+                //  if (diff !== 0) return diff;
 
-                // Smaller resulting norm is better
-                diff = a.reducedNormSquared - b.reducedNormSquared;
-                if (diff !== 0)
-                  return diff;
+                // Least exponents, ragardless of exponent
+                diff = a.nDims - b.nDims;
+                if (diff !== 0) return diff;
+
+                // Least total exponents
+                diff = a.expSum - b.expSum;
+                if (diff !== 0) return diff;
 
                 // Favor units in the denominator (typically time)
                 diff = Math.sign(a.exp) - Math.sign(b.exp);
-                if (diff !== 0)
-                  return diff;
+                if (diff !== 0) return diff;
                   
                 // Values greater than 1 get a special bonus in the calculation below.
                 // The idea is that anything over a meter should be expressed in meters
