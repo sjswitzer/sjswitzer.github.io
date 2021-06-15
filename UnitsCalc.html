@@ -814,18 +814,17 @@
             return Rat.normalize([ Number(a[0])*Number(b[1])/Number(b[0]), a[1] ]); // Normalize might make num a BigInt
           return Rat.normalize([ a[0]*b[1], a[1]*b[0] ]);
         }
-        static pow(a, b) {
-          if (b[0] !== undefined)
-            b = Number(b[0])/Number(b[1]);
+        static pow(a, b) {  // b can be a number, a BigInt or a Rat
+          if (b[0] !== undefined)            // If it's a rat, find the quotient
+            b = Number(b[0])/Number(b[1]);   // Now it's a number
           if (!isFinite(b))
             throw new MessageError("Divide by zero");
-          if (b === Math.trunc(b)) {
+          if (b < 0)
+            return this.pow(this.normalize([ a[1], a[0] ]), -b);
+          if (typeof b === 'number' && b === Math.trunc(b)) {      
             let bn = BigInt(b);
-            if (typeof a[0] === 'bigint') {
-              if (bn < 0n)
-                return [ a[1]**-bn, a[0]**-bn ];
+            if (typeof a[0] === 'bigint')
               return [ a[0]**bn, a[1]**bn ];
-            }
             return Rat.normalize([ Number(a[0])**b, a[1]**bn ]);
           }
           return Rat.normalize([ Number(a[0])/Number(a[1])**b, 1n ]);
