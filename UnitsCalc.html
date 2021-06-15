@@ -2775,7 +2775,7 @@
                 if (sym?.origin)
                   text = "0 " + text;
                 exprElement.value = text.trim();
-                exprElement.focus();
+                // exprElement.focus() -- seems like a good idea, but brings up a keyboard in mobile
                 updateParse({ doAssigns: true, showErrors: true });
                 return;
               }
