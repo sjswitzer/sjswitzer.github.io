@@ -1261,7 +1261,7 @@
         },
       };
 
-      addBuiltinSymbolsHelp(); // This also conditions the systemSymbols definitions
+      groomSystemSymbols();
 
       for (const [name, sym] of Object.entries(systemSymbols)) {
         if (sym.alt)
@@ -2787,14 +2787,14 @@
           document.body.removeAttribute(attr);
       }
 
-      (function initialDeviceMode() {
+      {
         let styles = window.getComputedStyle(document.body);
         let val = styles.getPropertyValue("--device").trim();
         if (val !== '')
           toggleDeviceMode(val);
-      })();
+      }
 
-      function addBuiltinSymbolsHelp() {
+      function groomSystemSymbols() { // grooms the system symbols and injects help text
         let html = "";
         for (const [name, sym] of Object.entries(systemSymbols)) {
           if (sym.group) {
