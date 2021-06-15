@@ -271,25 +271,24 @@
     <div class="layout-column shrink-wrap">
       <div class="force-width legacy input-area">
         <input type="text" pattern="\d*" style="text-align: right;"
-          oninput="updateResult()" size="4" id="ft" value="5"> feet &nbsp;
+          oninput="updateResult(this)" size="4" id="ft" value="5"> feet &nbsp;
         <input type="text" pattern="\d*" style="text-align: right;"
-          oninput="updateResult()" size="2" id="inch" value="">
+          oninput="updateResult(this)" size="2" id="inch" value="">
         <sup>
           <input type="text" pattern="\d*" style="text-align: right;"
-            oninput="updateResult()" size="2" align="right" id="num" value="">
+            oninput="updateResult(this)" size="2" align="right" id="num" value="">
         </sup>/<sub>
-          <input type="text" pattern="\d*" oninput="updateResult()" size="2" id="denom" value="8">
+          <input type="text" pattern="\d*" oninput="updateResult(this)" size="2" id="denom" value="8">
         </sub> inches
         &nbsp;&nbsp; times
-        <input type="text" pattern="\d*" oninput="updateResult()" size="3" id="times" value="">
+        <input type="text" pattern="\d*" oninput="updateResult(this)" size="3" id="times" value="">
         &nbsp; divided by
-        <input type="text" pattern="\d*" oninput="updateResult()" size="3" id="div" value="">
+        <input type="text" pattern="\d*" oninput="updateResult(this)" size="3" id="div" value="">
       </div>
       <div class="layout-row input-area">
         <div class="expands">
           <input style="width: 100%;" type="text" id="expr" value=""
-            autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="none"
-            oninput="updateParse()" onchange="updateParse({ doAssigns: true, userHitEnter: true })">
+            autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="none">
         </div>
         <span class="button" style="margin-left: .25em; font-size: 1.125em"
           onclick="showHelp('help-expr')">?</span>
@@ -645,6 +644,26 @@
     </div>
     <script type="text/javascript">
       "use strict";
+
+      const exprElement = document.getElementById('expr');
+      const errorElement = document.getElementById('error');
+      const resultsElement = document.getElementById('results');
+      const numberResultsElement = document.getElementById('numberResults');
+      const numberResultsDetailElement = document.getElementById('numberResultsDetail');
+      const symdefsElement = document.getElementById('symdefs');
+      const resultInElement = document.getElementById('resultIn');
+      const resultFtElement = document.getElementById('resultFt');
+      const resultFtDetailElement = document.getElementById('resultFtDetail');
+      const resultInDetailElement = document.getElementById('resultInDetail');
+      const resultMetersElement = document.getElementById('resultMeters');
+      const resultMetersMetricFeetElement = document.getElementById('resultMetersMetricFeet');
+      const builtinSymbolsElement = document.getElementById('builtin-symbols');
+      const ftElement = document.getElementById('ft');
+      const inchElement = document.getElementById('inch');
+      const numElement = document.getElementById('num');
+      const denomElement = document.getElementById('denom');
+      const timesElement = document.getElementById('times');
+      const divElement = document.getElementById('div');
 
       class MessageError extends Error {
         constructor(msg) {
@@ -1660,24 +1679,24 @@
       // Simple interface for common operations
       //
 
-      function getField(name, def) {
-        document.getElementById(name).style.color = '';
-        let val = document.getElementById(name).value.trim();
+      function getField(element, def) {
+        element.style.color = '';
+        let val = element.value.trim();
         if (val === "") return def;
         val = parseFloat(val);
         if (isNaN(val) || (val === 0 && def !== 0))
-          document.getElementById(name).style.color = 'red';
+          element.style.color = 'red';
         return val;
       }
 
-      function updateResult() {
+      function updateResult(element) {
         try {
-          const ft = getField('ft', 0);
-          const inch = getField('inch', 0);
-          const num = getField('num', 0);
-          const denom = getField('denom', 1);
-          const times = getField('times', 1);
-          const div = getField('div', 1);
+          const ft = getField(ftElement, 0);
+          const inch = getField(inchElement, 0);
+          const num = getField(numElement, 0);
+          const denom = getField(denomElement, 1);
+          const times = getField(timesElement, 1);
+          const div = getField(divElement, 1);
           if (denom === 0 || div === 0)
             throw new MessageError("Divide by zero");
 
@@ -1687,6 +1706,8 @@
             throw new MessageError("Divide by zero")
 
           showFeetInchesResult([ totalInches*IN5K, N5K ], { updateExpr: true });
+          if (element)  // stuffing the expr element changes the focus, but we want to keep it here
+            element.focus();
         }
         catch (e) {
           showError(e);
@@ -1696,13 +1717,13 @@
       function showError(e, opts) {
         // always update the text, in case the error box is already showing
         let msg = String(e);
-        document.getElementById('error').textContent = String(msg);
+        errorElement.textContent = String(msg);
         if (!opts?.allErrors && e instanceof ChattyError)
           return;
         // we had an error so hide the results block and show the error block
-        document.getElementById('results').style.display = 'none';
-        document.getElementById('numberResults').style.display = 'none';
-        document.getElementById('error').style.display = '';
+        resultsElement.style.display = 'none';
+        numberResultsElement.style.display = 'none';
+        errorElement.style.display = '';
         if ((e instanceof Error) && !(e instanceof MessageError))
           throw e;  // rethrow
       }
@@ -2462,7 +2483,7 @@
       function updateParse(opts) {
         clearFields();
         try {
-          let exprStr = document.getElementById('expr').value;
+          let exprStr = exprElement.value;
           if (exprStr.trim() === "")
             showAssignResult("&nbsp;");  // clear the input field
           let val = parseInputStatement(exprStr);
@@ -2480,7 +2501,7 @@
               setUserSymbol(val);
               showUserSymbols();
               if (opts?.userHitEnter)
-                document.getElementById('expr').value = "";
+                exprElement.value = "";
             } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.displayUnits) {
               showFeetInchesResult(numVal(val));
             } else if (val.type === 'num') {
@@ -2504,22 +2525,22 @@
         }
 
         // Gray out the result since we can't parse correctly right now
-        document.getElementById('results').style.color = '#aaaaaa';
-        document.getElementById('numberResults').style.color = '#aaaaaa';
+        resultsElement.style.color = '#aaaaaa';
+        numberResultsElement.style.color = '#aaaaaa';
       }
 
       function clearFields() {
-        for (const field of ['ft', 'inch', 'num', 'times', 'div'])
-          document.getElementById(field).value = "";
+        for (const element of [ftElement, inchElement, numElement, timesElement, divElement])
+          element.value = "";
       }
 
       function showResult(val) {
-        document.getElementById('results').style.display = 'none';
-        document.getElementById('numberResults').style.display = '';
-        document.getElementById('error').style.display = 'none';
-        document.getElementById('numberResults').style.color = '';
+        resultsElement.style.display = 'none';
+        numberResultsElement.style.display = '';
+        errorElement.style.display = 'none';
+        numberResultsElement.style.color = '';
 
-        document.getElementById('numberResultsDetail').innerHTML = val2str(val, { html: true, describe: true });
+        numberResultsDetailElement.innerHTML = val2str(val, { html: true, describe: true });
       }
 
       function escapeHTML(str) {
@@ -2532,7 +2553,6 @@
       }
 
       function showUserSymbols() {
-        document.getElementById('symdefs');
         let str = "";
         // It seems like sorting is a good idea, but
         // JavaScript keeps entries in definition order and
@@ -2544,7 +2564,7 @@
             str += `<p class="user-def">
               <span class="delete-button" onclick="deleteDef('${sym}')"></span>${symStr}</p>`;
         }
-        document.getElementById('symdefs').innerHTML = str;
+        symdefsElement.innerHTML = str;
       }
 
       function deleteDef(symName) {
@@ -2577,37 +2597,34 @@
       function showAssignResult(val) {
         let str = (typeof val === 'string') ? val : symString(val, { html: true });
         if (str === undefined) return;
-        document.getElementById('results').style.display = 'none';
-        document.getElementById('numberResults').style.display = '';
-        document.getElementById('error').style.display = 'none';
-        document.getElementById('numberResults').style.color = '';
-        document.getElementById('numberResultsDetail').innerHTML = str;
+        resultsElement.style.display = 'none';
+        numberResultsElement.style.display = '';
+        errorElement.style.display = 'none';
+        numberResultsElement.style.color = '';
+        numberResultsDetailElement.innerHTML = str;
       }
 
       function showFeetInchesResult(val, opts) {
         let totalUnits = Rat.number(val);
-        document.getElementById('results').style.display = '';
-        document.getElementById('numberResults').style.display = 'none';
-        document.getElementById('error').style.display = 'none';
-        document.getElementById('results').style.color = '';
+        resultsElement.style.display = '';
+        numberResultsElement.style.display = 'none';
+        errorElement.style.display = 'none';
+        resultsElement.style.color = '';
 
-        document.getElementById('resultIn').textContent = val2str([ totalUnits * Number(N5K), IN5K ]);
-        document.getElementById('resultFt').textContent = val2str([ totalUnits * Number(N5K), FT5K ]);
+        resultInElement.textContent = val2str([ totalUnits * Number(N5K), IN5K ]);
+        resultFtElement.textContent = val2str([ totalUnits * Number(N5K), FT5K ]);
 
         let [ftStr, inStr, delta] = unitsToUSStringReps(totalUnits);
-        document.getElementById('resultFtDetail').textContent = ftStr + delta;
-        if (opts?.updateExpr) {
-          const exprField = document.getElementById('expr')
-          exprField.value = ftStr + delta;
-          exprField.focus();
-        }
+        resultFtDetailElement.textContent = ftStr + delta;
+        if (opts?.updateExpr)
+          exprElement.value = ftStr + delta;
 
-        document.getElementById('resultInDetail').textContent = inStr + delta;
+        resultInDetailElement.textContent = inStr + delta;
 
         // show metric for good measure
-        document.getElementById('resultMeters').textContent =
+        resultMetersElement.textContent =
           val2str([ totalUnits, M ]);
-        document.getElementById('resultMetersMetricFeet').textContent =
+        resultMetersMetricFeetElement.textContent =
           val2str([ totalUnits*250, M*254 ])
       }
 
@@ -2757,7 +2774,8 @@
                 let sym = getSymbol(text);
                 if (sym?.origin)
                   text = "0 " + text;
-                document.getElementById('expr').value = text.trim();
+                exprElement.value = text.trim();
+                exprElement.focus();
                 updateParse({ doAssigns: true, showErrors: true });
                 return;
               }
@@ -2834,7 +2852,7 @@
           html += `<tr><td><span class="stuff-text">${name}<span>
                        <td><span class="stuff-text">/${name}</span><td>${desc}`;
         }
-        document.getElementById('builtin-symbols').innerHTML = html;
+        builtinSymbolsElement.innerHTML = html;
       }
 
       window.addEventListener("beforeunload", function(evt) {
@@ -2842,13 +2860,21 @@
       });
 
       document.addEventListener("keydown", function(evt) {
-        evt = evt || window.event;
-        if (evt.key === "Escape" || evt.key === "Esc" || evt.keyCode === 27)
+        if (evt.key === "Escape")
           showHelp();
       });
 
+      exprElement.addEventListener("keydown", function(evt) {
+        if (evt.key === "Enter")
+          updateParse({ doAssigns: true, userHitEnter: true });
+      });
+
+      exprElement.addEventListener("input", function(evt) {
+        updateParse();
+      });
+      
       addExampleStuffs();
-      document.getElementById('ft').value = "5";
+      ftElement.value = "5";
       updateResult();
       try { loadUserSymbols(); } catch (e) {} // inconvenient to crash while loading
    </script>
