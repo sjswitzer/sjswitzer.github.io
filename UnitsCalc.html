@@ -1393,7 +1393,7 @@
           let dim = val.dim;
           val = Rat.normalize(numVal(val));
           // Certain kinds of units should not be displayed as fractions
-          noFrac = Dim.isScalar(dim) || dim.A || dim.Q || dim.RAD || dim.BIT || dim.CD
+          noFrac = Dim.isScalar(dim) || dim.A || dim.Q || dim.RAD || dim.BIT || dim.CD || dim.PERSON
               || !uscu && (dim.L || dim.M);
           function describeUnit(unit, opts) {
             try {
@@ -1475,8 +1475,6 @@
                 invUnitsStr += str;
               else
                 unitsStr += str;
-              if (unit.nonce)
-                noFrac = true;
             }
             val = unitDesc.newVal;
             dim = unitDesc.reducedDim;
