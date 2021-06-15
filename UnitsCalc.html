@@ -31,14 +31,14 @@
         font: 110% caption, sans-serif;
       }
 
-      @media (hover: none) {
+      /*@media (hover: none) {*/
         body, table th, table td {
-          font: 200% caption, sans-serif !important;
+          font: 150% caption, sans-serif !important;
         }
         div.input-area {
-          font-size: 175%;
+          font-size: 150%;
         }
-      }
+      /*}*/
 
       body:not([data-presentation-mode="legacy"]) .legacy {
         display: none;
@@ -280,7 +280,7 @@
         &nbsp; divided by
         <input type="text" pattern="\d*" oninput="updateResult()" size="3" id="div" value="">
       </div>
-      <div class="layout-row input-area-row">
+      <div class="layout-row input-area">
         <div class="expands">
           <input style="width: 100%;" type="text" id="expr" value=""
             autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="none"
