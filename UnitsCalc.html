@@ -1125,6 +1125,7 @@
         pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
         tau: { type: 'num', dim: {}, val: 2 * Math.PI, display: TAUSYM, desc: `2${PISYM}` },
         unit: { type: 'num', dim: {}, val: 1, desc: "one", alt: ["u"] },  // to allow "1 1/2 u"
+        rat: { type: 'num', dim: {}, val: 1, display: null, rat: true }, // secret unit to force fraction display
         // Since SI units were redefined in 2019, a dalton is almost but not precicely 1 gm/mol
         mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number", alt: ["mols"] },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27 * KG },
@@ -1410,7 +1411,7 @@
       const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'lbf', 'ft', 'in', 'lb' ]);
 
       function val2str(val, opts) {
-        let descStr = "", displayUnits = val.displayUnits;
+        let descStr = "", displayUnits = val.displayUnits, rat = displayUnits?.rat;
         if (opts?.describe && val.desc && !displayUnits)
           descStr = ` (${val.desc})`;
         let unitsStr = "", invUnitsStr = "";
@@ -1484,6 +1485,7 @@
           function applyDesc(unitDesc) {
             let unitList = unitDesc.unit.unitList ?? [ [ 1, unitDesc.unit ] ];
             for (let [exp, unit] of unitList) {
+              if (unit.rat) continue; // special unit to force fractional representation
               let str = " ";
               let displayExp = exp = unitDesc.exp * exp;
               if (displayExp < 0) {
@@ -1616,7 +1618,7 @@
         if (typeof num === 'bigint') {
           intpart = num/denom;
           num -= intpart*denom;
-          if (!noFrac) { // integral numerator
+          if (!noFrac) {
             if (num === 1n || num <= 12n && denom <= 12n) {
               asFrac = true;
               // But favor decimal for things like 0.001
@@ -1627,12 +1629,11 @@
               let lg2 = Math.log2(Number(denom));
               if (lg2 === Math.trunc(lg2) && lg2 <= 10) {
                 asFrac = true;
-              } else {
               }
             }
           }
         }
-        if (asFrac) {
+        if (asFrac || rat) {
           let neg = num < 0n;
           let str = "";
           if (neg) {
@@ -1944,7 +1945,7 @@
       //    [ '/'? word ]+
 
       function parseUnitString(val, opts) {
-        let implicitValue = false, type = 'num';
+        let implicitValue = false, type = 'num', rat = false;
         if (!val) {
           val = Rat.ONE;
           // In this case, there's doubt whether we've got a unit string or just a variable,
@@ -1966,7 +1967,6 @@
             sym = getSymbol(word);
             if (!sym && opts?.parse)
               sym = { type: 'parse', word };
-
             if (!sym) {
               if (!implicitValue)
                 throw new ChattyError(`Unknown unit: "${word}"`);
@@ -1979,6 +1979,8 @@
             unitList.push([ 1, sym ]);
             continue;
           }
+          if (sym.rat)
+            rat = true;
           // Affine units can't combine with other units at all
           if (origin || sym.origin && unitList.length > 0)
             throw new MessageError(`Implausible units`);
@@ -2021,7 +2023,7 @@
         let desc;
         if (unitList.length === 1 && unitList[0][0] === 1)
           desc = unitList[0][1].desc;
-        return { type, val, dim, uscu, origin, desc, unitVal, unitList };
+        return { type, val, dim, uscu, origin, desc, unitVal, unitList, rat };
       }
 
       // Parse a value, which is either a plain number (n) or a sequesnce of
