@@ -30,12 +30,13 @@
       body, table th, table td {
         font: 110% caption, sans-serif;
       }
+
       @media (hover: none) {
         body, table th, table td {
-          font: 180% caption, sans-serif !important;
+          font: 200% caption, sans-serif !important;
         }
-        div.command-row {
-          font-size: 200%;
+        div.input-area {
+          font-size: 125%;
         }
       }
 
@@ -263,7 +264,7 @@
   </head>
   <body>
     <div class="layout-column shrink-wrap">
-      <div class="force-width legacy">
+      <div class="force-width legacy input-area">
         <input type="text" pattern="\d*" style="text-align: right;"
           oninput="updateResult()" size="4" id="ft" value="5"> feet &nbsp;
         <input type="text" pattern="\d*" style="text-align: right;"
@@ -279,7 +280,7 @@
         &nbsp; divided by
         <input type="text" pattern="\d*" oninput="updateResult()" size="3" id="div" value="">
       </div>
-      <div class="layout-row command-row">
+      <div class="layout-row input-area-row">
         <div class="expands">
           <input style="width: 100%;" type="text" id="expr" value=""
             autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="none"
