@@ -32,14 +32,21 @@
       }
 
       @media (hover: none) {
-        body, table th, table td {
-          font: 175% caption, sans-serif !important;
-        }
-        div.input-area {
-          font-size: 150%;
+        body {
+          --device: mobile;
         }
       }
 
+      /* A trick to let the app switch mobile mode on the fly */
+      body[data-device="mobile"],
+      body[data-device="mobile"] table th,
+      body[data-device="mobile"] table td {
+          font: 175% caption, sans-serif !important;
+      }
+      body[data-device="mobile"] div.input-area {
+        font-size: 150%;
+      }
+ 
       body:not([data-presentation-mode="legacy"]) .legacy {
         display: none;
       }
@@ -1232,12 +1239,16 @@
         },
 
         // Sets MKS or CGS preference
-        MKS: function SetMKS() { unitsSystem = 'mks'; return { type: 'num', dim: {}, val: Rat.ZERO }; },
-        CGS: function SetCGS() { unitsSystem = 'cgs'; return { type: 'num', dim: {}, val: Rat.ZERO }; },
+        MKS: function SetMKS() { return { type: 'num', dim: {}, val: Rat.ZERO,
+            command: () => unitsSystem = 'mks' } },
+        CGS: function SetCGS() { unitsSystem = 'cgs'; return { type: 'num', dim: {}, val: Rat.ZERO,
+            command: () => unitsSystem = 'cgs' } },
 
-        // For debugging, call saveUserSymbols.
-        //    (it's hard to debug when the window is closing)
-        SAVE: function DebugSaveSyms() { saveUserSymbols(); return { type: 'num', dim: {}, val: Rat.ZERO }; },
+        // For debugging
+        SAVE: function DebugSaveSyms() { return { type: 'num', dim: {}, val: Rat.ZERO,
+            command: () => saveUserSymbols() } },
+        DEVICE: function ToggleDeviceMode() { ; return { type: 'num', dim: {}, val: Rat.ZERO,
+            command: () => toggleDeviceMode() } },
 
         // Set logging level
         LOGGING: function SetLogLevel(...params) {
@@ -1246,8 +1257,9 @@
           if (val.type !== 'num' || !Dim.isScalar(val.dim) || numVal(val) < 0 )
             throw new MessageError(`${this.sym}(x): Illegal parameter`);
           let oldLevel = logLevel;
-          logLevel = Rat.number(numVal(val));
-          return { type: 'num', dim: {}, val: [ oldLevel, 1n ] };
+          let newLevel = Rat.number(numVal(val));
+          return { type: 'num', dim: {}, val: [ oldLevel, 1n ],
+              command: () => logLevel = newLevel };
         },
       };
 
@@ -2478,6 +2490,8 @@
             } else if (val.type === 'fn' && !val.defined) {
               showAssignResult(val);
             }
+            if (opts?.userHitEnter && val.command)
+              val.command();
             return;
           } else {
             let rest = parseStr.substr(parseFurthest);
@@ -2766,6 +2780,21 @@
       if (window.location.href.match(/inch/i))
         toggleLegacyMode(true);
       document.body.setAttribute('data-protocol', window.location.protocol);
+
+      function toggleDeviceMode(mode) {
+        const attr = 'data-device';
+        if (mode || !document.body.getAttribute(attr))
+          document.body.setAttribute(attr, mode || 'mobile');
+        else
+          document.body.removeAttribute(attr);
+      }
+
+      (function initialDeviceMode() {
+        let styles = window.getComputedStyle(document.body);
+        let val = styles.getPropertyValue("--device").trim();
+        if (val !== '')
+          toggleDeviceMode(val);
+      })();
 
       function addBuiltinSymbolsHelp() {
         let html = "";
