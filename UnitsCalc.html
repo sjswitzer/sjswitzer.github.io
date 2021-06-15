@@ -15,8 +15,9 @@
 <html>
   <head>
     <title>Units Calculator</title>
-    <base target="_blank"> <!-- all links open in a new tab/page -->
+    <meta charset="utf-8">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <base target="_blank"> <!-- all links open in a new tab/page -->
     <!-- this is gross, but it allows an icon without requiring an extra file -->
     <link rel="apple-touch-icon" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAA3QAAAN0BcFOiBwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAM3SURBVFiFrdfPi5VVHMfx1zMiXSQJAzHQjRiCLUKyH7OY0RmtHGZiFqGrAdfuEkPmTxjFfRFdnJu6qU2tqkWbKCg3IUEgtIqGmWuRrtJa3RbP95mOZ5773GfmeuHC85zzPefz/n7P95zzfQwGA4PBABZwFe/jYNU+7h8ddLGG5bx/AoqiWA2jAmdwtyiKWWP+iqLo4IuAmMZSURQrud072MAzCfUk1nF6TM+/xi1MRNt+/IyVxM5VXKuZ4G08wpkxxG9W4knfExBizb/MjJ7Dj+hFdN7cgfgnqbgyx85nEMtwEH9hMhNfSQY+agORiPdqPD+C37AU74exVnWeRT/Cnoo/j7v4MCLx1k7EE5uj+B0XcBvdtHMO/6CXiP+Ebry/UUE2iK82iM9gF47h37Dv5EZzIbIQnt8Iz19ogsA5fDBMPGw+C69vVuKDwUCdYRWJj+L9RU9u0QribHh+rmaOfcnzuziEPeHMpngtQAKxjleSto8xm0H8UIFm49ewGM8X8Ss+zcWHAtRBYBZ/YiaBeIj5mrEvx9hFTOBOnXgjQAZxIoH4A6eySMzVjD0eIf9mmPhIgBEQJ+sgMI/rkfGfN4m3AkggNvBqsqXuYzqHwLP4Lta9UXw7AB3lAfUgg+hnOdGPCPTaiLddguqQuRGTb+C1BCLPiYcBO1K8TRJuOeH8f1hVEKeGLcdYAHXiWU708XoC0cfUdiFGifdy8acN0SSe3+e7k+f5yPb5WPMK4mTkSGuItuL7Itmqdb8eW60XCbeB/TuBqBPfUkZF/2Ik2wnlIbO5z5XFRiexnW4LkYvfqhPPIPrKE+4ryS0Z/d8my9EKopW48kq9qLxYhp7ttm7RHOI9PMaBFKCrLBR2NXh+KEJ+p87zGoj02J6K90uRR9/jSgqwhuNJwwKOxPOMspLZY8h9PgKiusAu4W+cVn5z3EsBlpUlcpXF55XV69FIttsxWaPnQyDWY+nuSz5y8MvmskTDSgaxpKxej8lquO38A+JxhH0yab+M1Xwb5hAXJNXrdsWTeQ/gCu6F55fxkvJm3ZsbVxCHI/RjidfATCnvlgfKwne6zmg5ErP7NMUzjb3Kqnr3fx1E7uivCS6LAAAAAElFTkSuQmCC">
     <style type="text/css">
@@ -1122,7 +1123,7 @@
             desc: "lumen, luminous flux", alt: ["lumen", "lumens"] },
 
         // Interesting constants and units (various)
-        groupVarious: { group: "Constants" },
+        groupVarious: { group: "Useful Constants and Units" },
         pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
         tau: { type: 'num', dim: {}, val: 2 * Math.PI, display: TAUSYM, desc: `2${PISYM}` },
         unit: { type: 'num', dim: {}, val: 1, desc: "one", alt: ["u"] },  // to allow "1 1/2 u"
@@ -1149,7 +1150,7 @@
             desc: "distance light travels in a year", alt: ["ly"] },
 
         // Obscure/whimsical units
-        groupObscure: { group: "Other" },
+        groupObscure: { group: "Et Cetera" },
         day: { type: 'num', dim: { T: 1 }, val: DAY, uscu: null, alt: ["days"] },
         week: { type: 'num', dim: { T: 1 }, val: 7 * DAY, desc: "7 days", uscu: null, alt: ["weeks"] },
         fortnight: { type: 'num', dim: { T: 1 }, val: 14 * DAY, desc: "2 weeks", uscu: null, alt: ["fortnights"] },
@@ -1270,6 +1271,8 @@
             command: () => saveUserSymbols() } },
         DEVICE: function ToggleDeviceMode() { ; return { type: 'num', dim: {}, val: Rat.ZERO,
             command: () => toggleDeviceMode() } },
+        UI: function ToggleLegacyMode() { ; return { type: 'num', dim: {}, val: Rat.ZERO,
+            command: () => toggleLegacyMode() } },
 
         // Set logging level
         LOGGING: function SetLogLevel(...params) {
@@ -1617,11 +1620,11 @@
 
         // Now, should it be represented as a (mixed) fraction?
         let asFrac = false;
-        let num = val[0], denom = val[1], intpart;
+        let num = val[0], denom = val[1], intpart = 0n;
         if (typeof num === 'bigint') {
           intpart = num/denom;
           num -= intpart*denom;
-          if (!noFrac) {
+          if (!noFrac) {     // xxx this logic looks suss
             if (num === 1n || num <= 12n && denom <= 12n) {
               asFrac = true;
               // But favor decimal for things like 0.001
@@ -2869,8 +2872,9 @@
           showHelp();
       });
 
+      // onchange event isn't suitable because if the value doesn't change, nothing is reported
       exprElement.addEventListener("keydown", function(evt) {
-        if (evt.key === "Enter")
+        if (evt.key === "Enter") 
           updateParse({ doAssigns: true, userHitEnter: true });
       });
 
