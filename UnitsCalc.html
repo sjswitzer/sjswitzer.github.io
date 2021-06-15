@@ -904,7 +904,7 @@
       const M = 1, KM = 1000*M;
       const IN5K = 127*M, FT5K = 12*IN5K, MI5K = 5280*FT5K, N5K = 5000;
       const NMI = 1852*M;
-      const SEC = 1, MIN = 60*SEC, HR = 60*MIN;
+      const SEC = 1, MIN = 60*SEC, HR = 60*MIN, DAY = 24*HR;
       const KG = 1;
       const EARTHG = 9.80665, LBM100M = 45359237 * KG, N100M = 100000000;
       const LBFS2 = EARTHG * 0.45359237 * KG * M;
@@ -915,6 +915,7 @@
       const CANDLE = 1;
       const PERSON = 1;
       const NONCE = 1;
+      const CMPS = 299792458;
 
       const DIGITS = "0123456789";
       const MICROSYM = "\u00B5", OHMSYM = "\u2126", PISYM = "\uD835\uDF0B", TAUSYM = "\uD835\uDF0F";
@@ -1143,13 +1144,15 @@
             desc: "standard gravity (earth)"},
         G: { type: 'num', dim: { L: 3, M: -1, T:-2 }, val: [ 6.6743e-11 * M**3, KG * SEC**2 ],
             desc: "universal gravitational constant" },
-        c: { type: 'num', dim: { L: 1, T:-1 }, val: [ 299792458 * M, SEC ], desc: "speed of light"},
+        c: { type: 'num', dim: { L: 1, T:-1 }, val: [ CMPS * M, SEC ], desc: "speed of light"},
+        lightyear: { type: 'num', dim: { L: 1 }, val: [ CMPS * 36525 * DAY, 100  ],
+            desc: "distance light travels in a year", alt: ["ly"] },
 
         // Obscure/whimsical units
         groupObscure: { group: "Other" },
-        day: { type: 'num', dim: { T: 1 }, val: 24 * HR, uscu: null, alt: ["days"] },
-        week: { type: 'num', dim: { T: 1 }, val: 24 * 7 * HR, desc: "7 days", uscu: null, alt: ["weeks"] },
-        fortnight: { type: 'num', dim: { T: 1 }, val: 24 * 14 * HR, desc: "2 weeks", uscu: null, alt: ["fortnights"] },
+        day: { type: 'num', dim: { T: 1 }, val: DAY, uscu: null, alt: ["days"] },
+        week: { type: 'num', dim: { T: 1 }, val: 7 * DAY, desc: "7 days", uscu: null, alt: ["weeks"] },
+        fortnight: { type: 'num', dim: { T: 1 }, val: 14 * DAY, desc: "2 weeks", uscu: null, alt: ["fortnights"] },
         link: { type: 'num', dim: { L: 1 }, val: [ 66 * FT5K, 100 * N5K ],  // you'd think 2/3 foot, but no its really .66 ft!
             desc: "surveyor's link", uscu: true, alt: ["links"] },
         rod: { type: 'num', dim: { L: 1 }, val: [ 66 * FT5K, 4 * N5K ], desc: "surveyor's rod", uscu: true, alt: ["rods"] },
