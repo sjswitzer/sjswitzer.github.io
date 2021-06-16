@@ -5,7 +5,7 @@
   results when applicable. But it now supports fairly general dimensional calculations
   in units of length, mass, time, information, temperature, electrical current, etc.
 
-  If the fileor URL contains "inch", it will display the original user interface,
+  If the file or URL contains "inch", it will display the original user interface,
   otherwise the interface will be simplified.
 
   Copyright 2021 Stan Switzer
@@ -17,8 +17,10 @@
     <title>Units Calculator</title>
     <meta charset="utf-8">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="apple-touch-icon" href="icon128.png">
     <base target="_blank"> <!-- all links open in a new tab/page -->
-    <link rel="apple-touch-icon" sizes="32x32" href="icon32.png">
     <style type="text/css">
       body {
         padding: 4px 12px;
@@ -26,16 +28,19 @@
         margin: 0px 0px;
         background-color: #f8f8f8;
       }
-
       body, table th, table td {
         font: 110% caption, sans-serif;
       }
 
+      /*
+       * A trick to let the app switch to mobile mode on the fly.
+       * Javascript flips the --device property into the
+       * body element's data-device attribute, but the app
+       * can change it later.
+       */
       @media (hover: none) {
         body { --device: mobile; }
       }
-
-      /* A trick to let the app switch mobile mode on the fly */
       body[data-device="mobile"],
       body[data-device="mobile"] table th,
       body[data-device="mobile"] table td {
@@ -600,7 +605,7 @@
         <p> Oh well, it was a good excuse to spiff up my HTML, CSS, and JavaScript skills.
             Not bad for a weekend project that got <i>way</i> out of hand.
         <p class="local-only"> You can also
-            <a href="https://htmlpreview.github.io/?https://gist.githubusercontent.com/sjswitzer/77288511a213dd0d973d99a941ac909e/raw/UnitsCalc.html">
+            <a href="https://sjswitzer.github.io/UnitsCalc">
               run this from the web</a>.
         <p> A-B-C. A-Always. B-Be. C-Coding.
         <p> Copyright &copy; 2021, Stan Switzer
@@ -617,7 +622,7 @@
             <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
               Creative Commons Attribution-ShareAlike 4.0 International License</a>.
             <br> Find source on
-            <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">GitHub</a>
+            <a href="https://github.com/sjswitzer/UnitsCalc">GitHub</a>
           </div>
         </div>
       </div>
@@ -1219,7 +1224,6 @@
           return { ...val, val: Rat.sign(val.val), dim:{} };
         },
 
-        // Square root
         sqrt: function SquareRoot(...params) {
           if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
           let val = params[0];
@@ -1229,7 +1233,6 @@
           return { type: 'num', dim, val: Rat.sqrt(numVal(val)), uscu: val.uscu };
         },
 
-        // Cube root
         cbrt: function CubeRoot(...params) {
           if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
           let val = params[0];
@@ -2329,7 +2332,7 @@
             } else if (val.type === 'num' && val2.type === 'num') {
               if ((val.origin || val2.origin) && Dim.equal(val.dim, val2.dim)) {
                 // Ratios with affine units should just be a ratio of their magnitudes
-                // so that degf / degc == 5/9
+                // so that degf / degc = 5/9
                 val = { ...val, origin: undefined };
                 val2 = { ...val2, origin: undefined };
               }
@@ -2502,9 +2505,17 @@
                 display: undefined, reserved: undefined, alt: undefined };
         delete userSymbols[sym];  // remove from list so new value now shows up first (in reverse listing)
         userSymbols[sym] = val;
+        // Do it here because iOS doesn't reliably deliver any kind of event when the app ends.
+        saveUserSymbols();
       }
 
-      function updateParse(opts) {
+      function deleteDef(symName) {
+        delete userSymbols[symName];
+        showUserSymbols()
+        saveUserSymbols();
+      }
+
+     function updateParse(opts) {
         clearFields();
         try {
           let exprStr = exprElement.value;
@@ -2589,11 +2600,6 @@
               <span class="delete-button" onclick="deleteDef('${sym}')"></span>${symStr}</p>`;
         }
         symdefsElement.innerHTML = str;
-      }
-
-      function deleteDef(symName) {
-        delete userSymbols[symName];
-        showUserSymbols()
       }
 
       function symString(val, opts) {
@@ -2878,10 +2884,6 @@
         }
         builtinSymbolsElement.innerHTML = html;
       }
-
-      window.addEventListener("beforeunload", function(evt) {
-        saveUserSymbols();
-      });
 
       document.addEventListener("keydown", function(evt) {
         if (evt.key === "Escape")
