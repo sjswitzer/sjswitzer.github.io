@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <!--
   A calculator originaly designed to do inconvenient math with expressions in
   feet and inches such as dividing 5' 6 3/8" by 3. Hence, its grammar supports
@@ -110,6 +109,7 @@
         right: 16px;
         bottom: 16px;
         border: 2px solid black;
+        border-radius: 5px;
       }
       div.help > span.close-button {
         color: #888888;
@@ -403,8 +403,7 @@
             <td> 1/4 mi2 / acres
             <td> The number of acres in a quarter of a square mile
         </table>
-        <p> Just for fun, try <code>furlongs/fortnight</code>, <code>9600 baud</code>, <code>gallons/cup</code>, or
-          <code>horsepower/g</code>.
+        <p> Just for fun, try <code>furlongs/fortnight</code>, <code>9600 baud</code>, or <code>gallons/cup</code>.
         <h2> Terms </h2>
         <p> Expressions are built up out of <i>terms</i> which are either
           <ul>
@@ -723,6 +722,16 @@
             if ((dim1[measure] ?? 0) !== (dim2[measure] ?? 0))
               return false;
           return true;
+        }
+
+        static noncePrefix = 'NONCE-';
+
+        static hasNonce(dim) {
+          for (const measure in dim)
+            if (measure.startsWith(Dim.noncePrefix)
+                && nonceUnits[measure.substr(Dim.noncePrefix.length)])
+              return true;
+          return false;
         }
 
         static mul(dim = {}, n) {
@@ -1126,8 +1135,8 @@
         groupVarious: { group: "Useful Constants and Units" },
         pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
         tau: { type: 'num', dim: {}, val: 2 * Math.PI, display: TAUSYM, desc: `2${PISYM}` },
-        unit: { type: 'num', dim: {}, val: 1, desc: "one", alt: ["u"] },  // to allow "1 1/2 u"
-        rat: { type: 'num', dim: {}, val: 1, display: null, rat: true }, // secret unit to force fraction display
+        unit: { type: 'num', dim: {}, val: 1, desc: "one", display: null, alt: ["u"] },  // to allow "1 1/2 u"
+        ratio: { type: 'num', dim: {}, val: 1, display: null, rat: true, alt: ["rat"] }, // secret unit to force fraction display
         // Since SI units were redefined in 2019, a dalton is almost but not precicely 1 gm/mol
         mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number", alt: ["mols"] },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27 * KG },
@@ -1343,7 +1352,7 @@
                 let desc = val.sym && `${val.sym ?? symPrefix}^${String(exp)}`;
                 return { sym: symName, type: 'num',
                   dim: Dim.mul(val.dim, exp), val: Rat.pow(numVal(val), exp),
-                  desc, reserved: val.reserved, uscu: val.uscu, origin: val.origin,
+                  desc, reserved: val.reserved, uscu: val.uscu,
                   baseSym: val, withExp: exp };
               }
             }
@@ -1429,7 +1438,8 @@
           let dim = val.dim;
           val = Rat.normalize(numVal(val));
           // Certain kinds of units should not be displayed as fractions
-          noFrac = Dim.isScalar(dim) || dim.A || dim.Q || dim.RAD || dim.BIT || dim.CD || dim.PERSON
+          noFrac = Dim.isScalar(dim) || Dim.hasNonce(dim)
+              || dim.A || dim.Q || dim.RAD || dim.BIT || dim.CD || dim.PERSON
               || !uscu && (dim.L || dim.M);
           function describeUnit(unit, opts) {
             try {
@@ -1914,7 +1924,7 @@
           return sym;
         const display = `'${name}'`;
         sym = { sym: display, type: 'num', val: [ NONCE, 1n ], dim: {}, display, favored: 1, uscu: null, nonce: true };
-        sym.dim['NONCE-'+name] = 1;
+        sym.dim[Dim.noncePrefix+name] = 1;
         nonceUnits[name] = sym;
         return sym;
       }
@@ -2175,7 +2185,7 @@
             if (val.type === 'fn') throw new ChattyError("can't divide functions");
             if (val.type === 'parse')
               return { type: 'parse', op: 'recip', expr: val };
-            let q = Rat.recip(val.val);
+            let q = Rat.recip(numVal(val));
             return { type: val.type, dim: Dim.mul(val.dim, -1), val: q, uscu: val.uscu };
           }
           parsePos = backtrack;
@@ -2317,6 +2327,12 @@
             if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '/', expr1: val, expr2: val2 };
             } else if (val.type === 'num' && val2.type === 'num') {
+              if ((val.origin || val2.origin) && Dim.equal(val.dim, val2.dim)) {
+                // Ratios with affine units should just be a ratio of their magnitudes
+                // so that degf / degc == 5/9
+                val = { ...val, origin: undefined };
+                val2 = { ...val2, origin: undefined };
+              }
               val = { type: 'num', dim: Dim.sub(val.dim, val2.dim),
                   val: Rat.div(numVal(val), numVal(val2)), uscu: val.uscu || val2.uscu };
             } else {
@@ -2376,11 +2392,11 @@
               // special case for subtracting 0; take first val
             } else if (val.type === 'num' && val2.type === 'num') {
               if (Dim.equal(val.dim, val2.dim)) {
-                // Ignore origin in second argument so that 50 degc - 1 degf makes sense
-                if (val2.origin)
-                  val2 = { ...val2, origin: undefined };
+                // Ignore origin in second argument so that 50 degc - 1 degf makes sense;
+                // It this usage, degf is a relative degree not an absolute degree.
+                // Henve, we don't call numVal for it
                 val = { type: 'num', dim: val.dim,
-                    val: Rat.sub(numVal(val), numVal(val2)), uscu: val.uscu && val2.uscu };
+                    val: Rat.sub(numVal(val), val2.val), uscu: val.uscu && val2.uscu };
               } else {
                 throw new ChattyError("Cannot subtract different unit types");
               }
