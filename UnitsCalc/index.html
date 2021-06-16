@@ -5,7 +5,7 @@
   results when applicable. But it now supports fairly general dimensional calculations
   in units of length, mass, time, information, temperature, electrical current, etc.
 
-  If the fileor URL contains "inch", it will display the original user interface,
+  If the file or URL contains "inch", it will display the original user interface,
   otherwise the interface will be simplified.
 
   Copyright 2021 Stan Switzer
@@ -713,7 +713,7 @@
           return n;
         }
 
-        static equal(dim1 = {}, dim2 = {}) {
+        static equal(dim1, dim2) {
           for (const measure in dim1) {
             if ((dim1[measure] ?? 0) !== (dim2[measure] ?? 0))
               return false;
