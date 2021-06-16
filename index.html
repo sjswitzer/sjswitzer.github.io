@@ -5,7 +5,7 @@
   results when applicable. But it now supports fairly general dimensional calculations
   in units of length, mass, time, information, temperature, electrical current, etc.
 
-  If the fileor URL contains "inch", it will display the original user interface,
+  If the file or URL contains "inch", it will display the original user interface,
   otherwise the interface will be simplified.
 
   Copyright 2021 Stan Switzer
@@ -17,25 +17,30 @@
     <title>Units Calculator</title>
     <meta charset="utf-8">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="apple-touch-icon" href="icon128.png">
     <base target="_blank"> <!-- all links open in a new tab/page -->
-    <link rel="apple-touch-icon" sizes="32x32" href="icon32.png">
     <style type="text/css">
       body {
         padding: 4px 12px;
         box-sizing: border-box;
-        margin: 0px 8px;
+        margin: 0px 0px;
         background-color: #f8f8f8;
       }
-
       body, table th, table td {
         font: 110% caption, sans-serif;
       }
 
+      /*
+       * A trick to let the app switch to mobile mode on the fly.
+       * Javascript flips the --device property into the
+       * body element's data-device attribute, but the app
+       * can change it later.
+       */
       @media (hover: none) {
         body { --device: mobile; }
       }
-
-      /* A trick to let the app switch mobile mode on the fly */
       body[data-device="mobile"],
       body[data-device="mobile"] table th,
       body[data-device="mobile"] table td {
@@ -109,6 +114,7 @@
         right: 16px;
         bottom: 16px;
         border: 2px solid black;
+        border-radius: 5px;
       }
       div.help > span.close-button {
         color: #888888;
@@ -402,8 +408,7 @@
             <td> 1/4 mi2 / acres
             <td> The number of acres in a quarter of a square mile
         </table>
-        <p> Just for fun, try <code>furlongs/fortnight</code>, <code>9600 baud</code>, <code>gallons/cup</code>, or
-          <code>horsepower/g</code>.
+        <p> Just for fun, try <code>furlongs/fortnight</code>, <code>9600 baud</code>, or <code>gallons/cup</code>.
         <h2> Terms </h2>
         <p> Expressions are built up out of <i>terms</i> which are either
           <ul>
@@ -600,7 +605,7 @@
         <p> Oh well, it was a good excuse to spiff up my HTML, CSS, and JavaScript skills.
             Not bad for a weekend project that got <i>way</i> out of hand.
         <p class="local-only"> You can also
-            <a href="https://htmlpreview.github.io/?https://gist.githubusercontent.com/sjswitzer/77288511a213dd0d973d99a941ac909e/raw/UnitsCalc.html">
+            <a href="https://sjswitzer.github.io/UnitsCalc">
               run this from the web</a>.
         <p> A-B-C. A-Always. B-Be. C-Coding.
         <p> Copyright &copy; 2021, Stan Switzer
@@ -617,7 +622,7 @@
             <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
               Creative Commons Attribution-ShareAlike 4.0 International License</a>.
             <br> Find source on
-            <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">GitHub</a>
+            <a href="https://github.com/sjswitzer/UnitsCalc">GitHub</a>
           </div>
         </div>
       </div>
@@ -722,6 +727,16 @@
             if ((dim1[measure] ?? 0) !== (dim2[measure] ?? 0))
               return false;
           return true;
+        }
+
+        static noncePrefix = 'NONCE-';
+
+        static hasNonce(dim) {
+          for (const measure in dim)
+            if (measure.startsWith(Dim.noncePrefix)
+                && nonceUnits[measure.substr(Dim.noncePrefix.length)])
+              return true;
+          return false;
         }
 
         static mul(dim = {}, n) {
@@ -1125,8 +1140,8 @@
         groupVarious: { group: "Useful Constants and Units" },
         pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
         tau: { type: 'num', dim: {}, val: 2 * Math.PI, display: TAUSYM, desc: `2${PISYM}` },
-        unit: { type: 'num', dim: {}, val: 1, desc: "one", alt: ["u"] },  // to allow "1 1/2 u"
-        rat: { type: 'num', dim: {}, val: 1, display: null, rat: true }, // secret unit to force fraction display
+        unit: { type: 'num', dim: {}, val: 1, desc: "one", display: null, alt: ["u"] },  // to allow "1 1/2 u"
+        ratio: { type: 'num', dim: {}, val: 1, display: null, rat: true, alt: ["rat"] }, // secret unit to force fraction display
         // Since SI units were redefined in 2019, a dalton is almost but not precicely 1 gm/mol
         mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number", alt: ["mols"] },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27 * KG },
@@ -1209,7 +1224,6 @@
           return { ...val, val: Rat.sign(val.val), dim:{} };
         },
 
-        // Square root
         sqrt: function SquareRoot(...params) {
           if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
           let val = params[0];
@@ -1219,7 +1233,6 @@
           return { type: 'num', dim, val: Rat.sqrt(numVal(val)), uscu: val.uscu };
         },
 
-        // Cube root
         cbrt: function CubeRoot(...params) {
           if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
           let val = params[0];
@@ -1342,7 +1355,7 @@
                 let desc = val.sym && `${val.sym ?? symPrefix}^${String(exp)}`;
                 return { sym: symName, type: 'num',
                   dim: Dim.mul(val.dim, exp), val: Rat.pow(numVal(val), exp),
-                  desc, reserved: val.reserved, uscu: val.uscu, origin: val.origin,
+                  desc, reserved: val.reserved, uscu: val.uscu,
                   baseSym: val, withExp: exp };
               }
             }
@@ -1428,7 +1441,8 @@
           let dim = val.dim;
           val = Rat.normalize(numVal(val));
           // Certain kinds of units should not be displayed as fractions
-          noFrac = Dim.isScalar(dim) || dim.A || dim.Q || dim.RAD || dim.BIT || dim.CD || dim.PERSON
+          noFrac = Dim.isScalar(dim) || Dim.hasNonce(dim)
+              || dim.A || dim.Q || dim.RAD || dim.BIT || dim.CD || dim.PERSON
               || !uscu && (dim.L || dim.M);
           function describeUnit(unit, opts) {
             try {
@@ -1913,7 +1927,7 @@
           return sym;
         const display = `'${name}'`;
         sym = { sym: display, type: 'num', val: [ NONCE, 1n ], dim: {}, display, favored: 1, uscu: null, nonce: true };
-        sym.dim['NONCE-'+name] = 1;
+        sym.dim[Dim.noncePrefix+name] = 1;
         nonceUnits[name] = sym;
         return sym;
       }
@@ -2174,7 +2188,7 @@
             if (val.type === 'fn') throw new ChattyError("can't divide functions");
             if (val.type === 'parse')
               return { type: 'parse', op: 'recip', expr: val };
-            let q = Rat.recip(val.val);
+            let q = Rat.recip(numVal(val));
             return { type: val.type, dim: Dim.mul(val.dim, -1), val: q, uscu: val.uscu };
           }
           parsePos = backtrack;
@@ -2316,6 +2330,12 @@
             if (val.type === 'parse' || val2.type === 'parse') {
               val = { type: 'parse', op: '/', expr1: val, expr2: val2 };
             } else if (val.type === 'num' && val2.type === 'num') {
+              if ((val.origin || val2.origin) && Dim.equal(val.dim, val2.dim)) {
+                // Ratios with affine units should just be a ratio of their magnitudes
+                // so that degf / degc = 5/9
+                val = { ...val, origin: undefined };
+                val2 = { ...val2, origin: undefined };
+              }
               val = { type: 'num', dim: Dim.sub(val.dim, val2.dim),
                   val: Rat.div(numVal(val), numVal(val2)), uscu: val.uscu || val2.uscu };
             } else {
@@ -2375,11 +2395,11 @@
               // special case for subtracting 0; take first val
             } else if (val.type === 'num' && val2.type === 'num') {
               if (Dim.equal(val.dim, val2.dim)) {
-                // Ignore origin in second argument so that 50 degc - 1 degf makes sense
-                if (val2.origin)
-                  val2 = { ...val2, origin: undefined };
+                // Ignore origin in second argument so that 50 degc - 1 degf makes sense;
+                // It this usage, degf is a relative degree not an absolute degree.
+                // Henve, we don't call numVal for it
                 val = { type: 'num', dim: val.dim,
-                    val: Rat.sub(numVal(val), numVal(val2)), uscu: val.uscu && val2.uscu };
+                    val: Rat.sub(numVal(val), val2.val), uscu: val.uscu && val2.uscu };
               } else {
                 throw new ChattyError("Cannot subtract different unit types");
               }
@@ -2485,9 +2505,17 @@
                 display: undefined, reserved: undefined, alt: undefined };
         delete userSymbols[sym];  // remove from list so new value now shows up first (in reverse listing)
         userSymbols[sym] = val;
+        // Do it here because iOS doesn't reliably deliver any kind of event when the app ends.
+        saveUserSymbols();
       }
 
-      function updateParse(opts) {
+      function deleteDef(symName) {
+        delete userSymbols[symName];
+        showUserSymbols()
+        saveUserSymbols();
+      }
+
+     function updateParse(opts) {
         clearFields();
         try {
           let exprStr = exprElement.value;
@@ -2572,11 +2600,6 @@
               <span class="delete-button" onclick="deleteDef('${sym}')"></span>${symStr}</p>`;
         }
         symdefsElement.innerHTML = str;
-      }
-
-      function deleteDef(symName) {
-        delete userSymbols[symName];
-        showUserSymbols()
       }
 
       function symString(val, opts) {
@@ -2861,10 +2884,6 @@
         }
         builtinSymbolsElement.innerHTML = html;
       }
-
-      window.addEventListener("beforeunload", function(evt) {
-        saveUserSymbols();
-      });
 
       document.addEventListener("keydown", function(evt) {
         if (evt.key === "Escape")
