@@ -1,0 +1,2891 @@
+<!--
+  A calculator originaly designed to do inconvenient math with expressions in
+  feet and inches such as dividing 5' 6 3/8" by 3. Hence, its grammar supports
+  these conventional notations and favors the display of feet and inches
+  results when applicable. But it now supports fairly general dimensional calculations
+  in units of length, mass, time, information, temperature, electrical current, etc.
+
+  If the fileor URL contains "inch", it will display the original user interface,
+  otherwise the interface will be simplified.
+
+  Copyright 2021 Stan Switzer
+    This work is licensed under a Creative Commons Attribution-ShareAlike
+    4.0 International License. https://creativecommons.org/licenses/by-sa/4.0/
+-->
+<html>
+  <head>
+    <title>Units Calculator</title>
+    <meta charset="utf-8">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <base target="_blank"> <!-- all links open in a new tab/page -->
+    <!-- this is gross, but it allows an icon without requiring an extra file -->
+    <link rel="apple-touch-icon" sizes="32x32" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAABHNCSVQICAgIfAhkiAAAAAlwSFlzAAAA3QAAAN0BcFOiBwAAABl0RVh0U29mdHdhcmUAd3d3Lmlua3NjYXBlLm9yZ5vuPBoAAAM3SURBVFiFrdfPi5VVHMfx1zMiXSQJAzHQjRiCLUKyH7OY0RmtHGZiFqGrAdfuEkPmTxjFfRFdnJu6qU2tqkWbKCg3IUEgtIqGmWuRrtJa3RbP95mOZ5773GfmeuHC85zzPefz/n7P95zzfQwGA4PBABZwFe/jYNU+7h8ddLGG5bx/AoqiWA2jAmdwtyiKWWP+iqLo4IuAmMZSURQrud072MAzCfUk1nF6TM+/xi1MRNt+/IyVxM5VXKuZ4G08wpkxxG9W4knfExBizb/MjJ7Dj+hFdN7cgfgnqbgyx85nEMtwEH9hMhNfSQY+agORiPdqPD+C37AU74exVnWeRT/Cnoo/j7v4MCLx1k7EE5uj+B0XcBvdtHMO/6CXiP+Ebry/UUE2iK82iM9gF47h37Dv5EZzIbIQnt8Iz19ogsA5fDBMPGw+C69vVuKDwUCdYRWJj+L9RU9u0QribHh+rmaOfcnzuziEPeHMpngtQAKxjleSto8xm0H8UIFm49ewGM8X8Ss+zcWHAtRBYBZ/YiaBeIj5mrEvx9hFTOBOnXgjQAZxIoH4A6eySMzVjD0eIf9mmPhIgBEQJ+sgMI/rkfGfN4m3AkggNvBqsqXuYzqHwLP4Lta9UXw7AB3lAfUgg+hnOdGPCPTaiLddguqQuRGTb+C1BCLPiYcBO1K8TRJuOeH8f1hVEKeGLcdYAHXiWU708XoC0cfUdiFGifdy8acN0SSe3+e7k+f5yPb5WPMK4mTkSGuItuL7Itmqdb8eW60XCbeB/TuBqBPfUkZF/2Ik2wnlIbO5z5XFRiexnW4LkYvfqhPPIPrKE+4ryS0Z/d8my9EKopW48kq9qLxYhp7ttm7RHOI9PMaBFKCrLBR2NXh+KEJ+p87zGoj02J6K90uRR9/jSgqwhuNJwwKOxPOMspLZY8h9PgKiusAu4W+cVn5z3EsBlpUlcpXF55XV69FIttsxWaPnQyDWY+nuSz5y8MvmskTDSgaxpKxej8lquO38A+JxhH0yab+M1Xwb5hAXJNXrdsWTeQ/gCu6F55fxkvJm3ZsbVxCHI/RjidfATCnvlgfKwne6zmg5ErP7NMUzjb3Kqnr3fx1E7uivCS6LAAAAAElFTkSuQmCC">
+    <style type="text/css">
+      body {
+        padding: 4px 12px;
+        box-sizing: border-box;
+        margin: 0px 8px;
+        background-color: #f8f8f8;
+      }
+
+      body, table th, table td {
+        font: 110% caption, sans-serif;
+      }
+
+      @media (hover: none) {
+        body { --device: mobile; }
+      }
+
+      /* A trick to let the app switch mobile mode on the fly */
+      body[data-device="mobile"],
+      body[data-device="mobile"] table th,
+      body[data-device="mobile"] table td {
+          font: 175% caption, sans-serif !important;
+      }
+      body[data-device="mobile"] div.input-area {
+        font-size: 150%;
+      }
+ 
+      body:not([data-presentation-mode="legacy"]) .legacy {
+        display: none;
+      }
+
+      body:not([data-presentation-mode="legacy"]) > .layout-column {
+          width: 100%;
+      }
+
+      body:not([data-protocol="file:"]) .local-only {
+        display: none;
+      }
+
+      /* Spiff up input fields */
+      input[type="text"] {
+        font-size: 110%;
+        border-radius: 5px;
+        padding: 1px 4px;
+      }
+
+      /*
+       * Layout containers
+       */
+      div.layout-column {
+        display: flex;
+        flex-flow: column nowrap;
+      }
+      div.layout-column > div {
+        margin: 4px 0px;
+      }
+      div.layout-column {
+        height: 100%;
+      }
+      div.layout-row {
+        display: flex;
+        flex-flow: row nowrap;
+        flex: 0 0 auto;
+      }
+      div.expands {
+        /* https://geon.github.io/programming/2016/02/24/flexbox-full-page-web-app-layout */
+        flex: 1 1 auto;
+        overflow: hidden;
+      }
+      div.shrink-wrap {
+        width: min-content;
+      }
+      div.force-width {
+        width: max-content;
+      }
+
+      /*
+       * Initially-hidden help content.
+       * Help contains a <span class="close-button"> for a close button
+       * and a <div> for help content which is made scrollable.
+       */
+      div.help {
+        padding: 0px 4px 0px 20px;
+        background-color: #e8e8e8;
+        position: absolute;
+        display: none;
+        top: 10%;
+        left: 35%;
+        right: 16px;
+        bottom: 16px;
+        border: 2px solid black;
+      }
+      div.help > span.close-button {
+        color: #888888;
+        font-weight: bold;
+        font-size: 250%;
+        float: right;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+      div.help > span.close-button:before {
+        content: "\d7"; /* Unicode times character */
+      }
+      div.help > span.close-button:hover {
+        transform: scale(1.25);
+        color: black;
+      }
+      div.help > span.close-button:active {
+        transform: scale(1.5);
+      }
+      div.help > div {
+        overflow-y: auto;
+        height: 100%;
+      }
+      /* styling for help content */
+      div.help td, div.help th {
+        padding: 0em .15em;
+        vertical-align: top;
+        text-align: left;
+      }
+      div.help td.group {
+        padding-top: .5em;
+        font-style: italic;
+        font-weight: normal !important;
+      }
+      div.help th {
+        font-weight: bold;
+      }
+      div.help ul {
+        padding-left: 1.25em;
+      }
+      div.help ul > li {
+        margin: .5em;
+      }
+      div.help code,
+      div.help table.example tr td:first-child,
+      div.help table.example2 tr td:nth-child(1),
+      div.help table.example2 tr td:nth-child(2) {
+        font-weight: bold;
+        font-family: caption, sans-serif;
+        color: #444444;  /* subtle graying to offset the boldness */
+      }
+      div.help code.abstract {
+        font-style: italic;
+      }
+      div.help table.example tr td:first-child {
+        width: 7em;
+     }
+      div.help table.example2 tr td:nth-child(1),
+      div.help table.example2 tr td:nth-child(2) {
+        width: 3em;
+      }
+      div.help table.example, div.help table.example2 {
+        margin-left: 1em;
+      }
+      /* Testing affordance; example text can be stuffed into the expr box */
+      div.help code:hover, div.help .stuff-text:hover,
+      div.help table.stuff.example tr td:first-child:hover {
+        cursor: pointer;
+        color: #0000dd;
+        text-decoration: underline;
+        --click-action: stuff-text;
+      }
+
+      /*
+       * Makes a <span> into a "button"
+       */
+      span.button {
+        display: inline-block;
+        cursor: pointer;
+        padding: 2px 8px;
+        background: #4444ff;
+        border-radius: 5px;
+        color: white;
+        transition: 0.3s;
+      }
+      span.button:hover {
+        background: #0000dd;
+        /* transform: scale(1.15); */
+      }
+      span.button:active {
+        background: #0000cc;
+        /* transform: scale(1.3); */
+      }
+
+      /* Looks like a link but is actually a "button" */
+      span.linklike {
+        color: #0000dd;
+        cursor: pointer;
+        text-decoration: underline;
+      }
+
+      /*
+       * Animates the delete button for variable and function definitions
+       */
+      p.user-def {
+        margin: .25em 0em;
+      }
+      p.user-def > span.delete-button:hover {
+        background: #ff3333;
+        /* transform: scale(1.15); */
+      }
+      p.user-def > span.delete-button:active {
+        background: #ff0000;
+        /* transform: scale(1.3); */
+      }
+      p.user-def > span.delete-button {
+        display: inline-block; /* so that transform works */
+        cursor: pointer;
+        padding: 0em .25em;
+        background: #ff7777;
+        font-weight: bold;
+        border-radius: 5px;
+        margin-right: .5em;
+        color: white;
+        transition: 0.1s;
+      }
+
+      p.user-def > span.delete-button:before {
+        content: "\d7"; /* Unicode times character */
+        /*
+         * What follows is a fudge to raise the baseline slightly;
+         * "times" is apparently designed to match lower-case characters.
+         */
+        position: relative;
+        top: -0.06em;
+      }
+      p.user-def:hover > span.delete-button {
+        visibility: visible;
+      }
+
+      /*
+       * User symbol defs take the remaining space and scroll
+       */
+      div.sym-defs {
+        flex: 1 1 auto;
+        overflow: auto;
+        max-height:100%;
+      }
+
+      /* The results box */
+      div.results {
+        border: 2px solid;
+        margin: 12px 0px;
+        padding: 0px 12px;
+        border-radius: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="layout-column shrink-wrap">
+      <div class="force-width legacy input-area">
+        <input type="text" pattern="\d*" style="text-align: right;"
+          oninput="updateResult(this)" size="4" id="ft" value="5"> feet &nbsp;
+        <input type="text" pattern="\d*" style="text-align: right;"
+          oninput="updateResult(this)" size="2" id="inch" value="">
+        <sup>
+          <input type="text" pattern="\d*" style="text-align: right;"
+            oninput="updateResult(this)" size="2" align="right" id="num" value="">
+        </sup>/<sub>
+          <input type="text" pattern="\d*" oninput="updateResult(this)" size="2" id="denom" value="8">
+        </sub> inches
+        &nbsp;&nbsp; times
+        <input type="text" pattern="\d*" oninput="updateResult(this)" size="3" id="times" value="">
+        &nbsp; divided by
+        <input type="text" pattern="\d*" oninput="updateResult(this)" size="3" id="div" value="">
+      </div>
+      <div class="layout-row input-area">
+        <div class="expands">
+          <input style="width: 100%;" type="text" id="expr" value=""
+            autocomplete="off" spellcheck="false" autocorrect="off" autocapitalize="none">
+        </div>
+        <span class="button" style="margin-left: .25em; font-size: 1.125em"
+          onclick="showHelp('help-expr')">?</span>
+      </div>
+      <div class="results">
+        <p id="results">
+          <span id="resultFt"></span> feet = <span id="resultFtDetail"></span>
+          <br>
+          <span id="resultIn"></span> inches = <span id="resultInDetail"></span>
+          <br>
+          <span id="resultMeters"></span> meters
+          <br>
+          <span id="resultMetersMetricFeet"></span> meters (assuming "metric feet")
+        </p>
+        <p id="numberResults">
+          <span id="numberResultsDetail"></span>
+        </p>
+        <p id="error" style="color: red;"></p>
+      </div>
+      <div class="layout-row expands">
+        <div class="sym-defs" id="symdefs"></div>
+        <div><span class="button legacy" onclick="showHelp('help-tips')">Help</span></div>
+      </div>
+    </div>
+    <div class="help" id="help-tips">
+      <span class="close-button" onclick="showHelp()"></span>
+      <div>
+        <h2> Help </h2>
+        <p> Some quick tips to get you started:
+        <ul>
+          <li> Input boxes can be left empty when not relevant.
+          <li> A value like five and a half feet can be entered as 5.5 feet or as 5 feet 6 inches.
+          <li> A value like six and a quarter inches can be entered as 6.25 inches or
+               as 6 inches and 1/4.
+          <li> You can type a fairly general expression into the text box. Click the
+               <span class="button" onclick="showHelp('help-expr')">?</span> button
+               for more information.
+        </ul>
+      </div>
+    </div>
+    <div class="help" id="help-expr">
+      <span class="close-button" onclick="showHelp()"></span>
+      <div>
+        <h2> Expressions </h2>
+        <p> Expressions can contain numbers, units and the operators
+            <code>+</code> <code>-</code> <code>*</code> <code>/</code>
+            and <code>^</code> (exponentiation).
+            Multiplication and division are performed before addition and subtraction, and
+            parenthesis can be used for grouping. Spaces are generally optional.
+        <p> Units include:
+            <code>ft</code> <code>'</code> <code>in</code> <code>"</code>
+            <code>m</code> and <code>cm</code>.
+        <p> As you type, the expression might be momentarily unparsable, e.g.,
+            &ldquo;<code>3'+</code>&rdquo;, until you finish typing.
+            The results box will be grayed out while that happens.
+            It would be too noisy to alert each of these errors, but if you don't
+            know why it's grayed out, you can hit &ldquo;enter&rdquo; to see an error message.
+        <p> In these help boxes most sample expressions, like
+            <code>11'4"/2</code>, can be clicked to evaluate the expression.
+        </p>
+        <table class="stuff example">
+          <tr>
+            <th> Example
+            <th> Description
+          <tr>
+            <td> 5' 6"
+            <td> An ordinary distance
+          <tr>
+            <td> 5' 6 3/8" / 3
+            <td> Divide 5 feet 6 and 3/8 inches by 3
+          <tr>
+            <td> 5 1/2' - 8"
+            <td> Subtracts lengths
+          <tr>
+            <td> 5.5'
+            <td> You can use decimal values instead of fractions
+          <tr>
+            <td> 3/4"
+            <td> You can use just a fraction
+          <tr>
+            <td> (5'6" + 7') / 2
+            <td> The average of 5'6" and 7'
+          <tr>
+            <td> 5'10 3/8" * 3/4
+            <td> 3/4 of 5' 10 3/8"
+          <tr>
+            <td> 12' / 6"
+            <td> The ratio of 12' and 6"
+          <tr>
+            <td> 1 + 2 * 3
+            <td> Ordinary math (note order of operations; result is 7)
+          <tr>
+            <td> (1 + 2) * 3
+            <td> Result is 9
+          <tr>
+            <td> 1m - 2cm
+            <td> One meter minus two centimeters
+         <tr>
+            <td> ft
+            <td> A foot
+          <tr>
+            <td> ft * 8
+            <td> 8 feet; notice that named units are simply variables that have units
+          <tr>
+            <td> 5' 6" * pi
+            <td> Circumference of a 5' 6" diameter circle
+          <tr>
+            <td> hyp(3', 4')
+            <td> Hypotenuse of a right triangle with sides 3' and 4' (result is 5')
+          <tr>
+            <td> 1/4 mi2 / acres
+            <td> The number of acres in a quarter of a square mile
+        </table>
+        <p> Just for fun, try <code>furlongs/fortnight</code>, <code>9600 baud</code>, <code>gallons/cup</code>, or
+          <code>horsepower/g</code>.
+        <h2> Terms </h2>
+        <p> Expressions are built up out of <i>terms</i> which are either
+          <ul>
+            <li> A plain number such as <code>12</code>, <code>7.</code>,
+                 <code>3.14</code>, <code>.15</code>, etc.
+            <li> A variable name, such as <code>pi</code>
+            <li> A <i>length</i> which can be a number, a fraction, or a number
+                 and a fraction followed by a <i>unit</i>
+            <li> Any sequence of the the previous length-unit combinations as long as
+                 the units are of descending size
+          </ul>
+        <h3> Units </h3>
+        <p> Units are either the notations <code>'</code> and <code>"</code> for
+            feet and inches or a named unit.
+            The  <span class="linklike" onclick="showHelp('help-builtin')">full list</span>
+            of predefined units and constants is too long to show here.
+        <p> Any variable you define can be used as a unit itself.
+            For example, if you enter <code>cubit = 1 1/2'</code>, you can then use
+            expressions like <code>3 cubit 5 1/2"</code>.
+        <p> A unit can be immediately followed (without spaces) by a number which is
+            the power of that unit. For instance, <code>3 yd2</code> is three square yards
+            (27 square feet)
+            and <code>2 ft3</code> is two cubic feet. If a unit specifier is immediately
+            preceded by a <code>/</code> (without spaces), it's an inverse unit.
+            For instance, <code>60 /ft2</code> means 60 per square foot.
+            <code>144/ft2</code> means 144 per square foot or, equivalently, 1 per square inch
+            (which is how it will display). <i>What</i> per square foot? Anything.
+            Think &ldquo;ducks&rdquo; or &ldquo;pebbles&rdquo; and you'll be on the right track.
+        <p> In fact, you can type <code>640 'ducks' / mi2</code> or <code>144 'pebble'/ft2</code>.
+            (Bear in mind that 'pebble' is a different unit from 'pebbles'.)
+            Try <code>2 'shoes'/person * 1000 people</code>.
+            If there's some unit this tool didn't anticipate, you can define it yourself,
+            <code>bogosity = 'bogosity'</code> and use it as an ordinary unit such as <code>20 bogosity</code>.
+        <p> Units must be specified in descending order.
+            You can use <code>12'3"</code> but you can't use <code>12"3'</code>.
+            This is to prevent accidentally typing <code>12'3'</code> when you really
+            meant <code>12'3"</code>.
+            You can type nonsense like <code>3 1/2m 3.5"</code> if you want, but you won't
+            do it by accident.
+        <p><i>Beware that spaces can occasionally make a big difference.</i>
+            <code>1/2 in</code> or <code>1/2in</code> means half an inch,
+            but <code>1 / 2 in</code> or even
+            <code>1/ 2 in</code> means one over 2 inches. <i>Just avoid putting spaces around
+            the slash in a fractional unit and you'll be fine.</i>
+        <h2> Variables </h2>
+        <p> To define variables type <code class="abstract">name = expression</code>
+            then hit &ldquo;enter.&rdquo;
+            For instance, <code>frontage = 45'4 3/4"</code>. You can then use those values
+            in later expressions, e.g. <code>frontage/3</code>.
+            Amusingly, perhaps, because <code>frontage</code> is a length, it can also be
+            used as a unit: <code>1/3 frontage</code> or <code>1/3frontage</code>.
+        <p> The variables <code>ft</code>, <code>in</code>, <code>m</code>, <code>cm</code>,
+            etc. described in "Units" above
+            are predefined for use as values or as units. The variable <code>pi</code> is
+            predefined in case you care about circles.
+            <span class="linklike" onclick="showHelp('help-builtin')">Reserved</span>
+            predefined variables cannot be changed.
+        <h2> Functions </h2>
+        <p> Define functions to automate routine calculations by typing
+            <code class="abstract">name(param,param,&hellip;) = expression</code>
+            then hitting &ldquo;enter.&rdquo; For instance, you can define a function to average to numbers
+            or lengths: <code>average(x,y) = (x+y)/2</code> (but the predefined function
+            <code>mean(&hellip;)</code> already does that, so&hellip;).
+        <p> Functions can use any of their parameters and variables
+            that have already been defined. As a special case, a function with no parameters
+            can be used as a &ldquo;dynamic variable.&rdquo; That is, assuming variables <code>a</code>
+            and <code>b</code> are already defined
+            (say, <code>a = 2</code> and <code>b = 3</code>), the function
+            <code>ab() = a + b</code> can be invoked as <code>ab()</code> or <code>ab</code>,
+            and in either case gives you the current value of <code>a + b</code>.
+            If you change either variable (say, <code>b = 5</code>), then the
+            value <code>ab</code> changes too.
+        <h3> Built-In Functions </h3>
+        <table class="example">
+          <tr>
+            <th> Function
+            <th> Description
+          <tr>
+            <td> mean(x,y,&hellip;)
+            <td> The average of a set of numbers or lengths
+          <tr>
+            <td> sum(x,y,&hellip;)
+            <td> The average of a set of numbers or lengths
+          <tr>
+            <td> hyp(x,y,&hellip;)
+            <td> The hypotenuse of a triangle or, more usefully, the diagonal of a rectangle
+          <tr>
+            <td> sqrt(x)
+            <td> Square root
+          <tr>
+            <td> cbrt(x)
+            <td> Cube root
+          <tr>
+            <td> sin(angle)
+            <td> Sine of an <i>angle</i> (must be units of radian or degree)
+          <tr>
+            <td> cos(angle)
+            <td> Cosine of an <i>angle</i> (must be units of radian or degree)
+          <tr>
+            <td> atan2(y, x)
+            <td> Returns the <i>angle</i> corresponding to the slope y/x, even when x is zero.
+                 More formally, it's the angle from the x-axis of the vector (x,y).
+        </table>
+        <p> Note that angles are neither degrees nor radians. They are <i>just angles</i> and can be
+            specified or displayed using either notation. If, however, a plain number is given, it will be
+            interpreted as radians. So <code>sin(45 degrees)</code>, <code>sin(pi/4radian)</code>
+            and <code>sin(pi/4)</code> all mean the same thing.
+        <h2> Unit Conversions </h2>
+        <p> To display results in terms of specific units, follow an expression by <code>|</code>
+            then a unit or series of units.
+            For instance, <code>100 km/hr | mi</code> displays the speed in miles/minute.
+            <code>100 km/hr | mi/hr</code> displays the speed in terms of miles/hour.
+        <p>
+          <ul>
+            <li> How many watts in 10 horsepower? <code>10 horsepower | W</code>
+            <li> How many tablespoons in a cup? <code>cup | tbsp</code>
+            <li> How many cups in a tablespoon? <code>tbsp | cup</code>
+            <li> Sea-level air pressure in PSI? <code>atm | PSI</code>
+            <li> What's 20 degrees celsius in fahrenheit? <code>20 celsius | fahrenheit</code>
+            <li> What about absolute zero? <code>0K | degf</code>
+            <li> What <i>is</i> 20000 leagues anyway? <code>20000 league | mi</code>
+            <li> How far away is the Sun in miles? <code>au | mi</code>
+            <li> What's the current with <code>5V</code> across a <code>2000 ohm</code> resister?
+                 <code>5V / 2000 ohm</code>
+            <li> What's <code>pi/4</code> radians in degrees? <code>pi/4 radians | degrees</code>
+            <li> How much does it cost to run a 100 watt lightbulb for a year,
+                 assuming electricity costs $0.20 per kilowatt hour?
+                 <code>.20 'dollars' / kW hr * 100 watts * 365 days</code>, about $175
+            <li> Alternatively, it's about $1.75 per watt per year
+                 <code>.20 'dollars' / kW hr * watt * 365 days</code>
+            <li> What's 45 mpg as km/liter? <code>45 mi/gallon | km/liter</code>
+            <li> How much does a gallon of water weigh in pounds? <code>kg/liter*gallon | lb</code>
+            <li> How long does it take sunlight to reach the Earth? <code>au/c | min</code>
+            <li> What's a kilobyte per meter in kilometers? <code>KB/m | km</code>.
+                 It seems rather silly, but it might be a length of magnetic tape
+            <li> Suppose an Icelandic Kr&oacute;na is about <code>ISK = .008 'dollar'</code>
+                 and gas costs <code>220 ISK/liter</code>; what's that in dollars per gallon?
+                 <code>220 ISK/liter | 'dollar'/gallon</code>
+          </ul>
+        <p> As an exercise (click the code that follows), suppose an elephant weighs
+            <code>elephantWeight = 8000lbf</code>
+            (I've used <i>pounds of force</i>) and an elephant's foot is about
+            <code>elephantFoot = 45cm</code> across, and it's standing evenly on four legs,
+            then the pressure under its feet, expressed in pounds per square inch, is
+            <code>elephantWeight/(pi*(elephantFoot/2)^2)/4 | PSI</code>, about 8 PSI.
+        <h2> Metric Feet </h2>
+        <p> Results presented in feet and inches show an alternate interpretetion assuming measurements
+            are in "metric feet." A &ldquo;metric foot&rdquo; is a convention used by the construction
+            industry in metric countries where a foot is taken to be exactly 30cm instead of 30.48cm.
+            It's an
+            <a href="https://en.wikipedia.org/wiki/ISO_2848#Metric_foot">international standard</a>.
+        <h2> Odds & Ends </h2>
+        <p> <span class="linklike" onclick="showHelp('help-boring')">Boring details</span>,
+            if you're interested.
+      </div>
+    </div>
+    <div class="help" id="help-boring">
+      <span class="close-button" onclick="showHelp()"></span>
+      <div>
+        <h2> Boring Details </h2>
+        <p> This program started out as a quick and dirty tool to easily divide
+            lengths given in feet and inches into equal parts, a common task
+            in the construction industry and quite tedious to work out by hand.
+            If the file name or URL contains the string "inch" (regardless of case),
+            you'll see the original user interface. If you're curoius, you can
+            <span class="linklike" onclick="toggleLegacyMode()">switch</code> the UI.
+        <p> But I started to think of it as a <i>calculator</i> and wondered
+            if it could be generalized to do arbitrary math with lengths.
+            It's possible to add two lengths,
+            resulting in another length, or to multiply or divide a length by a number.
+            But you can't add a length and a number.
+            You can divide a length by a length to get a number (the ratio of lengths).
+            Can you multiply two lengths? Yes, but the result is an <i>area</i>.
+        <p> This line of thinking leads to
+            <a href="https://en.wikipedia.org/wiki/Dimensional_analysis">dimensional analysis</a>,
+            and there are already some very good programs out there for that including the legendary
+            <a href="https://linux.die.net/man/1/units">Unix "units" command</a>.
+            Hell, <a href="https://www.google.com/search?q=12+acres+%2F+100+feet">
+            Google will do it for you</a> if you ask it nicely. But I couldn't
+            help myself, so I got carried away and ended up implementing a fairly
+            general dimensional units calculator.
+        <p> Various interesting problems came up along the way, including issues of
+            special-purpose language design, grammar ambiguity, and maintaining full
+            decimal precision in different units while using floating-point arithmetic
+            (remember that 0.1 can't be represented exactly in binary floating point).
+        <p> As an example of using ambiguity for profit, there seemed to be no principled
+            reason to forbid using a dimensionless number as a unit and allowing it
+            lets you define the function <code>circleArea(r) = &#x1D70B; r2</code>
+            or write <code>17 mol</code>.
+        <p> Still, the main distinction of this tool is that it deals naturally with notations
+            typically used with feet and inches. But, <i>sigh</i>,
+            <a href="https://www.google.com/search?q=5%27+6+3%2F8%22+%2F+3">
+            Google will do that for you too</a>.
+        <p> Oh well, it was a good excuse to spiff up my HTML, CSS, and JavaScript skills.
+            Not bad for a weekend project that got <i>way</i> out of hand.
+        <p class="local-only"> You can also
+            <a href="https://htmlpreview.github.io/?https://gist.githubusercontent.com/sjswitzer/77288511a213dd0d973d99a941ac909e/raw/UnitsCalc.html">
+              run this from the web</a>.
+        <p> A-B-C. A-Always. B-Be. C-Coding.
+        <p> Copyright &copy; 2021, Stan Switzer
+        <p> Icon made by <a href="https://www.freepik.com" title="Freepik">Freepik</a>
+            from <a href="https://www.flaticon.com/" title="Flaticon">www.flaticon.com</a>
+        <div class="layout-row">
+          <div>
+            <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+              <img style="vertical-align: text-top;" alt="Creative Commons License" style="border-width:0"
+                src="https://i.creativecommons.org/l/by-sa/4.0/88x31.png"></a>
+          </div>
+          <div style="margin: 0 0 0 .5em">
+            This work is licensed under a
+            <a rel="license" href="http://creativecommons.org/licenses/by-sa/4.0/">
+              Creative Commons Attribution-ShareAlike 4.0 International License</a>.
+            <br> Find source on
+            <a href="https://gist.github.com/sjswitzer/77288511a213dd0d973d99a941ac909e">GitHub</a>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="help" id="help-builtin">
+      <span class="close-button" onclick="showHelp()"></span>
+      <div>
+        <h2> Built-In Constants and Units </h2>
+        <p> Symbols that are reserved (that is, cannot be redefined) are noted.
+        <p>
+        <table class="stuff example2">
+          <thead>
+            <tr>
+              <th> Symbol
+              <th> Inverse
+              <th> Description
+            </tr>
+          </thead>
+          <tbody id="builtin-symbols">
+            <!-- table contents inserted here at onload event -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <script type="text/javascript">
+      "use strict";
+
+      const exprElement = document.getElementById('expr');
+      const errorElement = document.getElementById('error');
+      const resultsElement = document.getElementById('results');
+      const numberResultsElement = document.getElementById('numberResults');
+      const numberResultsDetailElement = document.getElementById('numberResultsDetail');
+      const symdefsElement = document.getElementById('symdefs');
+      const resultInElement = document.getElementById('resultIn');
+      const resultFtElement = document.getElementById('resultFt');
+      const resultFtDetailElement = document.getElementById('resultFtDetail');
+      const resultInDetailElement = document.getElementById('resultInDetail');
+      const resultMetersElement = document.getElementById('resultMeters');
+      const resultMetersMetricFeetElement = document.getElementById('resultMetersMetricFeet');
+      const builtinSymbolsElement = document.getElementById('builtin-symbols');
+      const ftElement = document.getElementById('ft');
+      const inchElement = document.getElementById('inch');
+      const numElement = document.getElementById('num');
+      const denomElement = document.getElementById('denom');
+      const timesElement = document.getElementById('times');
+      const divElement = document.getElementById('div');
+
+      class MessageError extends Error {
+        constructor(msg) {
+          super(msg);
+        }
+        toString() { return this.message; }
+      }
+
+      class OverflowError extends MessageError {};
+
+      // Errors that are too chatty to show while typing.
+      //   (Error will be shown if the user hits "enter.")
+      class ChattyError extends MessageError {
+        constructor(msg) {
+          super(msg);
+        }
+      }
+
+      const InternalError = Error;
+
+      let logLevel = 0;
+      function Log(level, msg, ...rest) {
+        if (level <= logLevel) {
+          if (msg instanceof Function) msg = msg(logLevel);
+          if (msg instanceof Array) msg = [ ...res, ...rest ];
+          else msg = msg = [ msg, ...rest];
+          console.log(...msg);
+        }
+      }
+
+      class Dim {
+        static isScalar(dim) {
+          for (const measure in dim)
+            if (dim[measure] !== 0)
+              return false;
+          return true;;
+        }
+
+        static normSquared(dim) {
+          // How far this dimension is from being scalar.
+          let n = 0
+          for (const measure in dim) {
+            const m = dim[measure];
+            if (m)
+              n += m * m;
+          }
+          return n;
+        }
+
+        static equal(dim1 = {}, dim2 = {}) {
+          for (const measure in dim1) {
+            if ((dim1[measure] ?? 0) !== (dim2[measure] ?? 0))
+              return false;
+          }
+          for (const measure in dim2)
+            if ((dim1[measure] ?? 0) !== (dim2[measure] ?? 0))
+              return false;
+          return true;
+        }
+
+        static mul(dim = {}, n) {
+          let ret = {};
+          for (const measure in dim)
+            ret[measure] = dim[measure]*n;
+          return ret;
+        }
+
+        // If a dimension can be evenly divided, the new dimension, else null
+        // We don't allow fractal dimensions in this town.
+        static div(dim = {}, n) {
+        let ret = {};
+          for (const measure in dim) {
+            const expDiv = dim[measure]/n;
+            if (expDiv !== Math.trunc(expDiv))
+              return null;
+            ret[measure] = expDiv;
+          }
+          return ret;
+        }
+
+        static add(dim1 = {}, dim2 ={}, factor = 1) {
+          let measures = {}, ret = {};
+          for (const measure in dim1)
+            measures[measure] = true;
+          for (const measure in dim2)
+            measures[measure] = true;
+          for (const measure in measures) {
+            let exp = (dim1[measure] ?? 0) + factor*(dim2[measure] ?? 0);
+            if (exp)
+              ret[measure] = exp;
+          }
+          return ret;
+        }
+
+        static sub(dim1, dim2, factor = 1) {
+          return Dim.add(dim1, dim2, -factor);
+        }
+      }
+
+      function gcd(...params) { // requires BigInt params
+        let a = params[0];
+        if (a < 0n) a = -a;
+        if (a === 0n) return 1n
+        for (let i = params.length-1; i > 0; --i) {
+          let b = params[i];
+          if (b < 0n) b = -b;
+          if (b === 0n) return 1n;
+          while (b !== 0n) {
+            let t = b;
+            b = a % b;
+            a = t;
+          }
+        }
+        return a;
+      }
+
+      // Rational numbers [ num, denom ]
+      //  denom must be BigInt, numerator can be a number for things like pi
+      class Rat {
+        static number(a) {
+          let res = Number(a[0])/Number(a[1]);
+          if (!isFinite(res))
+            throw new MessageError("Divide by zero");
+          return res;
+        }
+
+        static ZERO = [ 0n, 1n ];
+        static ONE = [ 1n, 1n ];
+
+        // Reduces and normalizes a rational.
+        // The denominator will always be a positive BigInt
+        static normalize(a) {
+          let num = a[0], denom = a[1];
+          if (typeof denom !== 'bigint') {
+            if (denom === Math.trunc(denom))
+              denom = BigInt(denom);
+            else
+              num = Number(num)/denom, denom = 1n;
+          }
+          if (denom === 0n)
+            throw new MessageError("Divide by zero");
+          if (denom < 0n) // keep denom positive
+             num = -num, denom = -denom;
+          if (num === 0n || num === 0)
+            return [ 0n, 1n ];
+          if (typeof num === 'number') {
+            if (num !== Math.trunc(num))
+              return [ num, denom ];
+            num = BigInt(num);
+          }
+          if (denom === 1n) return [ num, denom ];
+          let g = gcd(num, denom);
+          return [ num/g, denom/g ];
+        }
+
+        static cmp(a, b) {
+          // avoid division:  n1/d1 - n2/d2 = (n1*d2 - n2/d1)/(d1*d2),
+          // but note the denoms are always positive
+          let n1 = a[0], d1 = a[1], n2 = b[0], d2 = b[1];
+          if (typeof n1 === 'number' || typeof n2 === 'number') {
+            return Number(n1)*Number(d2) - Number(n2)*Number(d1);
+          }
+          return n1*d2 - n2*d1;
+        }
+
+        static mul(a, b) {
+          if (typeof a[0] === 'number' || typeof b[0] === 'number')
+            return Rat.normalize([ Number(a[0])*Number(b[0]), a[1]*b[1] ]); // Normalize to keep denom > 0
+          return Rat.normalize([ a[0]*b[0], a[1]*b[1] ]);
+        }
+        static div(a, b) {
+          if (typeof a[0] === 'number' || typeof b[0] === 'number')
+            return Rat.normalize([ Number(a[0])*Number(b[1])/Number(b[0]), a[1] ]); // Normalize might make num a BigInt
+          return Rat.normalize([ a[0]*b[1], a[1]*b[0] ]);
+        }
+        static pow(a, b) {  // b can be a number, a BigInt or a Rat
+          if (b[0] !== undefined)            // If it's a rat, find the quotient
+            b = Number(b[0])/Number(b[1]);   // Now it's a number
+          if (!isFinite(b))
+            throw new MessageError("Divide by zero");
+          if (b < 0)
+            return this.pow(this.normalize([ a[1], a[0] ]), -b);
+          if (typeof b === 'number' && b === Math.trunc(b)) {      
+            let bn = BigInt(b);
+            if (typeof a[0] === 'bigint')
+              return [ a[0]**bn, a[1]**bn ];
+            return Rat.normalize([ Number(a[0])**b, a[1]**bn ]);
+          }
+          return Rat.normalize([ Number(a[0])/Number(a[1])**b, 1n ]);
+        }
+
+        static add(a, b, factor = 1) {
+          if (typeof a[0] === 'number' || typeof b[0] === 'number')
+            return Rat.normalize([ Number(a[0])/Number(a[1]) + Number(b[0])/Number(b[1]), 1n ]);
+          // an/ad + f * bn/bd === (an * bd + f * bn*ad)/(ad/bd)
+          let res = [ a[0]*b[1] + BigInt(factor)*b[0]*a[1], a[1]*b[1] ];
+          return Rat.normalize(res);
+        }
+        static sub(a, b) { return Rat.add(a, b, -1); }
+        static sqrt(a) { return [ Math.sqrt(Rat.number(a)), 1n ]; }
+        static cbrt(a) { return [ Math.cbrt(Rat.number(a)), 1n ]; }
+        static abs(a) { return [ Rat.nsign(a)*a[0], a[1]]; }
+        static nsign(a) {
+          if (a[0] < 0) return -1n;
+          if (a[0] > 0) return 1n;
+          return 0n;
+        }
+        static sign(a) { return [ Rat.nsign(a), 1n]; }
+        static neg(a) { return [ -a[0], a[1] ]; }
+        static recip(a) { return Rat.normalize([ a[1], a[0] ]); }
+      }
+
+      // A curious thing worth noting: It turns out that fractions of the form
+      // "n / power-of-2" are precicely the values that can be represented exactly
+      // in floating point arithmetic and also the conventional way of expressing
+      // fractional inches. So doing all arithmetic in units of inches means that
+      // calculations can be exact when exact results are possible.
+      //
+      // It later occurred to me that doing calculations in metric units of a
+      // hundredth of a centimeter or less would lead to exact results for both systems
+      // most often. The largest SI unit that would serve is the micrometer.
+      // But why not go further? Decimal fractions suffer in binary
+      // representations. Many exact values in decimal must be approximated in binary.
+      // But if you pick a small enough base unit, all integral values greater that
+      // can be exact. For angles, pick a power of ten times 60*60 so that decimal angles
+      // can be exact down to seconds because radians are never going to be exact anyway.
+      // The unit for KELVIN could be a multiple of 9 so that fahrenheit can be represented exactly.
+      //
+      // That's how it used to work, but the point is moot now that we use rational
+      // arithmetic whenever possible.
+      // For instance, 1.001 is representad as the ratio [ 1001, 1000 ]. This alows
+      // exact decimal representations whenever possibe.
+      //
+      // If an expression contains any US units, the results will be displayed in
+      // those units. If an expression contains only metric units, the results
+      // will be displayed in metric.
+
+      const M = 1, KM = 1000*M;
+      const IN5K = 127*M, FT5K = 12*IN5K, MI5K = 5280*FT5K, N5K = 5000;
+      const NMI = 1852*M;
+      const SEC = 1, MIN = 60*SEC, HR = 60*MIN, DAY = 24*HR;
+      const KG = 1;
+      const EARTHG = 9.80665, LBM100M = 45359237 * KG, N100M = 100000000;
+      const LBFS2 = EARTHG * 0.45359237 * KG * M;
+      const GAL5K3 = 231*IN5K**3;
+      const AMP = 1, KELVIN = 1;
+      const BIT = 1, BYTE = 8*BIT;
+      const DEGREE = 1, RADIAN = 180*Number(DEGREE)/Math.PI;
+      const CANDLE = 1;
+      const PERSON = 1;
+      const NONCE = 1;
+      const CMPS = 299792458;
+
+      const DIGITS = "0123456789";
+      const MICROSYM = "\u00B5", OHMSYM = "\u2126", PISYM = "\uD835\uDF0B", TAUSYM = "\uD835\uDF0F";
+      const ALPHA =
+        "abcdefghijklmnopqrstuvwxyz" +
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+        MICROSYM + OHMSYM + TAUSYM + PISYM;
+      const ALPHANUM = ALPHA + DIGITS;
+
+      let unitsSystem = 'mks';  // can also be 'cgs'
+
+      const systemSymbols = {
+        // Length (L)
+        groupLength: { group: "Length Units" },
+        in: { type: 'num', dim: { L: 1 }, val: [ IN5K, N5K ], reserved: true, uscu: true, alt: ["inch", "inches"] },
+        ft: { type: 'num', dim: { L: 1 }, val: [ 12 * IN5K, N5K ], reserved: true, uscu: true, alt: ["foot", "feet"] },
+        yd: { type: 'num', dim: { L: 1 }, val: [ 3 * FT5K, N5K ], uscu: true, alt: ["yard", "yards"] },
+        mi: { type: 'num', dim: { L: 1 }, val: [ MI5K, N5K ], alt: ["mile", "miles"],
+            reserved: true, uscu: true },
+        km: { type: 'num', dim: { L: 1 }, val: KM, alt: ["kilometer", "kilometers"] },
+        m:  { type: 'num', dim: { L: 1 }, val: M, reserved: true, alt: ["meter", "meters"] },
+        cm: { type: 'num', dim: { L: 1 }, val: [ M, 100 ], reserved: true, alt: ["centimeter", "centimeters"] },
+        mm: { type: 'num', dim: { L: 1 }, val: [ M, 1000 ], alt: ["millimeter", "millimeters"] },
+        um: { type: 'num', dim: { L: 1 }, val: [ M, 1000**2 ], display: MICROSYM+"m", alt: ["micrometer", "micrometers"] },
+        nm: { type: 'num', dim: { L: 1 }, val: [ M, 1000**3 ], alt: ["nanometer", "nanometers"] },
+
+        // Area (L^2)
+        groupArea: { group: "Area Units" },
+        acre: { type: 'num', dim: { L: 2 }, val: [ 66*FT5K * 660*FT5K, N5K**2 ], reserved: true, uscu: true, alt: ["acres"],
+            desc: "66' \u00D7 660'" },
+        hectare: { type: 'num', dim: { L: 2 }, val: (100*M)**2, alt: ["hectares"],
+            desc: "100 meters \u00D7 100 meters" },
+
+        // Volume (L^3)
+        //    Sadly, there's ambiguity in units between liquid volume, dry volume, and mass
+        //    and, further, differences between the US and Imperial systems.
+        //    When in conflict, I've chosen liquid volumes and US units.
+        groupVolume: { group: "Volume Units" },
+        gallon: { type: 'num', dim: { L: 3 }, val: [ GAL5K3, N5K**3 ], uscu: true, alt: ["gallons"] },
+        quart: { type: 'num', dim: { L: 3 }, val: [ GAL5K3, 4 * N5K**3 ], uscu: true, alt: ["quarts"] },
+        pint: { type: 'num', dim: { L: 3 }, val: [ GAL5K3, 8 * N5K**3 ], uscu: true, alt:["pints"] },
+        cup: { type: 'num', dim: { L: 3 }, val: [ GAL5K3, 16 * N5K**3 ], uscu: true, alt: ["cups"] },
+        tbsp: { type: 'num', dim: { L: 3 }, val: [ GAL5K3, 256 * N5K**3 ], uscu: true, alt: ["tablespoon", "tablespoons", "tbsps"] },
+        tsp: { type: 'num', dim: { L: 3 }, val: [ GAL5K3, 768 * N5K**3 ], uscu: true, alt: ["teaspoon", "teaspoons", "tsps"] },
+        floz: { type: 'num', dim: { L: 3 }, val: [ GAL5K3, 128 * N5K**3 ], desc: "fluid ounce", uscu: true },
+        liter: { type: 'num', dim: { L: 3 }, val: [ M**3, 10**3 ], desc: "liter", alt: ["liters", "litre", "litres"] },
+        ml: { type: 'num', dim: { L: 3 }, val: [ M**3, 100**3 ], alt: ["milliliter", "millilitre", "milliliters", "millilitres"] },
+        cc: { type: 'num', dim: { L: 3 }, val: [ M**3, 100**3 ], desc: "cubic centimeter" },
+        gi: { type: 'num', dim: { L: 3 }, val: [ GAL5K3, 32 * N5K**3 ], uscu: true, desc: "gill", alt:["gill", "gills"] },
+        dram: { type: 'num', dim: { L: 3 }, val: [ GAL5K3, 128 * N5K**3 * 8 ], uscu: true, alt: ["drams"] },
+        minim: { type: 'num', dim: { L: 3 }, val: [ GAL5K3, 128 * N5K**3 * 8 * 60 ], uscu: true, alt: ["minims"] },
+        cord: { type: 'num', dim: { L: 3 }, val: [ 128 * FT5K**3, N5K**3 ], desc: "cord of wood", uscu: true, alt: ["cords"] },
+
+        // Mass (M)
+        groupMass: { group: "Mass Units" },
+        lb: { type: 'num', dim: { M: 1 }, val: [ LBM100M, N100M ], desc: "pound mass", uscu: true, alt: ["lbs", "pound", "pounds", "lbm"] },
+        oz: { type: 'num', dim: { M: 1 }, val: [ LBM100M, 16 * N100M ], desc: "ounce mass", uscu: true, alt: ["ounce", "ounces"]},
+        kg: { type: 'num', dim: { M: 1 }, val: KG, reserved: true, alt: ["kilogram", "kilograms"] },
+        gm: { type: 'num', dim: { M: 1 }, val: [ KG, 1000 ], reserved: true, alt: ["gram", "grams"] },
+        mg: { type: 'num', dim: { M: 1 }, val: [ KG, 1000**2 ], alt: ["milligram", "milligrams"]  },
+        ug: { type: 'num', dim: { M: 1 }, val: [ KG, 1000**3 ], display: MICROSYM+"g", alt: ["microgram", "micrograms"] },
+
+        // Time (T)
+        groupTime: { group: "Time Units" },
+        hr: { type: 'num', dim: { T: 1 }, val: HR, uscu: null, alt: ["hour", "hours", "hrs"] },
+        min: { type: 'num', dim: { T: 1 }, val: MIN, uscu: null, alt: ["minute", "minutes", "mins"] },
+        s: { type: 'num', dim: { T: 1 }, val: SEC, reserved: true, uscu: null,
+            alt: ["second", "seconds", "sec", "secs"] },
+        ms: { type: 'num', dim: { T: 1 }, val: [ SEC, 1000 ], uscu: null, alt: ["millisecond", "milliseconds"] },
+        us: { type: 'num', dim: { T: 1 }, val: [ SEC, 1000**2 ], uscu: null, display: MICROSYM+"s", alt: ["microsecond", "microseconds"] },
+        ns: { type: 'num', dim: { T: 1 }, val: [ SEC, 1000**3 ], uscu: null, alt: ["nanosecond", "nanoseconds"] },
+        Hz: { type: 'num', dim: { T: -1 }, val: [ 1, SEC ], desc: "hertz", uscu: null, alt: ["hertz"] },
+        kHz: { type: 'num', dim: { T: -1 }, val: [ 1000, SEC ], desc: "kilohertz", uscu: null },
+        MHz: { type: 'num', dim: { T: -1 }, val: [ 1000**2, SEC ], desc: "megahertz", uscu: null },
+        GHz: { type: 'num', dim: { T: -1 }, val: [ 1000**3, SEC ], desc: "gigahertz", uscu: null },
+
+        // Temperature (Q)
+        groupTemperature: { group: "Temperature Units" },
+        celsius: { type: 'num', dim: { Q: 1 }, val: KELVIN, origin: [ 27315 * KELVIN, 100 ],
+            desc: "Celsius", alt: ["degc"] },
+        fahrenheit: { type: 'num', dim: { Q: 1 }, val: [ 5 * KELVIN, 9 ],
+            origin: [ 27315*KELVIN*9 - 3200*5*KELVIN, 900 ], // KELVIN*(273.15-32*5/9)
+            desc: "Fahrenheit", alt: ["degf"] },
+        K: { type: 'num', dim: { Q: 1 }, val: KELVIN, reserved: true,  alt: ["kelvin", "kelvins"] },
+
+        // Angles (RAD)
+        //   A steradian can be thought of as a square radian because 2pi radians covers
+        //   a circle and 4pi steradians covers a sphere. Even if not completely
+        //   sound, there are no operations on it that are harmed by the assumption.
+        groupAngle: { group: "Angle Units" },
+        radian: { type: 'num', dim: { RAD: 1 }, reserved: true, val: RADIAN, alt: ["radians"] },
+        sr: { type: 'num', dim: { RAD: 2 }, val: RADIAN**2, alt: ["steradian", "steradians"] },
+        degree: { type: 'num', dim: { RAD: 1 }, val: DEGREE, alt: ["degrees"] },
+        arcmin: { type: 'num', dim: { RAD: 1 }, val: [ DEGREE, 60 ], alt: ["arcminute", "arcminutes"] },
+        arcsec: { type: 'num', dim: { RAD: 1 }, val: [ DEGREE, 60*60 ], alt: ["arcsecond", "arcseconds"] },
+
+        // Data (BIT)
+        groupInformation: { group: "Data Units" },
+        bit: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BIT, alt: ["bits"] },
+        byte: { type: 'num', dim: { BIT: 1 }, reserved: true, val: BYTE, alt: ["bytes"] },
+        baud: { type: 'num', dim: { BIT: 1, T: -1 }, val: [ BIT, SEC ] },
+        kilobaud: { type: 'num', dim: { BIT: 1, T: -1 }, val: [ 1000 * BIT, SEC ], alt: ["kbaud"] },
+        // I personally find this offensive, but the modern consensus is that the well-named
+        // units here are powers of 10 and the stupidly-named ones are powers of 2.
+        //   https://www.ibm.com/docs/en/storage-insights?topic=overview-units-measurement-storage-data
+        KB: { type: 'num', dim: { BIT: 1 }, val: 10**3 * BYTE, alt: ["kilobyte", "kilobytes"] },
+        MB: { type: 'num', dim: { BIT: 1 }, val: 10**6 * BYTE, alt: ["megabyte", "megabytes"] },
+        GB: { type: 'num', dim: { BIT: 1 }, val: 10**9 * BYTE, alt: ["gigabyte", "gigabytes"] },
+        TB: { type: 'num', dim: { BIT: 1 }, val: 10**12 * BYTE, alt: ["terabyte", "terabytes"] },
+        PB: { type: 'num', dim: { BIT: 1 }, val: 10**15 * BYTE, alt: ["petabyte", "petabytes"] },
+        EB: { type: 'num', dim: { BIT: 1 }, val: 10**18 * BYTE, alt: ["exabyte", "exabytes"] },
+        KiB: { type: 'num', dim: { BIT: 1 }, val: 2**10 * BYTE, alt: ["kibibyte", "kibibytes"] },
+        MiB: { type: 'num', dim: { BIT: 1 }, val: 2**20 * BYTE, alt: ["mebibyte", "mebibytes"] },
+        GiB: { type: 'num', dim: { BIT: 1 }, val: 2**30 * BYTE, alt: ["gibibyte", "gibibytes"] },
+        TiB: { type: 'num', dim: { BIT: 1 }, val: 2**40 * BYTE, alt: ["tebibyte", "tebibytes"] },
+        PiB: { type: 'num', dim: { BIT: 1 }, val: 2**50 * BYTE, alt: ["pebibyte", "pebibytes"] },
+        EiB: { type: 'num', dim: { BIT: 1 }, val: 2**60 * BYTE, alt: ["exbibyte", "exbibytes"]},
+
+        // Population (PERSON)
+        groupPop: { group: "Population Units" },
+        person: { type: 'num', dim: { PERSON: 1 }, val: PERSON, reserved: true, uscu: null, favored: 1,
+            desc: "person", alt: [ "persons", "people", "capita" ] },
+        percapita: { type: 'num', dim: { PERSON: -1 }, val: [ 1, PERSON ], uscu: null },
+
+        // Force (L M T^-2)
+        groupForce: { group: "Force Units" },
+        N: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: [ KG * M, SEC**2 ], alt: ["newton", "newtons"] },
+        dyne: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: [ KG * M, 100000 * SEC**2 ], alt: ["dynes"] },
+        lbf: { type: 'num', dim: { L: 1, M: 1, T:-2 }, val: [ LBFS2, SEC**2 ], desc: "pound force", uscu: true },
+
+        // Energy (L^2 M, T^-2)
+        groupEnergy: { group: "Energy Units" },
+        joule: { type: 'num', dim: { L: 2, M: 1, T:-2 }, val: [ KG * M * M, SEC**2 ], alt: ["joules"] },
+        erg: { type: 'num', dim: { L: 2, M: 1, T:-2 }, val: [ KG * M * M, SEC**2 * 10000000 ], alt: ["ergs"] },
+
+        // Power (L^2 M T^-3)
+        groupPower: { group: "Power Units" },
+        W: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ KG * M**2, SEC**3 ], alt: ["watt", "watts"] },
+        kW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ 1000 * KG * M**2, SEC**3 ], alt: ["kilowatt", "killowatts"] },
+        mW: { type: 'num', dim: { L: 2, M: 1, T:-3 }, val: [ KG * M**2, 1000 * SEC**3 ], alt: ["milliwatt", "milliwatts"] },
+        horsepower: { type: 'num', dim: { L: 2, M: 1, T:-3 },
+            val: [ 550 * FT5K * LBFS2, N5K * SEC**3 ], desc: "mechanical horsepower", uscu: true },
+
+        // Pressure (L^-1 M T^-2)
+        groupPressure: { group: "Pressure Units" },
+        Pa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ KG, M * SEC**2 ], alt: ["pascal", "pascals"] },
+        kPa: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ 1000 * KG, M * SEC**2 ], alt: ["kilopascal", "kilopascals"] },
+        PSI: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ LBFS2 * N5K**2, IN5K**2 * SEC**2 ],
+            desc: "pounds per square inch", uscu: true },
+        atm: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ 101325 * KG, M * SEC**2 ], desc: "atmosphere" },
+        bar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ 100000 * KG, M * SEC**2 ], alt: ["bars"] },
+        millibar: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ 100 * KG, M * SEC**2 ], alt: ["millibars"] },
+        mmHg: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ 133.322387415 * KG, M * SEC**2 ],
+            desc: "millimeter of mercury" },
+        torr: { type: 'num', dim: { L: -1, M: 1, T:-2 }, val: [ 101325 * KG, 760 * M * SEC**2 ] },
+
+        // Electrical (A ...)
+        //   http://www.ebyte.it/library/educards/sidimensions/SiDimensionsAlfaList.html
+        groupElectrical: { group: "Electrical Units" },
+        A: { type: 'num', dim: { A: 1 }, val: AMP, reserved: true, alt: ["ampere", "amperes", "amp", "amps"]  },
+        mA: { type: 'num', dim: { A: 1 }, val: [ AMP, 1000 ], alt: ["milliampere", "milliamperes"] },
+        uA: { type: 'num', dim: { A: 1 }, val: [ AMP, 1000**2 ], display: MICROSYM+"A", alt: ["microampere", "microamperes"] },
+        V: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: [KG * M**2, SEC**3 * AMP ],
+            alt: ["volt", "volts"] },
+        kV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: [ 1000 * KG * M**2, SEC**3 * AMP ],
+            alt: ["kilovolt", "kilovolts"] },
+        mV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: [ KG*M**2, 1000 * SEC**3 * AMP ],
+            alt: ["millivolt", "millivolts"] },
+        uV: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -1 }, val: [ KG*M**2, 1000**2 * SEC**3 * AMP ],
+            display: MICROSYM+"V", alt: ["microvolt", "microvolts"] },
+        ohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: [ KG * M**2, SEC**3 * AMP**2 ],
+            display: OHMSYM, alt: ["ohms"] },
+        kohm: { type: 'num', dim: { M: 1, L: 2, T: -3, A: -2 }, val: [ 1000 * KG * M**2, SEC**3 * AMP**2 ],
+            display: "k" + OHMSYM, alt: ["kiloohm", "kiloohms", "kilohm", "kilohms"] },
+        S: { type: 'num', dim: { M: -1, L: -2, T: 3, A: 2 }, val: [ SEC**3 * AMP**2, KG * M**2 ], desc: "siemens" },
+        C: { type: 'num', dim: { T: 1, A: 1 }, val: SEC * AMP, desc: "coulomb" },
+        // farads tend to be very small
+        F: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: [ SEC**4 * AMP**2, KG * M**2 ],
+            alt: ["farad", "farads"] },
+        mF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: [ SEC**4 * AMP**2, 1000 * KG * M**2 ],
+            alt: ["millifarad", "millifarads"] },
+        uF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: [ SEC**4 * AMP**2, 1000**2 * KG * M**2 ],
+            alt: ["microfarad", "microfarads"], display: MICROSYM+"F" },
+        nF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: [ SEC**4 * AMP**2, 1000**3 * KG * M**2 ],
+            alt: ["nanofarad", "nanofarads"] },
+        pF: { type: 'num', dim: { M: -1, L: -2, T: 4, A: 2 }, val: [ SEC**4 * AMP**2, 1000**4 * KG * M**2 ],
+            alt: ["picofarad", "picofarads"] },
+        Wb: { type: 'num', dim: { M: 1, L: 2, T: -2, A: -1 }, val: [ KG * M**2, SEC**2 * AMP ],
+            desc: "weber, magnetic flux", alt: ["weber"] },
+        T: { type: 'num', dim: { M: 1, T: -2, A: -1 }, val: [ KG, SEC**2 * AMP ],
+            desc: "tesla, magnetic flux density", alt: ["tesla"] },
+        gauss: { type: 'num', dim: { M: 1, T: -2, A: -1 }, val: [ KG, 10000 * SEC**2 * AMP ],
+            desc: "gauss, magnetic flux density", alt: ["gauss"] },
+        H: { type: 'num', dim: { M: 1, L: 2, T: -2, A: -2 }, val: [ KG * M**2, SEC**2 * AMP**2 ],
+            desc: "henry, mutual inductance ", alt: ["henry"] },
+
+        // Lumosity (CD...)
+        groupLuminosity: { group: "Lumosity Units" },
+        cd: { type: 'num', dim: { CD: 1 }, val: CANDLE, reserved: true, desc: "candle, luminous intensity",
+            alt: ["candle", "candles"] },
+        lx: { type: 'num', dim: { CD: 1, RAD: 2, L: -2 }, val: [ CANDLE * RADIAN**2,  M**2 ],
+            desc: "lux, luminous emittance", alt: ["lux"] },
+        lm: { type: 'num', dim: { CD: 1, RAD: 2 }, val: CANDLE * RADIAN**2,
+            desc: "lumen, luminous flux", alt: ["lumen", "lumens"] },
+
+        // Interesting constants and units (various)
+        groupVarious: { group: "Useful Constants and Units" },
+        pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
+        tau: { type: 'num', dim: {}, val: 2 * Math.PI, display: TAUSYM, desc: `2${PISYM}` },
+        unit: { type: 'num', dim: {}, val: 1, desc: "one", alt: ["u"] },  // to allow "1 1/2 u"
+        rat: { type: 'num', dim: {}, val: 1, display: null, rat: true }, // secret unit to force fraction display
+        // Since SI units were redefined in 2019, a dalton is almost but not precicely 1 gm/mol
+        mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number", alt: ["mols"] },
+        dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27 * KG },
+        boltz: { type: 'num', dim: { L: 2, M: 1, T:-2, Q: -1 }, val: [ 1.380649e-23 * KG * M**2, SEC**2 * KELVIN ],
+            desc: "Boltzmann constant" },
+        au:  { type: 'num', dim: { L: 1 }, val: 149597870700 * M, desc: "astronomical unit" },
+        parsec:  { type: 'num', dim: { L: 1 }, val: 149597870700 * M * 648000 / Math.PI,
+            desc: "astronomy, parallax of one arcsecond", alt: ["parsecs"] },
+        barn: { type: 'num', dim: { L: 2 }, val: 10e-28 * M**2, alt: ["barns"] }, // Nuclear physicist in the house?
+        darcy: { type: 'num', dim: { L: 2 }, val: 10e-12 * M**2, desc: "hydraulic permeability" },
+        // EIA-310 https://en.wikipedia.org/wiki/Eurocard_(printed_circuit_board)
+        U: { type: 'num', dim: { L:1 }, val: [ 7*IN5K, 4*N5K ], desc: "rack unit, 1 3/4\"", alt: ["RU"], uscu: true },
+        HP: { type: 'num', dim: { L:1 }, val: [ IN5K, 5*N5K ], desc: "Eurocard horizontal pitch, 0.2\"", uscu: true },
+        g: { type: 'num', dim: { L: 1, T:-2 }, val: [ EARTHG * M, SEC**2 ],
+            desc: "standard gravity (earth)"},
+        G: { type: 'num', dim: { L: 3, M: -1, T:-2 }, val: [ 6.6743e-11 * M**3, KG * SEC**2 ],
+            desc: "universal gravitational constant" },
+        c: { type: 'num', dim: { L: 1, T:-1 }, val: [ CMPS * M, SEC ], desc: "speed of light"},
+        lightyear: { type: 'num', dim: { L: 1 }, val: [ CMPS * 36525 * DAY, 100  ],
+            desc: "distance light travels in a year", alt: ["ly"] },
+
+        // Obscure/whimsical units
+        groupObscure: { group: "Et Cetera" },
+        day: { type: 'num', dim: { T: 1 }, val: DAY, uscu: null, alt: ["days"] },
+        week: { type: 'num', dim: { T: 1 }, val: 7 * DAY, desc: "7 days", uscu: null, alt: ["weeks"] },
+        fortnight: { type: 'num', dim: { T: 1 }, val: 14 * DAY, desc: "2 weeks", uscu: null, alt: ["fortnights"] },
+        link: { type: 'num', dim: { L: 1 }, val: [ 66 * FT5K, 100 * N5K ],  // you'd think 2/3 foot, but no its really .66 ft!
+            desc: "surveyor's link", uscu: true, alt: ["links"] },
+        rod: { type: 'num', dim: { L: 1 }, val: [ 66 * FT5K, 4 * N5K ], desc: "surveyor's rod", uscu: true, alt: ["rods"] },
+        chain: { type: 'num', dim: { L: 1 }, val: [ 66 * FT5K, N5K ], desc: "surveyor's chain", uscu: true, alt: ["chains"] },
+        furlong: { type: 'num', dim: { L: 1 }, val: [ 660 * FT5K, N5K ], uscu: true, alt: ["furlongs"] },
+        township: { type: 'num', dim: { L: 2 }, val: [ (6 * MI5K)**2, N5K**2 ], uscu: true, alt: ["townships"] },
+        are: { type: 'num', dim: { L: 2 }, val: (10 * M)**2, desc: "10 meters \u00D7 10 meters" },
+        grain: { type: 'num', dim: { M: 1 }, val: [ LBM100M, 7000 * N100M ], uscu: true },
+        stone: { type: 'num', dim: { M: 1 }, val: [ 14 * LBM100M, N100M ], uscu: true, desc: "UK stone" }, // no alt "stones"
+        hundredweight: { type: 'num', dim: { M: 1 }, val: [ 112 * LBM100M, N100M ], uscu: true,
+            desc: "UK hundredweight, about 51 kg" },  // in the US it's 100lb, but nobody uses it so...
+        longton: { type: 'num', dim: { M: 1 }, val: [ 2240 * LBM100M, N100M ], uscu: true, alt: ["longtons"], desc: "UK long ton" },
+        ton: { type: 'num', dim: { M: 1 }, val: [ 2000 * LBM100M, N100M ], uscu: true, alt: ["tons"], desc: "US ton" },
+        tonne: { type: 'num', dim: { M: 1 }, val: 1000 * KG, alt: ["tonnes"], desc: "metric ton" },
+        carat: { type: 'num', dim: { M: 1 }, val: [ 200 * KG, 1000**2 ], alt: ["carats"] },
+        league: { type: 'num', dim: { L: 1 }, val: 3 * NMI, uscu: true, alt: ["leagues"], desc: "3 nautical miles" },
+        nmi: { type: 'num', dim: { L: 1 }, val: NMI, uscu: true, desc: "nautical mile" },
+        knot: { type: 'num', dim: { L: 1, T: -1 }, val: [ NMI, HR ], uscu: true, alt: ["knots"], desc: "nautical mile per hour" },
+        dozen: { type: 'num', dim: {}, val: 12 },
+        bakersdozen: { type: 'num', dim: {}, val: 13, display: null }, // :)
+
+        // General n-dimensional hypotenuse
+        hyp: function Hypotenuse(...params) {
+          if (params.length < 1)
+            return { type: 'num', dim: {}, val: 0 };
+          let res = reduceParamVals(this.sym, Rat.ZERO, params,
+              (accum, val) => Rat.add(accum, Rat.mul(val, val)));
+          return { ...res, val: Rat.sqrt(res.val) };
+        },
+
+        mean: function(...params) {
+          if (params.length < 1) throw new MessageError(`${this.sym}(): No parameters`);
+          let res = reduceParamVals(this.sym, Rat.ZERO, params, (accum, val) => Rat.add(accum, val));
+          return { ...res, val: Rat.div(res.val, [ params.length, 1n ]) };
+        },
+
+        sum: function(...params) {
+          if (params.length < 1) throw new MessageError(`${this.sym}(): No parameters`);
+          let res = reduceParamVals(this.sym, Rat.ZERO, params, (accum, val) => Rat.add(accum, val));
+          return res;
+        },
+
+        abs: function AbsoluteValue(...params) {
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Requires one parameter`);
+          let val = params[0];
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(): Requires numeric parameter`);
+          return { ...val, val: Rat.abs(val.val) };
+        },
+
+        sign: function(...params) {
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Requires one parameter`);
+          let val = params[0];
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(): Requires numeric parameter`);
+          return { ...val, val: Rat.sign(val.val), dim:{} };
+        },
+
+        // Square root
+        sqrt: function SquareRoot(...params) {
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
+          let val = params[0];
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(x): Illegal parameter`);
+          let dim = Dim.div(val.dim, 2);
+          if (!dim) throw new MessageError(`${this.sym}(x): parameter must have even units`);
+          return { type: 'num', dim, val: Rat.sqrt(numVal(val)), uscu: val.uscu };
+        },
+
+        // Cube root
+        cbrt: function CubeRoot(...params) {
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
+          let val = params[0];
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(x): Illegal parameter`);
+          let dim = Dim.div(val.dim, 3);
+          if (! dim) throw new MessageError(`${this.sym}(x): parameter units must be power of three`);
+          return { type: 'num', dim, val: Rat.cbrt(numVal(val)), uscu: val.uscu };
+        },
+
+        // Some trig functions that are valid over their whole domain, are somewhat useful,
+        // and illustrate interesting things about dimensional analysis.
+        sin: function Sine(...params) {
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
+          let val = params[0];
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(x): Illegal parameter`);
+          if (Dim.isScalar(val.dim))
+            return { type: 'num', val: [ Math.sin(Rat.number(numVal(val))), 1n ], dim: {} };
+          if (!Dim.equal(val.dim, { RAD: 1 })) throw new MessageError(`${this.sym}(x): Parameter must be an angle`);
+          return { type: 'num', val: [ Math.sin(Rat.number(numVal(val))/RADIAN), 1n ], dim: {} };
+        },
+
+        cos: function Cosine(...params) {
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
+          let val = params[0];
+          if (val.type !== 'num') throw new MessageError(`${this.sym}(x): Illegal parameter`);
+          if (Dim.isScalar(val.dim))
+            return { type: 'num', val: [ Math.cos(Rat.number(numVal(val))), 1n ], dim: {} };
+          if (!Dim.equal(val.dim, { RAD: 1 })) throw new MessageError(`${this.sym}(x): Parameter must be an angle`);
+          return { type: 'num', val: [ Math.cos(Rat.number(numVal(val))/RADIAN), 1], dim: {} };
+        },
+
+        atan2: function ArctangentOfRatio(...params) {
+          if (params.length !== 2) throw new MessageError(`${this.sym}(): Needs two parameters`);
+          let val1 = params[0], val2 = params[1];
+          if (!Dim.equal(val1.dim, val2.dim)) throw new MessageError(`${this.sym}(): Parameter types incompatible`);
+          return { type: 'num', dim: { RAD: 1 },
+              val: [ Math.atan2(Rat.number(numVal(val1)), Rat.number(numVal(val2)))*RADIAN, 1n ] };
+        },
+
+        // Sets MKS or CGS preference
+        MKS: function SetMKS() { return { type: 'num', dim: {}, val: Rat.ZERO,
+            command: () => unitsSystem = 'mks' } },
+        CGS: function SetCGS() { unitsSystem = 'cgs'; return { type: 'num', dim: {}, val: Rat.ZERO,
+            command: () => unitsSystem = 'cgs' } },
+
+        // For debugging
+        SAVE: function DebugSaveSyms() { return { type: 'num', dim: {}, val: Rat.ZERO,
+            command: () => saveUserSymbols() } },
+        DEVICE: function ToggleDeviceMode() { ; return { type: 'num', dim: {}, val: Rat.ZERO,
+            command: () => toggleDeviceMode() } },
+        UI: function ToggleLegacyMode() { ; return { type: 'num', dim: {}, val: Rat.ZERO,
+            command: () => toggleLegacyMode() } },
+
+        // Set logging level
+        LOGGING: function SetLogLevel(...params) {
+          if (params.length !== 1) throw new MessageError(`${this.sym}(): Needs one parameter`);
+          let val = params[0];
+          if (val.type !== 'num' || !Dim.isScalar(val.dim) || numVal(val) < 0 )
+            throw new MessageError(`${this.sym}(x): Illegal parameter`);
+          let oldLevel = logLevel;
+          let newLevel = Rat.number(numVal(val));
+          return { type: 'num', dim: {}, val: [ oldLevel, 1n ],
+              command: () => logLevel = newLevel };
+        },
+      };
+
+      groomSystemSymbols();
+
+      for (const [name, sym] of Object.entries(systemSymbols)) {
+        if (sym.alt)
+          for (const alt of sym.alt)
+            systemSymbols[alt] = { ...sym, altOf: name, alt: undefined, reserved: false };
+        if (sym.display)
+          systemSymbols[sym.display] = { ...sym, altOf: name, display: undefined, reserved: false };
+      }
+
+      function reduceParamVals(name, accum, params, fn) {  // fn => (accum, val) => val
+        let dim;
+        let uscu = false;
+        for (const val of params) {
+          if (val.type !== 'num') throw new MessageError(`${name}(): Illegal parameter`);
+          const value = numVal(val);
+          if (value !== 0) {
+            if (dim && !Dim.equal(val.dim, dim))
+              throw new ChattyError(`${name}(): Parameter types incompatible`);
+            dim = val.dim;
+            accum = fn(accum, value);
+            uscu = uscu || val.uscu;
+          }
+        }
+        if (!dim)
+          dim = {}
+        return { type: 'num', dim, val: accum, uscu };
+      }
+
+      const userSymbols = {};
+      let environment = {};
+
+      function getSymbol(symName, opts) {
+        let val = environment[symName];
+        if (val === undefined)
+          val = userSymbols[symName];
+        if (val === undefined)
+          val = systemSymbols[symName];
+        if (val instanceof Function)
+          val = { type: 'fn',  params:["..."], native: val,
+            body: `#BuiltinFunction-${val.name}#` };
+        if (!val) {
+          // special case to create pseudo-variables for exponentiated units.
+          let pos = symName.length;
+          while (pos > 1 && DIGITS.includes(symName.charAt(pos-1)))
+            pos -= 1;
+          if (pos < symName.length) {
+            const symPrefix = symName.substr(0, pos);
+            const symSuffix = symName.substr(pos);
+            val = getSymbol(symPrefix);
+            let exp = Number(symSuffix);
+            if (val && exp > 1) {
+              if (val.type === 'num') {
+                let desc = val.sym && `${val.sym ?? symPrefix}^${String(exp)}`;
+                return { sym: symName, type: 'num',
+                  dim: Dim.mul(val.dim, exp), val: Rat.pow(numVal(val), exp),
+                  desc, reserved: val.reserved, uscu: val.uscu, origin: val.origin,
+                  baseSym: val, withExp: exp };
+              }
+            }
+          }
+          return null;
+        }
+        if (val.type === 'num' && typeof val.val === 'number')  // normalize to rational
+          val.val = [ val.val, 1n ];
+        if (!val.sym)
+          val.sym = symName;
+        return val;
+      }
+
+      function invokeFunction(symVal, params) {
+        if (symVal.type !== 'fn') throw new ChattyError("Not a function");
+        if (symVal.native)
+          return symVal.native(...params);   // symVal is "this" in a native function
+        if (params.length !== symVal.params.length)
+           throw new ChattyError(`incorrect number of params for ${symVal.sym}(${symVal.params.join(',')})`);
+        const saveEnv = environment, saveParseStr = parseStr, saveParsePos = parsePos;
+        try {
+          parseStr = symVal.body;
+          parsePos = 0;
+          environment = {};
+          for (const i in params)
+            environment[symVal.params[i]] = params[i];
+          let val = parseExpr();
+          skipSpaces();
+          if (peekc() !== null) throw new MessageError("Invalid function");
+          return val;
+        }
+        finally {
+          environment = saveEnv;
+          parseStr = saveParseStr;
+          parsePos = saveParsePos;
+        }
+      }
+
+      const DIGITS_PRECISION = 10, EPSILON = Math.pow(10, -DIGITS_PRECISION);
+
+      // fetch unit values and filter out any non-units (user may have redefined some)
+      function filterUnits(unitSyms) {
+        return unitSyms.map(sym => getSymbol(sym))
+          .filter(val => val.type === 'num' && val.val?.[0] && !Dim.isScalar(val.dim));
+      }
+
+      // The first unit listed is prefered over later units with the same
+      // favorability. So it's important to have 'sr' before 'radian', for example.
+      const commonUnits = [ // Ensure a covering basis of units in all cases
+        'A', 'mA', 'uA', 'V', 'kV', 'mV','uV', 'Wb',
+        'ohm', 'kohm', 'F', 'mF', 'uF', 'nF', 'pF',
+        'bit', 'byte',
+        'KB',  'MB',  'GB',  'TB',  'PB',  'EB',
+        // seconds come after electrical and information units so that a coulomb
+        // is an "A s", not an "s A"
+        's', 'K', 'person',
+        'sr', 'radian', 'cd', 'lx', 'lm' ];
+      const commonMetricUnits = [
+        'joule', 'N', 'Pa', 'kPa', 'W', 'kW', 'mW' ];
+      const candidateUnits = filterUnits([
+        ...commonUnits, ... commonMetricUnits,
+        'in', 'ft', 'mi', 'acre',
+        'tsp', 'tbsp', 'floz', 'cup', 'pint', 'quart', 'gallon',
+        'lbf', 'oz', 'lb',
+        'um', 'mm', 'cm', 'm', 'km', 'ml', 'liter',
+        'kg', 'gm', 'mg', 'ug',
+        'min', 'hr', // 'us', 'ms' -- don't include or you get m/s as um/us!
+      ]);
+      const candidateUnitsMKS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'kg', 'm' ]);
+      const candidateUnitsCGS = filterUnits([ ...commonUnits, ...commonMetricUnits, 'gm', 'cm' ]);
+      const candidateUnitsUSCU = filterUnits([ ...commonUnits, 'lbf', 'ft', 'in', 'lb' ]);
+
+      function val2str(val, opts) {
+        let descStr = "", displayUnits = val.displayUnits, rat = displayUnits?.rat;
+        if (opts?.describe && val.desc && !displayUnits)
+          descStr = ` (${val.desc})`;
+        let unitsStr = "", invUnitsStr = "";
+        let noFrac = false;
+        if (val.val !== undefined) {
+          let uscu = !!val.uscu;
+          if (displayUnits?.uscu)
+            uscu = true;
+          let dim = val.dim;
+          val = Rat.normalize(numVal(val));
+          // Certain kinds of units should not be displayed as fractions
+          noFrac = Dim.isScalar(dim) || dim.A || dim.Q || dim.RAD || dim.BIT || dim.CD || dim.PERSON
+              || !uscu && (dim.L || dim.M);
+          function describeUnit(unit, opts) {
+            try {
+              let normSquared = Dim.normSquared(dim);
+              let measures = {}, smallest = Number.POSITIVE_INFINITY, dotProduct = 0;
+              for (const measure in dim)
+                measures[measure] = true;
+              for (const measure in unit.dim)
+                measures[measure] = true;
+              for (const measure in measures) {
+                if (!dim[measure] || !unit.dim[measure])
+                  continue;
+                dotProduct += (dim[measure] ?? 0) * unit.dim[measure];
+                let q = dim[measure]/unit.dim[measure];
+                q = Math.abs(Math.trunc(q));
+                if (q < smallest)   // TODO: exclude zero?
+                  smallest = q;
+              }
+              let exp = smallest;
+              if (dotProduct < 0)
+                exp = -exp;
+              if (exp === 0 || !isFinite(smallest)) {
+                if (!opts?.forceUnit)
+                  return null;
+                exp = 1;
+              }
+              // Unit applied "exp" times; also ensures dotProduct is >= 0 unless forced.
+              // The dot product measures how aligned the units vectors are; the projection
+              // each vector on the other. Orthagonal units ha a product of zero; negative
+              // dot products mean anti-aligned, but we flipped the exponent's sign in that case.
+              dotProduct = dotProduct * exp;
+              const reducedDim = Dim.add(dim, unit.dim, -exp);
+              const reducedNormSquared = Dim.normSquared(reducedDim);
+              if (normSquared <= reducedNormSquared && !opts?.forceUnit)
+                return null;
+              let origin = unit.origin ?? Rat.ZERO;
+              let newVal = Rat.div(Rat.sub(val, origin), Rat.pow(unit.val, exp));
+              let expSum = 0, nDims = 0;
+              for (const measure in reducedDim) {
+                expSum += Math.abs(reducedDim[measure]);
+                if (reducedDim[measure])
+                  nDims += 1;
+              }
+              let newNum = Rat.number(newVal);
+              // Basically the number of digits left of the decimal or zeros to the right
+              // It's a measure of "how far from one" the valus is.
+              let digits = Math.abs(Math.log10(Math.abs(newNum)));
+              let favored = unit.favored ?? 0;
+              // A bunch of stuff that can be used in the sort function.
+              return { unit, exp, newVal, newNum, reducedDim, reducedNormSquared,
+                favored, dotProduct, digits, expSum, nDims };
+            }
+            catch (e) {
+              if (e instanceof OverflowError) // exponentiation failed somewhere along the line
+                return null;
+              throw e;  // rethrow
+            }
+          }
+          function applyDesc(unitDesc) {
+            let unitList = unitDesc.unit.unitList ?? [ [ 1, unitDesc.unit ] ];
+            for (let [exp, unit] of unitList) {
+              if (unit.rat) continue; // special unit to force fractional representation
+              let str = " ";
+              let displayExp = exp = unitDesc.exp * exp;
+              if (displayExp < 0) {
+                displayExp = -displayExp;
+                str += " /"
+              }
+              if (unit.display && !opts?.saveMode)
+                str += unit.display;
+              else
+                str += unit.sym;
+              if (displayExp !== 1) {
+                let expStr = String(displayExp);
+                if (opts?.html)
+                  expStr = `<sup>${expStr}</sup>`;
+                str += expStr;
+              }
+              if (exp < 0)
+                invUnitsStr += str;
+              else
+                unitsStr += str;
+            }
+            val = unitDesc.newVal;
+            dim = unitDesc.reducedDim;
+          }
+          if (displayUnits) {
+            const desc = describeUnit(displayUnits, { forceUnit: true } );
+            applyDesc(desc);
+            displayUnits = null;
+          }
+          let allowedCandidateUnits = candidateUnits;
+          if (dim.L && dim.M || dim.A || dim.DC) {
+            // Things get weird when both mass and length are in a value. It's best
+            // to revert to barebones CGS, MKS, or basic USCS units. Otherwise you get
+            // things like "km cg" instead of "m gm"
+            if (uscu)
+              allowedCandidateUnits = candidateUnitsUSCU;
+            else if (unitsSystem === 'mks' || opts?.saveMode)
+              allowedCandidateUnits = candidateUnitsMKS;
+            else if (unitsSystem === 'cgs')
+              allowedCandidateUnits = candidateUnitsCGS;
+          }
+          allowedCandidateUnits = [ ...Object.values(nonceUnits), ...allowedCandidateUnits ];
+          // Find best units to express the value in
+          let iterations = 0;
+          while (!Dim.isScalar(dim)) {
+            if (++iterations > 100)
+              throw new InternalError("Failed to reduce units");  // a system error, hence Error
+            let unitDescs = [];
+            for (const unit of allowedCandidateUnits) {
+              const unitDesc = describeUnit(unit);
+              if (unitDesc)
+                unitDescs.push(unitDesc)
+            }
+            unitDescs.sort((a,b) => {  // Note that we're sorting from best to worst
+              function cmp(a,b) {
+                // Units system should match
+                //   (unit.uscu === null is a hack for units like time that are universal)
+                if (a.unit.uscu !== null && b.unit.uscu !== null
+                    && !a.unit.uscu !== !b.unit.uscu) {
+                  if (!uscu === !a.unit.uscu)
+                    return -1;
+                  return 1;
+                }
+
+                // Favored units
+                let diff = b.favored - a.favored;
+                if (diff !== 0) return diff;
+
+                // This didn't work as well as the simpler tests below.
+                //
+                //  // Larger dot product is better (smaller comparison result)
+                //  diff = b.dotProduct - a.dotProduct;
+                //  if (diff !== 0) return diff;
+                //
+                //  // Smaller resulting norm is better
+                //  diff = a.reducedNormSquared - b.reducedNormSquared;
+                //  if (diff !== 0) return diff;
+
+                // Least exponents, ragardless of exponent
+                diff = a.nDims - b.nDims;
+                if (diff !== 0) return diff;
+
+                // Least total exponents
+                diff = a.expSum - b.expSum;
+                if (diff !== 0) return diff;
+
+                // Favor units in the denominator (typically time)
+                diff = Math.sign(a.exp) - Math.sign(b.exp);
+                if (diff !== 0) return diff;
+                  
+                // Values greater than 1 get a special bonus in the calculation below.
+                // The idea is that anything over a meter should be expressed in meters
+                // and less in lower units. But the inverse of cord (/cord) comes out
+                // to some ridiculous number of cubic miles and it really should be cubic feet.
+                // so being over 1 should give a bonus over the "distance from 1", but should
+                // not be absolute.
+                const aa = Math.abs(a.newNum), ab = Math.abs(b.newNum);
+
+                // Values closer to 1 win. log10 is number of digits basically
+                let va = a.digits - (aa >= 1 ? 5 : 0);
+                let vb = b.digits - (ab >= 1 ? 5 : 0);
+                if (!isFinite(va) || !isFinite(vb)) {
+                  if (isFinite(va))
+                    return -1;
+                  if (isFinite(vb))
+                    return 1;
+                  return 0;
+                }
+                return va - vb;
+              }
+              // ensure comparitor is well-behaved
+              let res = cmp(a,b), rev = cmp(b,a);
+              if (res !== -rev)
+                throw new InternalError("Bad comparitor");
+              return res;
+            });
+            Log(2, (level) =>  // use a function here to defer evaluation unless we're logging
+                "======== " + parseStr + " unit candidates for " + val + " " +
+                JSON.stringify(dim) + " ========\n" +
+                JSON.stringify(unitDescs, (k, v) => typeof v === 'bigint' ? String(v)+"n" : v, 2));
+            if (unitDescs.length < 1)
+              throw new InternalError("Insufficient basis units");
+            applyDesc(unitDescs[0]);
+          }
+        }
+
+        // Now, should it be represented as a (mixed) fraction?
+        let asFrac = false;
+        let num = val[0], denom = val[1], intpart = 0n;
+        if (typeof num === 'bigint') {
+          intpart = num/denom;
+          num -= intpart*denom;
+          if (!noFrac) {     // xxx this logic looks suss
+            if (num === 1n || num <= 12n && denom <= 12n) {
+              asFrac = true;
+              // But favor decimal for things like 0.001
+              let l10 = Math.log10(Number(denom));
+              if (l10 === Math.trunc(l10))
+                asFrac = false;
+            } else {
+              let lg2 = Math.log2(Number(denom));
+              if (lg2 === Math.trunc(lg2) && lg2 <= 10) {
+                asFrac = true;
+              }
+            }
+          }
+        }
+        if (asFrac || rat) {
+          let neg = num < 0n;
+          let str = "";
+          if (neg) {
+            num = -num;
+            str += "-";
+          }
+          if (intpart !== 0n || num === 0n) {
+            str += String(intpart);
+            if (num !== 0n)
+              str += " ";
+          }
+          if (num !== 0n)
+            str += String(num) + "/" + String(denom);
+          return str + unitsStr + invUnitsStr + descStr;
+        }
+
+        val = Rat.number(val);   // Finally, smash it into a JS number
+        if (opts?.saveMode) {
+          // full precision value
+          return String(val) + unitsStr + invUnitsStr;
+        }
+        let absVal = Math.abs(val);
+        if (absVal > 0 && absVal < 1) {
+          // We want to display things like 0.0000001 when possible, but not if
+          // signigicant digits are hanging out behind the truncation.
+          // The 0.1 test is to avoid getting a lot of 0.999999 values that should be 1
+          let val2 = absVal * 10**DIGITS_PRECISION;
+          if (absVal < 0.001 && (Math.trunc(val2) === 0 || val2 - Math.trunc(val2) > EPSILON))
+            return val.toExponential() + unitsStr + invUnitsStr + descStr;
+        }
+        if (absVal > 1e15) // toFixed can't be trusted with numbers bigger than this
+            return val.toExponential() + unitsStr + invUnitsStr + descStr;
+        // Avoids display of nonsense like 2.5000...001 while
+        // maintaining accuracy to "DIGITS_PRECISION" decimal digits.
+        val = val.toFixed(DIGITS_PRECISION);
+        while (val.endsWith("0"))
+          val = val.substr(0, val.length-1);
+        if (val.endsWith("."))
+          val = val.substr(0, val.length-1);
+        return val + unitsStr + invUnitsStr + descStr;
+      }
+
+      //
+      // Simple interface for common operations
+      //
+
+      function getField(element, def) {
+        element.style.color = '';
+        let val = element.value.trim();
+        if (val === "") return def;
+        val = parseFloat(val);
+        if (isNaN(val) || (val === 0 && def !== 0))
+          element.style.color = 'red';
+        return val;
+      }
+
+      function updateResult(element) {
+        try {
+          const ft = getField(ftElement, 0);
+          const inch = getField(inchElement, 0);
+          const num = getField(numElement, 0);
+          const denom = getField(denomElement, 1);
+          const times = getField(timesElement, 1);
+          const div = getField(divElement, 1);
+          if (denom === 0 || div === 0)
+            throw new MessageError("Divide by zero");
+
+          let totalInches = (ft*12 + inch + num/denom) * times / div;
+          if (isNaN(totalInches)) throw new MessageError("Bad input");
+          if (!isFinite(totalInches))
+            throw new MessageError("Divide by zero")
+
+          showFeetInchesResult([ totalInches*IN5K, N5K ], { updateExpr: true });
+          if (element)  // stuffing the expr element changes the focus, but we want to keep it here
+            element.focus();
+        }
+        catch (e) {
+          showError(e);
+        }
+      }
+
+      function showError(e, opts) {
+        // always update the text, in case the error box is already showing
+        let msg = String(e);
+        errorElement.textContent = String(msg);
+        if (!opts?.allErrors && e instanceof ChattyError)
+          return;
+        // we had an error so hide the results block and show the error block
+        resultsElement.style.display = 'none';
+        numberResultsElement.style.display = 'none';
+        errorElement.style.display = '';
+        if ((e instanceof Error) && !(e instanceof MessageError))
+          throw e;  // rethrow
+      }
+
+      //
+      // Parser, for general calculation with expressions
+      //
+
+      let parseStr = "", initialParseStr = "";
+      let parsePos = 0, parseFurthest = 0;
+      const NOSKIP = { noSkip: true };
+
+      function peekc() {
+        if (parsePos < parseStr.length)
+          return parseStr.charAt(parsePos);
+        return null;
+      }
+
+      function getc() {
+        if (parsePos < parseStr.length) {
+          let ch = parseStr.charAt(parsePos);
+          parsePos += 1;
+          if (parsePos > parseFurthest && parseStr === initialParseStr)
+            parseFurthest = parsePos;
+          return ch;
+        }
+        return null;
+      }
+
+      function take(match, opts) {
+        const backtrack = parsePos;
+        if (!opts?.noSkip)
+          skipSpaces();
+        if (parseStr.charAt(parsePos) === match) {
+          parsePos += 1;
+          if (parsePos > parseFurthest && parseStr === initialParseStr)
+            parseFurthest = parsePos;
+          return true;
+        }
+        parsePos = backtrack;
+        return false;
+      }
+
+      function skipSpaces() {
+        let foundSpace = false;
+        let ch = peekc();
+        while (ch === " " || ch === "\t") {
+          getc();
+          ch = peekc();
+          foundSpace = true;
+        }
+        return foundSpace;
+      }
+
+      // Numbers of form:
+      //    ddd
+      //    ddd.
+      //    ddd.dd
+      //    .ddd
+
+      function parseNum(opts) {
+        const backtrack = parsePos;
+        let nDigits = 0;
+        if (!opts?.noSkip)
+          skipSpaces();
+        let ch = peekc();
+        if (DIGITS.includes(ch) || ch === ".") {
+          let val = 0n, div = 1n;
+          while (DIGITS.includes(ch)) {
+            val = val*10n + BigInt(parseInt(ch));
+            getc();
+            ch = peekc();
+            nDigits += 1;
+          }
+          if (!opts?.intOnly && take('.', NOSKIP)) {
+            ch = peekc();
+            while (DIGITS.includes(ch)) {
+              val = val*10n + BigInt(parseInt(ch));
+              div *= 10n;
+              getc();
+              ch = peekc();
+              nDigits += 1;
+            }
+          }
+          const backtrack2 = parsePos;
+          if (!opts?.intOnly && take('e', NOSKIP)) {
+            take('+', NOSKIP);
+            take('-', NOSKIP);
+            if (DIGITS.includes(peekc())) {
+              // let JavaScript parse the number
+              while (DIGITS.includes(peekc()))
+                getc();
+              let str = parseStr.substring(backtrack, parsePos);
+              let val = Number.parseFloat(str);
+              if (isNaN(val)) {
+                parsePos = backtrack;
+                throw new Error(`System error: bad number: ${str}`);
+              }
+              return [ val, 1n ];
+            }
+          }
+          parsePos = backtrack2;
+          if (nDigits > 0) {
+            return [ val, div ];
+          }
+          parsePos = backtrack;
+        }
+        return null;
+      }
+
+      // Parse a number or a number followed by fraction or a fraction:
+      //    [ num | word] [num '/' num]?  -- no spaces around slash
+      //    [ num | word ] '/' num        -- no spaces around slash
+      // returns null, [ num, denom ] or "parse"
+
+      function parseNumFrac(opts) {
+        const backtrack1 = parsePos;
+        let parse = false;
+        let val = parseNum(opts);
+        if (val === null) {
+          let word = parseWord(), sym = word && getSymbol(word);
+          if (sym && sym.type === 'parse') {
+            parse = true;
+            val = Rat.ONE;
+          } else {
+            if (!sym || sym.type !== 'num' || !Dim.isScalar(sym.dim)) {
+              parsePos = backtrack1;
+              return null;
+            }
+            val = sym.val;
+          }
+        }
+        const backtrack2 = parsePos;
+        if (take('/', NOSKIP)) {
+          let denom = parseNum({ noSkip: true, intOnly: true });
+          if (denom === null) {
+            parsePos = backtrack2;
+            return val;
+          }
+          return Rat.div(val, denom);
+        }
+        let num = parseNum({ intOnly: true });
+        if (num === null)
+          return val;
+        if (take('/'), NOSKIP) {
+          let denom = parseNum({ noSkip: true, intOnly: true });
+          if (denom !== null) {
+            return Rat.add(val, Rat.div(num, denom));
+          }
+        }
+        parsePos = backtrack2;
+        if (parse)
+          return 'parse';
+        return val;
+      }
+
+      function numVal(val) {
+        if (val.origin)   // collapse affine values
+          return Rat.add(val.val, val.origin);
+        return val.val;
+      }
+
+      const nonceUnits = {};
+
+      function getNonceUnit(name) {
+        // It's preferable to write 'duck'2 to 'duck2' but we'll allow it anyway.
+        let pos = name.length;
+        while (pos > 1 && DIGITS.includes(name.charAt(pos-1)))
+          pos -= 1;
+        if (pos < name.length) {
+          const symPrefix = name.substr(0, pos);
+          const symSuffix = name.substr(pos);
+          let val = getNonceUnit(symPrefix);
+          let exp = Number(symSuffix);
+          if (exp < 2)
+            throw new MessageError("Bad units exponent");
+          return { ...val, dim: Dim.mul(val.dim, exp), val: Rat.pow(numVal(val), exp) };
+        }
+        let sym = nonceUnits[name];
+        if (sym)
+          return sym;
+        const display = `'${name}'`;
+        sym = { sym: display, type: 'num', val: [ NONCE, 1n ], dim: {}, display, favored: 1, uscu: null, nonce: true };
+        sym.dim['NONCE-'+name] = 1;
+        nonceUnits[name] = sym;
+        return sym;
+      }
+
+      // Parse a nonce unit
+      //   '"' word '"' num? -- both kinds of quotes, must match
+
+      function parseNonceUnit(opts) {
+        const backtrack = parsePos;
+        if (!opts?.noSkip)
+          skipSpaces();
+        let qchar = peekc();
+        if (qchar === '"' || qchar === "'") {
+          if (take(qchar, NOSKIP)) {
+            let word = parseWord(NOSKIP);
+            if (!word || !take(qchar, NOSKIP))
+              throw new ChattyError(peekc() === null ? "Incomplete input" : "Bad user unit" );
+            let sym = getNonceUnit(word);
+            let exp = parseNum({ noSkip:true, intOnly: true });
+            if (exp !== null) {
+              exp = Rat.number(exp);
+              if (exp < 2)
+                throw new MessageError("Bad units exponent");
+              return { ...sym, dim: Dim.mul(sym.dim, exp), val: Rat.pow(numVal(sym), exp) };
+            }
+            return sym;
+          }
+        }
+        parsePos = backtrack;
+        return null;
+      }
+
+      // Parse a unit string
+      //    [ '/'? word ]+
+
+      function parseUnitString(val, opts) {
+        let implicitValue = false, type = 'num', rat = false;
+        if (!val) {
+          val = Rat.ONE;
+          // In this case, there's doubt whether we've got a unit string or just a variable,
+          // so don't throw an error if it's not a unit; just fail the parse.
+          implicitValue = true;
+        }
+        let backtrack1 = parsePos;
+        let unitVal = Rat.ONE, unitList = [], dim= {}, origin, uscu;
+        while (true) {
+          const backtrack2 = parsePos;
+          let hasSlash = take('/');
+          let sym = parseNonceUnit({ noSkip: hasSlash });
+          if (!sym) {
+            let word = parseWord({ ...opts, noSkip: hasSlash });
+            if (!word) {
+              parsePos = backtrack2;
+              break;
+            }
+            sym = getSymbol(word);
+            if (!sym && opts?.parse)
+              sym = { type: 'parse', word };
+            if (!sym) {
+              if (!implicitValue)
+                throw new ChattyError(`Unknown unit: "${word}"`);
+              parsePos = backtrack1;
+              return null;
+            }
+          }
+          if (sym.type === 'parse') {
+            type = 'parse';
+            unitList.push([ 1, sym ]);
+            continue;
+          }
+          if (sym.rat)
+            rat = true;
+          // Affine units can't combine with other units at all
+          if (origin || sym.origin && unitList.length > 0)
+            throw new MessageError(`Implausible units`);
+          if (sym.origin && !hasSlash) {
+            // Affine units must appear alone with no exponents or in the denominator.
+            // Affine units can only have a +1 exponent or a negative exponent.
+            // We ignore the offset for negative exponents because a unit in the denominator
+            // is like differentiation and constants dissapear.
+            if (sym.withExp) throw new MessageError(`Bad unit: ${sym.sym}`);
+            origin = sym.origin;
+          }
+          if (!sym.val) {
+            if (!implicitValue)
+              throw new ChattyError(`Unknown unit: "${sym.sym}"`);
+            parsePos = backtrack1;
+            return null;
+          }
+          let symVal = sym.val;
+          if (hasSlash) {
+            dim = Dim.sub(dim, sym.dim);
+            val = Rat.div(val, symVal);
+          } else {
+            dim = Dim.add(dim, sym.dim);
+            val = Rat.mul(val, symVal);
+          }
+          if (sym.uscu)
+            uscu = true;
+          unitVal = Rat.mul(unitVal, symVal);
+          let exp = sym.withExp ?? 1;
+          if (hasSlash)
+            exp = - exp;
+          if (sym.baseSym)
+            sym = sym.baseSym;
+          unitList.push([ exp, sym ]);
+        }
+        if (unitList.length < 1) {
+          parsePos = backtrack1;
+          return null;
+        }
+        let desc;
+        if (unitList.length === 1 && unitList[0][0] === 1)
+          desc = unitList[0][1].desc;
+        return { type, val, dim, uscu, origin, desc, unitVal, unitList, rat };
+      }
+
+      // Parse a value, which is either a plain number (n) or a sequesnce of
+      // number-fractions (nf) each followed by a unit:
+      //    n
+      //    [ nf [ "'" | '"' | unitstring ] ]+
+
+      function parseValue(opts) {
+        const backtrack = parsePos;
+        let val = Rat.ZERO, dim, origin, type = 'num';
+        let lastUnitVal = Number.POSITIVE_INFINITY;
+        let uscu = false;   // consider it metric unless we encounter any non-metric unit
+
+        // The idea of lastUnitVal is that units should get progressively smaller.
+        // Otherwise, someone could enter 2'3' when they meant 2'3"
+
+        while (true) {  // additive chunks [nf unit unit unit]*
+          // chunkVal is [ num, denom ] to try to preserve decimal precision.
+          // The idea is tha decimals like "0.1" can't be represented exactly but
+          // the units have factors of ten in them so first multiply the unit
+          // then divide by the denom so that the value remains a clean integer when possible.
+          const backtrackChunk = parsePos;
+          let chunkVal = parseNumFrac(opts), unitVal = 0;
+          if (!chunkVal)
+            break;
+          if (chunkVal === "parse") {
+            type = 'parse';
+            chunkVal = Rat.ONE;
+          }
+          let chunkDim;
+          const backtrackQuote = parsePos;
+          if (take("'") && !ALPHA.includes(peekc())) {
+            chunkDim = { L: 1 };
+            unitVal = Number(FT5K)/Number(N5K);
+            chunkVal = Rat.mul(chunkVal, [ BigInt(FT5K), BigInt(N5K) ]);
+            uscu = true;
+          } else if (take('"') && !ALPHA.includes(peekc())) {
+            chunkDim = { L:1 };
+            unitVal = Number(IN5K)/Number(N5K);
+            chunkVal = Rat.mul(chunkVal, [ BigInt(IN5K), BigInt(N5K) ]);
+            uscu = true;
+          } else {
+            parsePos = backtrackQuote; // un-eat the quote in case this is a nonce unit
+            const res = parseUnitString(chunkVal, opts);
+            if (!res) {
+              parsePos = backtrackChunk;
+              break;
+            }
+            if (res.type === 'num') {
+              // can't combine affine units with anything else
+              if (origin || dim && res.origin) throw new MessageError("Implausible units");
+              chunkVal = res.val;
+              unitVal = Rat.number(res.unitVal);
+              chunkDim = res.dim;
+              origin = res.origin;
+              if (res.uscu)
+                uscu = true;
+            } else if (res.type === 'parse') {
+              type = 'parse';
+              chunkDim = {};
+            }
+          }
+          if (!chunkDim) // no unit found in this iteration
+            break;
+          if (!dim)
+            dim = chunkDim;
+          if (type !== 'parse') {
+            if (!Dim.equal(dim, chunkDim))
+              throw new ChattyError("Implausible units");
+            val = Rat.add(val, chunkVal);
+            if (unitVal >= lastUnitVal)  throw new MessageError("Implausible units");
+            lastUnitVal = unitVal;
+          }
+        }
+        if (dim)
+          return { type, dim, val, origin, uscu };
+        parsePos = backtrack;
+        let num = parseNum(opts);
+        if (num !== null)
+          return  {type: 'num', dim: {}, val: num };
+        return null;
+      }
+
+      // Parse a word
+
+      function parseWord(opts) {
+        const backtrack = parsePos;
+        if (!opts?.noSkip)
+          skipSpaces();
+        if (ALPHA.includes(peekc())) {
+          let word = getc();
+          while (ALPHANUM.includes(peekc()))
+            word += getc();
+          return word;
+        }
+        parsePos = backtrack;
+        return null;
+      }
+
+      // Parse a term, which is either a unary expression, a
+      // parenthesized expression, a function call, a value or a word (variable)
+      //    '+' term
+      //    '-' term
+      //    '/' term     -- reciprocal
+      //    '(' expr ')'
+      //    term [ '(' [ expr [ ',' expr ]* ]? ')' ]+
+      //    value
+      //    word
+      //    unitstring
+
+      function parseTerm(opts) {
+        const backtrack = parsePos;
+
+        // Deal with unary first
+        if (take('+')) {
+          let val = parseTerm(opts);
+          if (val !== null) {
+            if (val.type === 'parse')
+              return val;
+            if (val.type !== 'num') throw new ChattyError("Must be numeric");
+            return val;
+          }
+          parsePos = backtrack;
+          return null;
+        }
+        if (take('-')) {
+          let val = parseTerm(opts);
+          if (val !== null) {
+            if (val.type === 'parse')
+              return { type: 'parse', op: 'neg', expr: val };
+            if (val.type !== 'num') throw new ChattyError("Must be numeric");
+            let resVal = Rat.neg(val.val);
+            if (val.origin)   // special negation of affine values: don't negate the origin value
+              resVal = Rat.add(resVal, val.origin);
+            return { type: val.type, dim: val.dim, val: resVal, uscu: val.uscu };
+          }
+          parsePos = backtrack;
+          return null;
+        }
+        if (take('/')) {
+          let val = parseTerm(opts);
+          if (val !== null) {
+            if (val.type === 'fn') throw new ChattyError("can't divide functions");
+            if (val.type === 'parse')
+              return { type: 'parse', op: 'recip', expr: val };
+            let q = Rat.recip(val.val);
+            return { type: val.type, dim: Dim.mul(val.dim, -1), val: q, uscu: val.uscu };
+          }
+          parsePos = backtrack;
+          return null;
+        }
+
+        // Now deal with exprs that might or might not be followed by function invocation
+        let val = null;
+        if (take('(')) {
+          let val1 = parseExpr(opts);
+          if (val1 && take(')')) {
+            val = val1;
+          }
+        } else {
+          if (opts?.noUnits) {
+            val = parseNum(opts);
+            if (val !== null)
+              val = { type: 'num', dim: {}, val: val };
+          } else {
+            val = parseValue(opts);
+            if (!val)
+               val = parseUnitString(null, opts);
+          }
+          if (val === null) {
+            const word = parseWord(opts);
+            if (word !== null) {
+              let val1 = getSymbol(word);
+              skipSpaces();
+              // As a special case, a function of no arguments can be used as a constant
+              if (peekc() !== '('
+                  && val1 instanceof Object && val1.type === 'fn' && val1.params.length === 0) {
+                val = invokeFunction(val1, []);
+              } else if (!(val1 instanceof Object && val1.type)) {
+                if (opts?.parse)
+                  return { type: 'parse', sym: word, defined: true }
+                throw new ChattyError(`Unknown variable: "${word}"`);
+              } else {
+                val = val1;
+              }
+            }
+          }
+          if (val === null)
+            val = parseNonceUnit(opts);
+        }
+        if (val === null) {
+          parsePos = backtrack;
+          return null;
+        }
+
+        // This loops because a function can return a function
+        while (take('(')) {
+          const params = [];
+          let arg = parseExpr(opts);
+          while (arg !== null) {
+            params.push(arg);
+            if (!take(','))
+              break;
+            arg = parseExpr(opts);
+          }
+          if (!take(')')) {
+            parsePos = backtrack;
+            return null;
+          }
+          let paramsParse = false;
+          for (const p of params)
+            if (p.type === 'parse')
+               paramsParse = true;
+          if (paramsParse || val.type === 'parse')
+            val = { type: 'parse', op: 'call', expr: val, params: params };
+          else
+            val = invokeFunction(val, params);
+        }
+        return val;
+      }
+
+      // Parse an exponentiation expression (right-associative)
+      //    term '^' exponentiation
+      //    term
+
+      function parseExponentiation(opts) {
+        let val = parseTerm(opts);
+        if (val === null)
+          return null;
+        const backtrack = parsePos;
+        if (take('^')) {
+          let exp = parseExponentiation({ ...opts, noUnits: true });
+          if (!exp) {
+            parsePos = backtrack;
+            return val;
+          }
+          if (val.type === 'fn' || exp.type === 'fn')
+            throw new MessageError("Cannot exponentiate functions");
+          if (val.type === 'parse' || exp.type === 'parse')
+            return { type: 'parse', op: 'exp', expr1: val, expr2: exp };
+          if (!Dim.isScalar(exp.dim))
+            throw new MessageError("Must exponentiate with a scalar");
+          let expVal = Rat.number(numVal(exp));
+          if (!Dim.isScalar(val.dim) && expVal !== Math.trunc(expVal))
+            throw new MessageError("Cannot exponentiate non-scalars by non-integers");
+          return { type: 'num', dim: Dim.mul(val.dim, Rat.number(exp.val)),
+            val: Rat.pow(numVal(val), numVal(exp)), uscu: val.uscu };
+        }
+        return val;
+      }
+
+      // Parse a multiplicitive expression:
+      //    exponentiation [ '*' exponentiation ]*
+      //    exponentiation [ '/' exponentiation ]*
+
+      function parseMulExpr(opts) {
+        const backtrack = parsePos;
+        let val = parseExponentiation(opts);
+        if (val === null)
+          return null;
+        while (true) {
+          if (take('*') || take('\u00D7')) {  // '*' or times sign
+            let val2 = parseExponentiation(opts);
+            if (val2 === null) {
+              parsePos = backtrack;
+              return null;
+            }
+            if (val.type === 'fn' || val2.type === 'fn')
+              throw new MessageError("Can't multiply functions");
+            if (val.type === 'parse' || val2.type === 'parse')
+              val = { type: 'parse', op: '*', expr1: val, expr2: val2 };
+            else if (val.type === 'num' && val2.type === 'num')
+              val = { type: 'num', dim: Dim.add(val.dim, val2.dim),
+                  val: Rat.mul(numVal(val), numVal(val2)), uscu: val.uscu || val2.uscu };
+            else
+              throw new MessageError("Unknown value type");
+          } else if (take('/') || take('\u00F7')) { // '/' or divide sign
+            let val2 = parseExponentiation(opts);
+            if (val2 === null) {
+              parsePos = backtrack;
+              return null;
+            }
+            if (val.type === 'fn' || val2.type === 'fn')
+              throw new MessageError("Can't divide functions");
+            if (val.type === 'parse' || val2.type === 'parse') {
+              val = { type: 'parse', op: '/', expr1: val, expr2: val2 };
+            } else if (val.type === 'num' && val2.type === 'num') {
+              val = { type: 'num', dim: Dim.sub(val.dim, val2.dim),
+                  val: Rat.div(numVal(val), numVal(val2)), uscu: val.uscu || val2.uscu };
+            } else {
+              throw new MessageError("Unknown value type");
+            }
+          } else {
+            break;
+          }
+        }
+        return val;
+      }
+
+      // Parse an (additive) expression:
+      //    mulexpr [ '+' mulexpr ]*
+      //    mulexpr [ '-' mulexpr ]*
+
+      function parseExpr(opts) {
+        const backtrack = parsePos;
+        let val = parseMulExpr(opts);
+        if (val === null)
+          return null;
+        while (true) {
+          if (take('+')) {
+            let val2 = parseMulExpr(opts);
+            if (val2 === null) {
+              parsePos = backtrack;
+              return null;
+            }
+            if (val.type === 'fn' || val2.type === 'fn')
+              throw new ChattyError("Can't add functions");
+            if (val.type === 'parse' || val2.type === 'parse') {
+              val = { type: 'parse', op: '+', expr1: val, expr2: val2 };
+            } else if (numVal(val2)[0] === 0) {
+              // special case for adding 0; keep first val
+            } else if (numVal(val)[0] === 0) {
+              val = val2;  // special case for adding 0; take second val
+            } else if (val.type === 'num' && val2.type === 'num') {
+              if (Dim.equal(val.dim, val2.dim))
+                val = { type: 'num', dim: val.dim,
+                  val: Rat.add(numVal(val), numVal(val2)), uscu: val.uscu || val2.uscu };
+              else
+                throw new ChattyError("Cannot add different unit types")
+            } else {
+              throw new MessageError("Unknown value type");
+            }
+          } else if (take('-')) {
+            let val2 = parseMulExpr(opts);
+            if (val2 === null) {
+              parsePos = backtrack;
+              return null;
+            }
+            if (val.type === 'fn' || val2.type === 'fn')
+              throw new MessageError("Can't subtract functions");
+            if (val.type === 'parse' || val2.type === 'parse') {
+              val = { type: 'parse', op: '-', expr1: val, expr2: val2 };
+            } else if (numVal(val2)[0] === 0) {
+              // special case for subtracting 0; take first val
+            } else if (val.type === 'num' && val2.type === 'num') {
+              if (Dim.equal(val.dim, val2.dim)) {
+                // Ignore origin in second argument so that 50 degc - 1 degf makes sense
+                if (val2.origin)
+                  val2 = { ...val2, origin: undefined };
+                val = { type: 'num', dim: val.dim,
+                    val: Rat.sub(numVal(val), numVal(val2)), uscu: val.uscu && val2.uscu };
+              } else {
+                throw new ChattyError("Cannot subtract different unit types");
+              }
+            }
+            else {
+              throw new MessageError("Unknown value type");
+            }
+          } else {
+            break;
+          }
+        }
+        return val;
+      }
+
+      // Parse a statement:
+      //    expr
+      //    word '=' expr
+      //    word '(' [ word [ ',' word ]* ]? ')' '=' expr
+      //    expr '|' unitsstr
+
+      function parseStatement(opts) {
+        const backtrack = parsePos;
+        let word = parseWord(opts);
+        if (word !== null) {
+          if (take('=')) {
+            let val = parseExpr(opts);
+            if (val) {
+              return { ...val, sym: word, defined: true };
+            }
+          }
+          if (take('(')) {
+            let params = [];
+            let param = parseWord(opts);
+            while (param !== null) {
+              params.push(param);
+              if (!take(','))
+                break;
+              param = parseWord(opts);
+            }
+            if (take(')') && take('=')) {
+              // make sure the parameters all have different names
+              const paramNames = {};
+              for (const p of params) {
+                if (paramNames[p])
+                  throw new MessageError(`Duplicate parameter ${p} in function ${word}`);
+                const symVal = getSymbol(p);
+                if (symVal?.reserved) {
+                  let name = `"${p}"`;
+                  if (symVal.desc && symVal.desc !== name)
+                    name = `${name} (${symVal.desc})`;
+                  throw new MessageError(`Parameter cannot be reserved reserved symbol ${name}`);
+                }
+                paramNames[p] = true;
+              }
+              skipSpaces();
+              const exprStart = parsePos;
+              let expr = parseExpr({ ...opts, parse: true });
+              if (expr !== null)
+                return { type: 'fn', expr: expr, sym: word, defined: true,
+                          params: params, body: parseStr.substr(exprStart) };
+            }
+          }
+          parsePos = backtrack;
+        }
+        let val = parseExpr();
+        if (val && take('|')) {
+          let displayUnits = parseUnitString(opts);
+          if (!displayUnits) {
+            parsePos = backtrack;
+            return null;
+          }
+          return { ...val, displayUnits };
+        }
+        return val;
+      }
+
+      //
+      // Set up the initial parser state and parse a statement,
+      // making sure all the input is consumed.
+      //
+      function parseInputStatement(stmt, env, opts) {
+        parseStr = initialParseStr = stmt;
+        parsePos = 0;
+        parseFurthest = 0;
+        environment = env || {};
+        let val = parseStatement(opts);
+        skipSpaces();
+        if (val === null || peekc() !== null) {
+          let rest = parseStr.substr(parseFurthest);
+          if (rest.length > 0)
+            throw new ChattyError(`Cannot parse beyond "${rest}"`);
+          else if (parseStr.trim() !== "")
+            throw new ChattyError(`Incomplete input`);
+        }
+        return val;
+      }
+
+      function setUserSymbol(val) {
+        let sym = val.sym;
+        if (systemSymbols[sym]?.reserved)
+          return;
+        val = { ...val, defined: undefined, desc: undefined,
+                display: undefined, reserved: undefined, alt: undefined };
+        delete userSymbols[sym];  // remove from list so new value now shows up first (in reverse listing)
+        userSymbols[sym] = val;
+      }
+
+      function updateParse(opts) {
+        clearFields();
+        try {
+          let exprStr = exprElement.value;
+          if (exprStr.trim() === "")
+            showAssignResult("&nbsp;");  // clear the input field
+          let val = parseInputStatement(exprStr);
+          if (val !== null) {
+            if (opts?.doAssigns && val.defined) {
+              const sym = val.sym;
+              const symVal = getSymbol(sym);
+              if (symVal?.reserved) {
+                let name = `"${sym}"`;
+                if (symVal.desc && symVal.desc !== sym)
+                  name = `${name} (${symVal.desc})`;
+                throw new MessageError(`Cannot redefine reserved symbol ${name}`);
+              }
+              showAssignResult(val);
+              setUserSymbol(val);
+              showUserSymbols();
+              if (opts?.userHitEnter)
+                exprElement.value = "";
+            } else if (val.type === 'num' && val.uscu && Dim.equal(val.dim, { L: 1 }) && !val.displayUnits) {
+              showFeetInchesResult(numVal(val));
+            } else if (val.type === 'num') {
+              showResult(val);
+            } else if (val.type === 'fn' && !val.defined) {
+              showAssignResult(val);
+            }
+            if (opts?.userHitEnter && val.command)
+              val.command();
+            return;
+          } else {
+            let rest = parseStr.substr(parseFurthest);
+            if (rest.length > 0)
+              throw new ChattyError(`Cannot parse beyond "${rest}"`);
+            else if (parseStr.trim() !== "")
+              throw new ChattyError(`Incomplete input`);
+          }
+        }
+        catch (e) {
+          showError(e, { allErrors: opts?.userHitEnter || opts?.showErrors });
+        }
+
+        // Gray out the result since we can't parse correctly right now
+        resultsElement.style.color = '#aaaaaa';
+        numberResultsElement.style.color = '#aaaaaa';
+      }
+
+      function clearFields() {
+        for (const element of [ftElement, inchElement, numElement, timesElement, divElement])
+          element.value = "";
+      }
+
+      function showResult(val) {
+        resultsElement.style.display = 'none';
+        numberResultsElement.style.display = '';
+        errorElement.style.display = 'none';
+        numberResultsElement.style.color = '';
+
+        numberResultsDetailElement.innerHTML = val2str(val, { html: true, describe: true });
+      }
+
+      function escapeHTML(str) {
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+
+      function showUserSymbols() {
+        let str = "";
+        // It seems like sorting is a good idea, but
+        // JavaScript keeps entries in definition order and
+        // it's nice to list them in the reverse order of definition
+        let keys = Object.keys(userSymbols).reverse();
+        for (const sym of keys) {
+          let symStr = symString(userSymbols[sym], { html: true });
+          if (symStr)
+            str += `<p class="user-def">
+              <span class="delete-button" onclick="deleteDef('${sym}')"></span>${symStr}</p>`;
+        }
+        symdefsElement.innerHTML = str;
+      }
+
+      function deleteDef(symName) {
+        delete userSymbols[symName];
+        showUserSymbols()
+      }
+
+      function symString(val, opts) {
+        if (Dim.equal(val.dim, { L: 1 }) && val.uscu && !opts?.saveMode) {
+          let [ftStr, inStr, delta] = unitsToUSStringReps(Rat.number(numVal(val)));
+          let str = `${val.sym} = ${ftStr}${delta}`;
+          if (opts?.html)
+            return escapeHTML(str);
+          return str;
+        }
+        if (val.type === 'num') {
+          if (opts?.html)
+            return `${escapeHTML(val.sym)} = ${val2str(val, opts)}`;
+          return `${val.sym} = ${val2str(val, opts)}`;
+        }
+        if (val.type === 'fn') {
+          let str = `${val.sym}(${val.params.join(", ")}) = ${val.body}`;
+          if (opts?.html)
+            return escapeHTML(str);
+          return str;
+        }
+        return undefined;
+      }
+
+      function showAssignResult(val) {
+        let str = (typeof val === 'string') ? val : symString(val, { html: true });
+        if (str === undefined) return;
+        resultsElement.style.display = 'none';
+        numberResultsElement.style.display = '';
+        errorElement.style.display = 'none';
+        numberResultsElement.style.color = '';
+        numberResultsDetailElement.innerHTML = str;
+      }
+
+      function showFeetInchesResult(val, opts) {
+        let totalUnits = Rat.number(val);
+        resultsElement.style.display = '';
+        numberResultsElement.style.display = 'none';
+        errorElement.style.display = 'none';
+        resultsElement.style.color = '';
+
+        resultInElement.textContent = val2str([ totalUnits * Number(N5K), IN5K ]);
+        resultFtElement.textContent = val2str([ totalUnits * Number(N5K), FT5K ]);
+
+        let [ftStr, inStr, delta] = unitsToUSStringReps(totalUnits);
+        resultFtDetailElement.textContent = ftStr + delta;
+        if (opts?.updateExpr)
+          exprElement.value = ftStr + delta;
+
+        resultInDetailElement.textContent = inStr + delta;
+
+        // show metric for good measure
+        resultMetersElement.textContent =
+          val2str([ totalUnits, M ]);
+        resultMetersMetricFeetElement.textContent =
+          val2str([ totalUnits*250, M*254 ])
+      }
+
+      function unitsToUSStringReps(totalUnits) {
+        let totalInches = Number(N5K) * totalUnits/Number(IN5K);
+        let minus = "";
+        if (totalInches < 0) {
+          totalInches = -totalInches;
+          minus = "-";
+        }
+
+        // Recover feet and inches from from result
+        // (round to nearest 1/denom)
+        let denom = 32;
+        let inches =  Math.trunc(totalInches*denom + 0.5)/denom;
+        let ft = Math.trunc(inches/12);
+        inches = inches - ft*12;
+        let frac = inches - Math.trunc(inches);
+        inches = Math.trunc(inches);
+        let num = Math.trunc(frac*denom);
+        while (denom > 2 && num%2 === 0) {  // reduce fraction
+          denom = denom/2;
+          num = num/2;
+        }
+
+        // format that string
+        let ftStr = minus, sp = "";
+        if (ft !== 0 || (inches === 0 && num === 0)) {
+          ftStr += ft + "'";
+          sp = " ";
+        }
+        if (inches !== 0) {
+          ftStr += sp + inches;
+          sp = " ";
+        }
+        if (num !== 0)
+          ftStr += `${sp}${num}/${denom}`;
+        if (inches !== 0 || num !== 0)
+           ftStr += '"';
+        let delta = totalInches - (ft*12 + inches + num/denom);
+        if (Math.abs(delta) < EPSILON) {
+          delta = "";
+        } else {
+          if (delta < 0)
+            delta = ` - ${val2str([ -delta, 1n ])}"`;
+          else
+            delta = ` + ${val2str([ delta, 1n ])}"`;
+        }
+
+        // format inches
+        let inStr = minus;
+        sp = "";
+        inches = ft*12 + inches;
+        if (inches !== 0 || num === 0) {
+          inStr += inches;
+          sp = " ";
+        }
+        if (num !== 0)
+          inStr += `${sp}${num}/${denom}`;
+        inStr += '"';
+        return [ftStr, inStr, delta];
+      }
+
+      function showHelp(id) {
+        // hide all help
+        let elts = document.querySelectorAll('div.help');
+        for (let e of elts)
+          e.style.display = ''; // back to inherited 'none'
+        let helpElement = document.getElementById(id);
+        if (helpElement) {
+          helpElement.style.display = "block"; // inherits 'none' from "help" class
+          for (let child of helpElement.children)
+            if (child.tagName === 'DIV')
+              child.scroll(0, 0);
+        }
+      }
+
+      const GUID = "ad1f9c32-ed69-457d-89a0-f966c81424bd";
+      const LOCAL_STORAGE_KEY = "UnitsCalculator-" + GUID;
+      const MAJOR = 1, MINOR = 0, PATCH = 0;
+
+      function loadUserSymbols() {
+        const localStorage = window.localStorage;
+        if (!localStorage)
+          return false;
+        let json = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (!json)
+          return false;
+        let wad = JSON.parse(json);
+        if (!wad || !wad.major || wad.major > MAJOR)
+          return false;
+        if (!wad.defs)
+          return false;
+        for (const def of wad.defs) {
+          try {
+            let val = parseInputStatement(def);
+            skipSpaces();
+            if (val !== null && peekc() === null) // nothing left over at the end
+              setUserSymbol(val);
+          }
+          catch (e) {
+          }
+        }
+        showUserSymbols();
+        return true;
+      }
+
+      function saveUserSymbols() {
+        const localStorage = window.localStorage;
+        if (!localStorage)
+          return false;
+        const wad = {
+          major: MAJOR, minor: MINOR, patch: PATCH, defs: []
+        };
+        // We rely on the fact that objects are enumerated in the order
+        // items were added. Otherwise, function definitions might fail
+        // due to their variable references being unsatisfied.
+        for (const sym in userSymbols) {
+          if (userSymbols[sym].native || userSymbols[sym].origin)
+            continue;  // can't save these types now
+          let symStr = symString(userSymbols[sym], { saveMode: true });
+          if (symStr) {
+            wad.defs.push(symStr);
+            Log(1, `Saving: ${symStr}`);
+          }
+        }
+        let json = JSON.stringify(wad);
+        try {
+          localStorage.setItem(LOCAL_STORAGE_KEY, json);
+          return true;
+        }
+        catch (e) {
+        }
+        return false;
+      }
+
+      function addExampleStuffs() {
+        for (const help of document.querySelectorAll("div.help")) {
+          help.addEventListener("click", function(event) {
+            let element = event.target;
+            while (element) {
+              let styles = window.getComputedStyle(element);
+              let action = styles.getPropertyValue("--click-action");
+              if (action.trim() === "stuff-text") {
+                let text = event.target.textContent.trim();
+                // special handling for units that have offsets
+                let sym = getSymbol(text);
+                if (sym?.origin)
+                  text = "0 " + text;
+                exprElement.value = text.trim();
+                // exprElement.focus() -- seems like a good idea, but brings up a keyboard in mobile
+                updateParse({ doAssigns: true, showErrors: true });
+                return;
+              }
+              element = element.parentElement;
+            }
+          });
+        }
+      }
+
+      function toggleLegacyMode(legacy) {
+        const attr = 'data-presentation-mode';
+        if (legacy || !document.body.getAttribute(attr))
+          document.body.setAttribute(attr, 'legacy');
+        else
+          document.body.removeAttribute(attr);
+      }
+
+      if (window.location.href.match(/inch/i))
+        toggleLegacyMode(true);
+      document.body.setAttribute('data-protocol', window.location.protocol);
+
+      function toggleDeviceMode(mode) {
+        const attr = 'data-device';
+        if (mode || !document.body.getAttribute(attr))
+          document.body.setAttribute(attr, mode || 'mobile');
+        else
+          document.body.removeAttribute(attr);
+      }
+
+      {
+        let styles = window.getComputedStyle(document.body);
+        let val = styles.getPropertyValue("--device").trim();
+        if (val !== '')
+          toggleDeviceMode(val);
+      }
+
+      function groomSystemSymbols() { // grooms the system symbols and injects help text
+        let html = "";
+        for (const [name, sym] of Object.entries(systemSymbols)) {
+          if (sym.group) {
+            html += `<tr><td colspan="3" class="group">${sym.group}`;
+            delete systemSymbols[name];
+            continue;
+          }
+          if (sym instanceof Function) continue;
+          if (typeof sym.val !== 'object') // array, really
+            sym.val = [ sym.val, 1n ];
+          if (sym.val)
+            sym.val = Rat.normalize(sym.val);
+          if (sym.origin)
+            sym.origin = Rat.normalize(sym.origin);
+          if (sym.type !== 'num' || sym.altOf || sym.display === null)
+            continue;
+          let alts = sym.alt ?? [];
+          if (!sym.desc && alts.length > 1)  // If there's only one, it's usually the plural; skip it.
+            sym.desc = alts[0];
+          let desc = sym.desc || name;
+          if (sym.display)
+            alts.unshift(sym.display);
+          let unfilteredAlts = alts;
+          alts = alts.filter(name => name !== desc);
+          if (desc === name || unfilteredAlts.includes(desc))
+            desc = `<span class="stuff-text">${desc}</span>`;
+          if (sym.reserved)
+            desc += " <i>(reserved)</i>";
+          if (alts.length > 0) {
+            desc += ", also: ";
+            let comma = "";
+            for (const alt of alts) {
+              desc += comma + `<span class="stuff-text">${alt}</span>`;
+              comma = ", ";
+            }
+          }
+          html += `<tr><td><span class="stuff-text">${name}<span>
+                       <td><span class="stuff-text">/${name}</span><td>${desc}`;
+        }
+        builtinSymbolsElement.innerHTML = html;
+      }
+
+      window.addEventListener("beforeunload", function(evt) {
+        saveUserSymbols();
+      });
+
+      document.addEventListener("keydown", function(evt) {
+        if (evt.key === "Escape")
+          showHelp();
+      });
+
+      // onchange event isn't suitable because if the value doesn't change, nothing is reported
+      exprElement.addEventListener("keydown", function(evt) {
+        if (evt.key === "Enter") 
+          updateParse({ doAssigns: true, userHitEnter: true });
+      });
+
+      exprElement.addEventListener("input", function(evt) {
+        updateParse();
+      });
+      
+      addExampleStuffs();
+      ftElement.value = "5";
+      updateResult();
+      try { loadUserSymbols(); } catch (e) {} // inconvenient to crash while loading
+   </script>
+  </body>
+</html>
