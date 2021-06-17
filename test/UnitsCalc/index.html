@@ -25,9 +25,9 @@
     <base target="_blank"> <!-- all links open in a new tab/page -->
     <style type="text/css">
       body {
-        padding: 4px 12px;
+        padding: .2em .5em;
         box-sizing: border-box;
-        margin: 0px 0px;
+        margin: 0em 0em;
         background-color: #f8f8f8;
       }
       body, table  {
@@ -69,8 +69,9 @@
       /* Spiff up input fields */
       input[type="text"] {
         font-size: 110%;
-        border-radius: 5px;
-        padding: 1px 4px;
+        border: .15em solid;
+        border-radius: .3em;
+        padding: .1em .4em;
       }
 
       /*
@@ -81,7 +82,7 @@
         flex-flow: column nowrap;
       }
       div.layout-column > div {
-        margin: 4px 0px;
+        margin: .1em 0em;
       }
       div.layout-column {
         height: 100%;
@@ -109,16 +110,16 @@
        * and a <div> for help content which is made scrollable.
        */
       div.help {
-        padding: 0px 4px 0px 20px;
+        padding: 0em .5em;
         background-color: #e8e8e8;
         position: absolute;
         display: none;
         top: 10%;
         left: 40%;
-        right: 16px;
-        bottom: 16px;
-        border: 2px solid black;
-        border-radius: 5px;
+        right: 1em;
+        bottom: .5em;
+        border: .2em solid black;
+        border-radius: .4em;
       }
       div.help > span.close-button {
         color: #888888;
@@ -198,9 +199,9 @@
       span.button {
         display: inline-block;
         cursor: pointer;
-        padding: 2px 8px;
+        padding: .2em .6em;
         background: #4444ff;
-        border-radius: 5px;
+        border-radius: .4em;
         color: white;
         transition: 0.3s;
       }
@@ -222,50 +223,50 @@
         position: absolute;
         content: "\d7"; /* Unicode times character */
         font-size: 90%;
-        bottom: 6px;
-        left: -30px;
+        bottom: .4em;
+        left: -1.7em;
         color: white;
         background-color: #bbbbbb;
         cursor: pointer;
-        padding: 1px 8px;
-        border-radius: 8px;
+        padding: .05em .4em;
+        border-radius: .4em;
       }
 
       div#numpad {
         display: none;
+        font-size: 140%;
         grid-template-columns: repeat(5, 1fr);
-        gap: 5px;
-        padding: 10px;
+        gap: .1em;
+        padding: .2em;
         position: absolute;
-        right: 15px;
-        bottom: 5px;
-        border: 2px solid black;
-        border-radius: 8px;
+        right: 1em;
+        bottom: .5em;
+        border: .15em solid black;
+        border-radius: .4em;
         background-color: #aaaaaa;
       }
       body[data-numpad="show"] div#numpad {
         display: grid !important;
       }
       div#numpad > div {
-        width: 35px;
-        height: 35px;
+        width: 2em;
+        height: 2em;
+        border: .1em solid black;
         display: flex;
         justify-content: center;
         align-items: center;
-        border-radius: 8px;
-        border: 2px solid black;
+        border-radius: .4em;
         color: white;
         font-weight: bold;
-        font-size: 120%;
         background-color: #888888;
       }
       div#numpad > div.span2 {
         grid-column-end: span 2;
-        width: 79px;
+        width: 4.3em;  /* 2 cells, 2 borders, 1 gap */
       }
       div#numpad > div.span3 {
         grid-column-end: span 3;
-        width: 123px;
+        width: 6.6em;  /* 3 cells, 4 borders, 2 gaps */
       }
 
       /* Looks like a link but is actually a "button" */
@@ -295,7 +296,7 @@
         padding: 0em .25em;
         background: #ff7777;
         font-weight: bold;
-        border-radius: 5px;
+        border-radius: .3em;
         margin-right: .5em;
         color: white;
         transition: 0.1s;
@@ -325,10 +326,10 @@
 
       /* The results box */
       div.results {
-        border: 2px solid;
-        margin: 12px 0px;
-        padding: 0px 12px;
-        border-radius: 5px;
+        border: .15em solid;
+        margin: 1em 0em;
+        padding: 0em 1em;
+        border-radius: .3em;
       }
     </style>
   </head>
@@ -416,7 +417,8 @@
             It would be too noisy to alert each of these errors, but if you don't
             know why it's grayed out, you can hit &ldquo;enter&rdquo; to see an error message.
         <p> If, however, you realized you should have begun a parenthasized expression and enter
-            <code>10'4" + 4'2")</code>, the opening parenthesis will be provided automatically.
+            <code>10'4" + 4'2")</code>, the opening parenthesis will be provided automatically
+            so that you don't have to go back and add it youself (which is tedious on mobile devices).
         <p> In these help boxes most sample expressions, like
             <code>11'4"/2</code>, can be clicked to evaluate the expression.
         </p>
@@ -732,7 +734,8 @@
       <div> 7 </div> <div> 8 </div> <div> 9 </div> <div> &times; </div> <div> . </div>
       <div> ( </div> <div> 0 </div> <div> ) </div> <div> / </div> <div data-stuff="abc"> abc </div>
       <div class="span3" data-stuff=" "> space </div>
-      <div class="span2" style="font-size: 200%;" data-stuff="del"> &#9003; </div> <!-- back/erase symbol -->
+      <div class="span2" data-stuff="del">
+        <span style="font-size: 120%;">&#9003;</span> </div> <!-- back/erase symbol -->
     </div>
     <script type="text/javascript">
       "use strict";
@@ -1247,7 +1250,8 @@
         pi: { type: 'num', dim: {}, val: Math.PI, display: PISYM, desc: PISYM },
         tau: { type: 'num', dim: {}, val: 2 * Math.PI, display: TAUSYM, desc: `2${PISYM}` },
         unit: { type: 'num', dim: {}, val: 1, desc: "one", display: null, alt: ["u"] },  // to allow "1 1/2 u"
-        ratio: { type: 'num', dim: {}, val: 1, display: null, rat: true, alt: ["rat"] }, // secret unit to force fraction display
+        ratio: { type: 'num', dim: {}, val: 1, display: null, rat: 1, alt: ["rat"] }, // secret unit to force fraction display
+        mixratio: { type: 'num', dim: {}, val: 1, display: null, rat: 2, alt: ["mixrat"] }, // secret unit to force mixed fraction display
         // Since SI units were redefined in 2019, a dalton is almost but not precicely 1 gm/mol
         mol: { type: 'num', dim: {}, val: 6.02214076e23, desc: "Avogadro's number", alt: ["mols"] },
         dalton: { type: 'num', dim: { M: 1 }, val: 1.6605390666e-27 * KG },
@@ -1740,8 +1744,10 @@
         let asFrac = false;
         let num = val[0], denom = val[1], intpart = 0n;
         if (typeof num === 'bigint') {
-          intpart = num/denom;
-          num -= intpart*denom;
+          if (rat !== 1) {  // rat = 1 means no _mixed_ fractions, rat = 2 allows them
+            intpart = num/denom;
+            num -= intpart*denom;
+          }
           if (!noFrac) {     // xxx this logic looks suss
             if (num === 1n || num <= 12n && denom <= 12n) {
               asFrac = true;
@@ -2024,7 +2030,7 @@
           let val = getNonceUnit(symPrefix);
           let exp = Number(symSuffix);
           if (exp < 2)
-            throw new MessageError("Bad units exponent");
+            throw new ChattyError("Bad units exponent");
           return { ...val, dim: Dim.mul(val.dim, exp), val: Rat.pow(numVal(val), exp) };
         }
         let sym = nonceUnits[name];
@@ -2055,7 +2061,7 @@
             if (exp !== null) {
               exp = Rat.number(exp);
               if (exp < 2)
-                throw new MessageError("Bad units exponent");
+                throw new Chat("Bad units exponent");
               return { ...sym, dim: Dim.mul(sym.dim, exp), val: Rat.pow(numVal(sym), exp) };
             }
             return sym;
@@ -2104,7 +2110,7 @@
             continue;
           }
           if (sym.rat)
-            rat = true;
+            rat = sym.rat;
           // Affine units can't combine with other units at all
           if (origin || sym.origin && unitList.length > 0)
             throw new MessageError(`Implausible units`);
@@ -2633,10 +2639,9 @@
           try {
             val = parseInputStatement(exprStr);
           } catch (e) {
-            if (!(e instanceof ChattyError)) {
-              throw e;
-            } else {
-              // try to supply missing left parin
+            if (e instanceof ChattyError) {
+              // Try to supply missing left parin.
+              // Note: Yhis doesn't seem like a very general solution.
               let fixPos = 0, trackingFix = true;
               if (exprStr.charAt(exprStr.length-1) === ')') {
                 let fixPos = 0, trackingFix = true, nl = 0, nr = 0;
@@ -2659,13 +2664,27 @@
                 }
                 if (nl === nr-1) {
                   exprStr = exprStr.substring(0, fixPos) + '(' + exprStr.substring(fixPos );
-                  if (hasCaret)
-                    exprStr += CARETSYM;
-                  exprElement.value = exprStr;
-                  val = parseInputStatement(exprStr);
+                  let saveParseStr = parseStr, saveParesPos = parsePos, saveParseFurthest = parseFurthest;
+                  try {
+                    val = parseInputStatement(exprStr);
+                    if (val) {
+                      if (hasCaret)
+                        exprStr += CARETSYM;
+                      exprElement.value = exprStr;
+                      e = undefined;  // ignore the error
+                    }
+                  } catch(e2) { 
+                      e = e2; // keep original error
+                  } finally {
+                    // If it succeeds, there will be no error message.
+                    // If it fails, we want original context.
+                    parseStr = saveParseStr, parsePos = saveParesPos, parseFurthest = saveParseFurthest;
+                  }
                 }
               }
             }
+            if (e)
+              throw e;
           }
           if (val !== null) {
             if (opts?.doAssigns && val.defined) {
