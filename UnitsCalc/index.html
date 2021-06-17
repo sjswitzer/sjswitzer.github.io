@@ -232,6 +232,43 @@
         border-radius: 8px;
       }
 
+      div#numpad {
+        display: none;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 5px;
+        padding: 10px;
+        position: absolute;
+        left: 30%;
+        bottom: 5px;
+        border: 2px solid black;
+        border-radius: 8px;
+        background-color: #aaaaaa;
+      }
+      body[data-numpad="show"] div#numpad {
+        display: grid !important;
+      }
+      div#numpad > div {
+        width: 35px;
+        height: 35px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 8px;
+        border: 2px solid black;
+        color: white;
+        font-weight: bold;
+        font-size: 120%;
+        background-color: #888888;
+      }
+      div#numpad > div.span2 {
+        grid-column-end: span 2;
+        width: 79px;
+      }
+      div#numpad > div.span3 {
+        grid-column-end: span 3;
+        width: 123px;
+      }
+
       /* Looks like a link but is actually a "button" */
       span.linklike {
         color: #0000dd;
@@ -320,7 +357,9 @@
             autocomplete="off" spellcheck="false" autocorrect="off"
             autocapitalize="none">
         </div>
-        <div class="clear-text-button mobile-only" onclick="stuffExpr('');"><span></span></div>
+        <div class="clear-text-button mobile-only" onclick="clearExpr()"><span></span></div>
+        <span class="button mobile-only" style="margin-left: .25em; font-size: 1.125em"
+          onclick="toggleNumpad()">#</span>
         <span class="button" style="margin-left: .25em; font-size: 1.125em"
           onclick="showHelp('help-expr')">?</span>
       </div>
@@ -686,6 +725,14 @@
         </table>
       </div>
     </div>
+    <div id="numpad">
+      <div> 1 </div> <div> 2 </div> <div> 3 </div> <div> + </div> <div> ' </div>
+      <div> 4 </div> <div> 5 </div> <div> 6 </div> <div> - </div> <div> " </div>
+      <div> 7 </div> <div> 8 </div> <div> 9 </div> <div> * </div> <div> . </div>
+      <div> ( </div> <div> 0 </div> <div> ) </div> <div> / </div> <div data-stuff="abc"> abc  </div>
+      <div class="span3" data-stuff=" "> space </div>
+      <div class="span2" data-stuff="del"> &#9003; </div>
+    </div>
     <script type="text/javascript">
       "use strict";
 
@@ -708,6 +755,7 @@
       const denomElement = document.getElementById('denom');
       const timesElement = document.getElementById('times');
       const divElement = document.getElementById('div');
+      const numpadElement = document.getElementById('numpad');
 
       class MessageError extends Error {
         constructor(msg) {
@@ -972,7 +1020,8 @@
       const CMPS = 299792458;
 
       const DIGITS = "0123456789";
-      const MICROSYM = "\u00B5", OHMSYM = "\u2126", PISYM = "\uD835\uDF0B", TAUSYM = "\uD835\uDF0F";
+      const MICROSYM = "\u00B5", OHMSYM = "\u2126", CARETSYM = '\u2038',
+          PISYM = "\uD835\uDF0B", TAUSYM = "\uD835\uDF0F";
       const ALPHA =
         "abcdefghijklmnopqrstuvwxyz" +
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
@@ -2572,6 +2621,7 @@
         clearFields();
         try {
           let exprStr = exprElement.value;
+          exprStr = trimCaret(exprStr);
           if (exprStr.trim() === "")
             showAssignResult("&nbsp;");  // clear the input field
           let val = parseInputStatement(exprStr);
@@ -2857,7 +2907,7 @@
                 let sym = getSymbol(text);
                 if (sym?.origin)
                   text = "0 " + text;
-                stuffExpr(text);
+                stuffExpr(text.trim(), { doAssigns: true, showErrors: true });
                 return;
               }
               element = element.parentElement;
@@ -2866,15 +2916,60 @@
         }
       }
 
-      function stuffExpr(text) {
-        exprElement.value = text.trim();
+      function trimCaret(str) {
+        str = str.trimEnd(str);
+        if (str.charAt(str.length-1) === CARETSYM)
+          str = str.substr(0, str.length-1);
+        return str;
+      }
+
+      function addNumpadStuffs() {
+        document.body.addEventListener("click", function(event) {
+          let element = event.target;
+          while (element) {
+            if (element === numpadElement)
+              return;
+            if (element.parentElement === numpadElement) {
+              let text = element.textContent.trim();
+              let exprText = exprElement.value;
+              exprText = trimCaret(exprText);
+              let stuff = element.getAttribute('data-stuff');
+              if (stuff === 'del') { // hack
+                exprText = exprText.substr(0, exprText.length-1);
+                stuffExpr(exprText + CARETSYM);
+              } else if (stuff === 'abc') {
+                exprElement.focus();
+                toggleNumpad(false);
+              } else {
+                if (stuff)
+                  text = stuff;
+                stuffExpr(exprText + text + CARETSYM);
+              }
+              // Again, it seeme like this is a good idea, but it brings up the keyboard on iOS
+              //   exprElement.focus();  /* no! */
+              return;
+            }
+            element = element.parentElement;
+          }
+          // clicked somewhere outside the numpad
+          toggleNumpad(false);
+        });
+      }
+
+      function stuffExpr(text, opts) {
+        exprElement.value = text;
         // exprElement.focus() -- seems like a good idea, but brings up a keyboard in mobile
-        updateParse({ doAssigns: true, showErrors: true });
+        updateParse(opts);
+      }
+
+      function clearExpr() {
+        stuffExpr("");
+        ignoreOneToggleNumpad = true;  // don't bring down the numpad!
       }
 
       function toggleLegacyMode(legacy) {
         const attr = 'data-presentation-mode';
-        if (legacy || !document.body.getAttribute(attr))
+        if (legacy === undefined || !document.body.getAttribute(attr))
           document.body.setAttribute(attr, 'legacy');
         else
           document.body.removeAttribute(attr);
@@ -2892,6 +2987,29 @@
           document.body.setAttribute(attr, mode || 'mobile');
         else
           document.body.removeAttribute(attr);
+      }
+
+      let ignoreOneToggleNumpad = false;
+
+      function toggleNumpad(mode) {
+        // This is to deal with the click that opens the numpad being itself "out of the box"
+        if (ignoreOneToggleNumpad) {
+          ignoreOneToggleNumpad = false;
+          return;
+        }
+        const attr = 'data-numpad';
+        if (mode !== false && (mode !== undefined || !document.body.getAttribute(attr))) {
+          document.body.setAttribute(attr, 'show');
+          exprElement.value = exprElement.value + CARETSYM;
+          ignoreOneToggleNumpad = true;
+          exprElement.blur();
+          window.setTimeout(function() {  // fires at next event loop
+            ignoreOneToggleNumpad = false;
+          });
+        } else {
+          document.body.removeAttribute(attr);
+          exprElement.value = trimCaret(exprElement.value);
+        }
       }
 
       {
@@ -2960,7 +3078,8 @@
       });
       
       addExampleStuffs();
-      ftElement.value = "5";
+      addNumpadStuffs();
+      ftElement.value = "5";  // populate wuth example content
       updateResult();
       try { loadUserSymbols(); } catch (e) {} // inconvenient to crash while loading
    </script>
