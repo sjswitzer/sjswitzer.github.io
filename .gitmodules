@@ -1,0 +1,4 @@
+[submodule "test2/UnitsCalc"]
+	path = test2/UnitsCalc
+	url = https://github.com/sjswitzer/UnitsCalc.git
+	branch = test
