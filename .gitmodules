@@ -10,3 +10,7 @@
 	path = test/SchemeJS
 	url = https://github.com/sjswitzer/SchemeJS.git
 	branch = test
+[submodule "SchemeJS"]
+	path = SchemeJS
+	url = https://github.com/sjswitzer/SchemeJS.git
+	branch = main
