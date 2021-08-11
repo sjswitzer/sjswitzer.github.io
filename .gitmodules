@@ -6,3 +6,7 @@
 	path = UnitsCalc
 	url = https://github.com/sjswitzer/UnitsCalc.git
 	branch = main
+[submodule "test/SchemeJS"]
+	path = test/SchemeJS
+	url = https://github.com/sjswitzer/SchemeJS.git
+	branch = test
